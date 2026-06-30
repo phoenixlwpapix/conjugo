@@ -44,7 +44,7 @@ const readString = <Value extends string>(key: string, fallback: Value, allowedV
   return allowedValues.includes(rawValue as Value) ? (rawValue as Value) : fallback;
 };
 
-export const readLanguageId = () => readString<LanguageId>(storageKeys.languageId, 'spanish', languages.map((language) => language.id));
+export const readLanguageId = () => readString<LanguageId>(storageKeys.languageId, 'english', languages.map((language) => language.id));
 
 export const writeLanguageId = (languageId: LanguageId) => {
   if (canUseStorage()) {
@@ -61,7 +61,7 @@ export const writePracticeTense = (practiceTense: PracticeTenseId) => {
   }
 };
 
-export const readActiveView = () => readString<AppView>(storageKeys.activeView, 'practice', ['practice', 'wordbook']);
+export const readActiveView = () => readString<AppView>(storageKeys.activeView, 'practice', ['practice', 'stats', 'wordbook']);
 
 export const writeActiveView = (activeView: AppView) => {
   if (canUseStorage()) {

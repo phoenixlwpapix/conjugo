@@ -3,6 +3,7 @@ import { CelebrationOverlay } from './components/CelebrationOverlay';
 import { Header } from './components/Header';
 import { ProgressPanel } from './components/ProgressPanel';
 import { SessionBar } from './components/SessionBar';
+import { StatsDashboard } from './components/StatsDashboard';
 import { TrainerPanel } from './components/TrainerPanel';
 import { WordBook } from './components/WordBook/WordBook';
 import { languages, type LanguageId, type PracticeTenseId } from './data/verbs';
@@ -55,7 +56,7 @@ export default function App() {
         onViewChange={switchView}
       />
 
-      {activeView === 'practice' ? (
+      {activeView === 'practice' && (
         <>
           <SessionBar
             accuracy={practiceSession.accuracy}
@@ -91,15 +92,24 @@ export default function App() {
               progress={practiceSession.progress}
               progressPercent={practiceSession.progressPercent}
               recentMisses={practiceSession.recentMisses}
-              statsTotalAnswered={practiceSession.stats.totalAnswered}
               streak={practiceSession.streak}
-              todayAccuracy={practiceSession.todayAccuracy}
-              todayStats={practiceSession.todayStats}
-              trend={practiceSession.trend}
             />
           </section>
         </>
-      ) : (
+      )}
+
+      {activeView === 'stats' && (
+        <StatsDashboard
+          bestStreak={practiceSession.stats.bestStreak}
+          storedMisses={practiceSession.storedMisses}
+          stats={practiceSession.stats}
+          todayAccuracy={practiceSession.todayAccuracy}
+          todayStats={practiceSession.todayStats}
+          trend={practiceSession.trend}
+        />
+      )}
+
+      {activeView === 'wordbook' && (
         <WordBook
           activeLanguage={activeLanguage}
           bookTense={wordbook.bookTense}

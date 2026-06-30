@@ -1,4 +1,4 @@
-import { BookOpenText, Target } from 'lucide-react';
+import { BarChart3, BookOpenText, Target } from 'lucide-react';
 import { languages, type Language, type LanguageId } from '../data/verbs';
 import type { StyleVars } from '../lib/style';
 import type { AppView } from '../types';
@@ -41,6 +41,10 @@ export function Header({ activeLanguage, activeView, languageId, onLanguageChang
         <button className="view-button" data-active={activeView === 'practice'} onClick={() => onViewChange('practice')} type="button">
           <Target size={16} aria-hidden="true" />
           Practice
+        </button>
+        <button className="view-button" data-active={activeView === 'stats'} onClick={() => onViewChange('stats')} type="button">
+          <BarChart3 size={16} aria-hidden="true" />
+          Stats
         </button>
         <button className="view-button" data-active={activeView === 'wordbook'} onClick={() => onViewChange('wordbook')} type="button">
           <BookOpenText size={16} aria-hidden="true" />

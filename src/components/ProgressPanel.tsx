@@ -1,14 +1,7 @@
 import { BarChart3, BookOpenText } from 'lucide-react';
 import { getAnswer, getPronounLabel, getTenseLabel, sessionTarget } from '../lib/prompts';
-import type { Attempt, DailyStats } from '../types';
+import type { Attempt } from '../types';
 import { RingMeter } from './ui/RingMeter';
-
-type TrendPoint = {
-  key: string;
-  label: string;
-  accuracy: number;
-  answered: number;
-};
 
 type ProgressPanelProps = {
   accuracy: number;
@@ -17,22 +10,8 @@ type ProgressPanelProps = {
   progress: number;
   progressPercent: number;
   recentMisses: Attempt[];
-  statsTotalAnswered: number;
   streak: number;
-  todayAccuracy: number;
-  todayStats: DailyStats;
-  trend: TrendPoint[];
 };
-
-const getTrendPoints = (trend: TrendPoint[]) =>
-  trend
-    .map((item, index) => {
-      const x = 10 + index * 15;
-      const y = 34 - (item.answered === 0 ? 0 : item.accuracy / 100) * 28;
-
-      return `${x},${y}`;
-    })
-    .join(' ');
 
 export function ProgressPanel({
   accuracy,
@@ -41,11 +20,7 @@ export function ProgressPanel({
   progress,
   progressPercent,
   recentMisses,
-  statsTotalAnswered,
   streak,
-  todayAccuracy,
-  todayStats,
-  trend,
 }: ProgressPanelProps) {
   return (
     <aside className="progress-panel" aria-label="Practice progress">
@@ -72,35 +47,6 @@ export function ProgressPanel({
         <div>
           <span>Streak</span>
           <strong>{streak}</strong>
-        </div>
-      </section>
-
-      <section className="history-card">
-        <div className="panel-title">
-          <BarChart3 size={18} aria-hidden="true" />
-          <h2>History</h2>
-        </div>
-        <div className="history-metrics">
-          <div>
-            <span>Today</span>
-            <strong>{todayAccuracy}%</strong>
-          </div>
-          <div>
-            <span>Sets</span>
-            <strong>{todayStats.sessions}</strong>
-          </div>
-          <div>
-            <span>Total</span>
-            <strong>{statsTotalAnswered}</strong>
-          </div>
-        </div>
-        <svg className="trend-line" viewBox="0 0 100 40" role="img" aria-label="Seven day accuracy trend">
-          <polyline points={getTrendPoints(trend)} />
-        </svg>
-        <div className="trend-labels" aria-hidden="true">
-          {trend.map((item) => (
-            <span key={item.key}>{item.label}</span>
-          ))}
         </div>
       </section>
 

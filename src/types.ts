@@ -1,6 +1,6 @@
 import type { Language, Pronoun, TenseId, VerbEntry } from './data/verbs';
 
-export type AppView = 'practice' | 'wordbook';
+export type AppView = 'practice' | 'stats' | 'wordbook';
 
 export type Prompt = {
   language: Language;

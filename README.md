@@ -5,7 +5,8 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 ## Product Plan
 
 - Single-page training app with no hero or product-intro section.
-- Compact top controls for language, workspace, and tense selection.
+- Compact desktop controls for language, workspace, and tense selection.
+- Mobile-first header with a hamburger menu for language and workspace switching.
 - Top-right Word Book workspace for browsing every verb in the current language.
 - Compact Word Book layout with an independently scrolling verb list and sticky conjugation reference.
 - Interactive conjugation reference: search verbs, choose a verb, switch tense, and inspect every pronoun form.
@@ -19,8 +20,8 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Review queue that surfaces recent missed prompts with the correct answer and feeds missed prompts back into future sessions.
 - Local persistence for selected language, active workspace, tense, missed prompts, and cumulative practice stats.
 - Keyboard shortcuts for faster drills: A/B/C/D answer choices, Enter/Space for next missed question, and R reset.
-- Dedicated Stats workspace with cumulative answer counts, completed sets, best streak, review load, and a seven-day accuracy trend.
-- Responsive layout: focused desktop trainer with side progress panel, single-column mobile flow.
+- Dedicated Stats workspace with cumulative answer counts, completed sets, best streak, review load, and a Recharts-powered seven-day accuracy bar chart.
+- Responsive layout: focused desktop trainer with side progress panel, compact mobile header, and single-column mobile flow.
 
 ## Current Features
 
@@ -40,8 +41,11 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Auto-advance on correct answers and confetti for a perfect set.
 - Completion stats persist in localStorage across browser sessions.
 - The practice side panel stays focused on current-session metrics and review prompts.
-- The Stats workspace shows overall accuracy, today’s performance, active days, best streak, and saved review load.
+- The Stats workspace uses a tighter dashboard layout with consistent KPI typography, today’s performance, review load, and a responsive Recharts accuracy bar chart.
+- The Stats workspace is lazy-loaded so chart dependencies do not inflate the initial practice bundle.
 - The prompt card no longer repeats the same build information in a side rail, giving the question more room.
+- Mobile navigation now collapses language and workspace tabs behind a hamburger menu so the current drill stays visible first.
+- Mobile practice controls use a compact horizontal tense selector, with the pronoun prompt prioritized above metadata tags.
 - Modern responsive interface using React 19, TypeScript, Vite, and lucide-react icons.
 - Generated modern app logo applied to the app header and browser favicon.
 

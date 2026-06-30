@@ -1,4 +1,4 @@
-import { ArrowRight, Check, RotateCcw, TimerReset, X } from 'lucide-react';
+import { ArrowRight, Check, RotateCcw, X } from 'lucide-react';
 import { type Language, type PracticeTenseId } from '../data/verbs';
 import { getAnswer, getPronounLabel, getTenseLabel, sessionTarget } from '../lib/prompts';
 import type { Attempt, Prompt } from '../types';
@@ -42,10 +42,6 @@ export function TrainerPanel({
         <div>
           <span className="eyebrow">Question {Math.min(attempts.length + 1, sessionTarget)}</span>
           <h1>Conjugation drill</h1>
-        </div>
-        <div className="timer-chip">
-          <TimerReset size={17} aria-hidden="true" />
-          Fast recall
         </div>
       </div>
 

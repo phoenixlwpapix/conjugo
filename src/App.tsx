@@ -1,9 +1,8 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { CelebrationOverlay } from './components/CelebrationOverlay';
 import { Header } from './components/Header';
 import { ProgressPanel } from './components/ProgressPanel';
 import { SessionBar } from './components/SessionBar';
-import { StatsDashboard } from './components/StatsDashboard';
 import { TrainerPanel } from './components/TrainerPanel';
 import { WordBook } from './components/WordBook/WordBook';
 import { languages, type LanguageId, type PracticeTenseId } from './data/verbs';
@@ -12,6 +11,12 @@ import { useWordbook } from './hooks/useWordbook';
 import type { StyleVars } from './lib/style';
 import { readActiveView, readLanguageId, readPracticeTense, writeActiveView, writeLanguageId, writePracticeTense } from './lib/storage';
 import type { AppView, Attempt } from './types';
+
+const StatsDashboard = lazy(async () => {
+  const module = await import('./components/StatsDashboard');
+
+  return { default: module.StatsDashboard };
+});
 
 export default function App() {
   const [languageId, setLanguageId] = useState<LanguageId>(readLanguageId);
@@ -99,14 +104,16 @@ export default function App() {
       )}
 
       {activeView === 'stats' && (
-        <StatsDashboard
-          bestStreak={practiceSession.stats.bestStreak}
-          storedMisses={practiceSession.storedMisses}
-          stats={practiceSession.stats}
-          todayAccuracy={practiceSession.todayAccuracy}
-          todayStats={practiceSession.todayStats}
-          trend={practiceSession.trend}
-        />
+        <Suspense fallback={<section className="stats-loading-card" aria-label="Loading performance dashboard">Loading dashboard</section>}>
+          <StatsDashboard
+            bestStreak={practiceSession.stats.bestStreak}
+            storedMisses={practiceSession.storedMisses}
+            stats={practiceSession.stats}
+            todayAccuracy={practiceSession.todayAccuracy}
+            todayStats={practiceSession.todayStats}
+            trend={practiceSession.trend}
+          />
+        </Suspense>
       )}
 
       {activeView === 'wordbook' && (

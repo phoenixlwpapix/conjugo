@@ -19,6 +19,12 @@
   --shadow: 0 18px 45px rgba(38, 49, 44, 0.12);
 }
 
+@property --progress {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 0%;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -50,6 +56,13 @@ button {
   display: grid;
   place-items: center;
   pointer-events: none;
+}
+
+.celebration-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 32, 28, 0.34);
+  backdrop-filter: blur(3px);
 }
 
 .confetti-field {
@@ -154,6 +167,7 @@ button {
 .conjugation-panel,
 .progress-card,
 .score-grid,
+.history-card,
 .review-card {
   border: 1px solid rgba(20, 32, 28, 0.12);
   border-radius: 8px;
@@ -163,8 +177,8 @@ button {
 
 .app-topbar {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 18px;
+  grid-template-columns: minmax(145px, auto) minmax(280px, 1fr) auto;
+  gap: 12px;
   align-items: center;
   padding: 12px;
 }
@@ -273,9 +287,10 @@ button {
 
 .session-bar {
   display: grid;
-  grid-template-columns: minmax(320px, 460px) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(280px, 420px) auto auto;
   gap: 12px;
   align-items: center;
+  justify-content: space-between;
   margin-top: 12px;
   padding: 12px;
 }
@@ -538,7 +553,7 @@ button {
   overflow-wrap: anywhere;
   color: var(--ink);
   font-family: 'Fraunces', serif;
-  font-size: clamp(2.45rem, 6vw, 5.4rem);
+  font-size: clamp(1.8rem, 4vw, 3.2rem);
   line-height: 1.03;
   letter-spacing: 0;
 }
@@ -645,9 +660,7 @@ button {
 }
 
 .prompt-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(190px, 260px);
-  gap: 18px;
+  display: block;
   margin-top: 20px;
   padding: clamp(18px, 3vw, 26px);
   border: 1px solid rgba(20, 32, 28, 0.12);
@@ -732,44 +745,6 @@ button {
   font-style: normal;
   font-weight: 800;
   overflow-wrap: anywhere;
-}
-
-.prompt-side {
-  align-self: stretch;
-  display: grid;
-  align-content: end;
-  min-height: 150px;
-  padding: 16px;
-  border-radius: 8px;
-  color: #ffffff;
-  background: var(--language-accent, var(--green));
-}
-
-.prompt-side span,
-.prompt-side strong,
-.prompt-side small {
-  display: block;
-}
-
-.prompt-side span {
-  opacity: 0.78;
-  font-size: 0.74rem;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.prompt-side strong {
-  margin-top: 6px;
-  font-size: clamp(1.1rem, 2.6vw, 1.45rem);
-  line-height: 1.1;
-  overflow-wrap: anywhere;
-}
-
-.prompt-side small {
-  margin-top: 12px;
-  opacity: 0.82;
-  font-size: 0.86rem;
-  font-weight: 900;
 }
 
 .choice-grid {
@@ -891,6 +866,7 @@ button {
 }
 
 .progress-card,
+.history-card,
 .review-card {
   padding: 16px;
 }
@@ -917,6 +893,7 @@ button {
   background:
     radial-gradient(circle, var(--paper-strong) 0 58%, transparent 59%),
     conic-gradient(var(--language-accent, var(--green)) var(--progress), #e7dfd0 0);
+  transition: --progress 260ms ease;
 }
 
 .ring-meter span {
@@ -967,6 +944,69 @@ button {
   font-weight: 900;
 }
 
+.history-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.history-metrics div {
+  min-width: 0;
+  padding: 10px;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.history-metrics span,
+.history-metrics strong {
+  display: block;
+}
+
+.history-metrics span {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.history-metrics strong {
+  margin-top: 5px;
+  color: var(--ink);
+  font-size: 1.12rem;
+  font-weight: 900;
+}
+
+.trend-line {
+  width: 100%;
+  height: 74px;
+  margin-top: 10px;
+  border-radius: 8px;
+  background:
+    linear-gradient(rgba(20, 32, 28, 0.06) 1px, transparent 1px) 0 9px / 100% 14px,
+    #ffffff;
+}
+
+.trend-line polyline {
+  fill: none;
+  stroke: var(--language-accent, var(--green));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.trend-labels {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-align: center;
+  text-transform: uppercase;
+}
+
 .miss-list {
   display: grid;
   gap: 8px;
@@ -976,9 +1016,17 @@ button {
 .miss-item {
   display: grid;
   gap: 4px;
+  width: 100%;
   padding: 11px;
+  border: 0;
   border-radius: 8px;
+  color: inherit;
   background: #f1ece1;
+  text-align: left;
+}
+
+.miss-item:hover {
+  background: color-mix(in srgb, var(--language-accent, var(--green)) 10%, #f1ece1);
 }
 
 .miss-item span {
@@ -1022,6 +1070,10 @@ button {
     grid-column: 1 / -1;
   }
 
+  .history-card {
+    grid-column: 1 / -1;
+  }
+
   .trainer-panel {
     min-height: auto;
   }
@@ -1050,10 +1102,11 @@ button {
 
   .app-topbar,
   .session-bar,
-    .trainer-panel,
-    .verb-list-panel,
-    .conjugation-panel,
+  .trainer-panel,
+  .verb-list-panel,
+  .conjugation-panel,
   .progress-card,
+  .history-card,
   .review-card {
     padding: 12px;
   }
@@ -1085,10 +1138,6 @@ button {
 
   .verb-list {
     max-height: 360px;
-  }
-
-  .prompt-side {
-    min-height: 92px;
   }
 
   .choice-card {

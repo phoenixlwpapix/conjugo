@@ -15,7 +15,7 @@ import { readPracticeStats, readStoredMisses, writePracticeStats, writeStoredMis
 import type { Attempt, PracticeStats, ReviewTarget, StoredMiss } from '../types';
 
 const getReviewTargets = (language: Language, practiceTense: PracticeTenseId, misses: StoredMiss[]): ReviewTarget[] => {
-  const activeTenses = new Set(getPracticeTenses(practiceTense));
+  const activeTenses = new Set(getPracticeTenses(practiceTense, language.id));
   const verbInfinitives = new Set(language.verbs.map((verb) => verb.infinitive));
 
   return misses

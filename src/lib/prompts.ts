@@ -4,12 +4,16 @@ import type { Prompt, ReviewTarget } from '../types';
 export const sessionTarget = 20;
 export const autoAdvanceDelayMs = 1200;
 
-export const getPracticeTenses = (practiceTense: PracticeTenseId): TenseId[] =>
-  practiceTense === 'mixed' ? concreteTenses.map((tense) => tense.id) : [practiceTense];
+export const getPracticeTenses = (practiceTense: PracticeTenseId, languageId?: Language['id']): TenseId[] => {
+  const tenses = languageId === 'english'
+    ? concreteTenses.filter((t) => t.id !== 'imperfect')
+    : concreteTenses;
+  return practiceTense === 'mixed' ? tenses.map((tense) => tense.id) : [practiceTense];
+};
 
 export const createPromptPool = (language: Language, practiceTense: PracticeTenseId): Prompt[] =>
   language.verbs.flatMap((verb) =>
-    getPracticeTenses(practiceTense).flatMap((tense) =>
+    getPracticeTenses(practiceTense, language.id).flatMap((tense) =>
       pronouns.map((pronoun) => ({
         language,
         verb,
@@ -66,7 +70,7 @@ export const getFallbackPrompt = (language: Language, practiceTense: PracticeTen
   return {
     language,
     verb: firstVerb,
-    tense: getPracticeTenses(practiceTense)[0],
+    tense: getPracticeTenses(practiceTense, language.id)[0],
     pronoun: pronouns[0],
   };
 };
@@ -95,7 +99,12 @@ export const getChoices = (prompt: Prompt, seed: number, choiceCount = 4) => {
     .filter((value, index, values) => value !== correctAnswer && values.indexOf(value) === index)
     .sort((first, second) => stableScore(first, seed) - stableScore(second, seed))
     .slice(0, choiceCount - 1);
-  const fallbackDistractors = concreteTenses
+  
+  const languageTenses = prompt.language.id === 'english'
+    ? concreteTenses.filter((t) => t.id !== 'imperfect')
+    : concreteTenses;
+
+  const fallbackDistractors = languageTenses
     .flatMap((tense) => pronouns.map((pronoun) => prompt.verb.forms[tense.id][pronoun]))
     .filter(
       (value, index, values) =>

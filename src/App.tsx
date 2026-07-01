@@ -1,132 +1,186 @@
-import { lazy, Suspense, useMemo, useState } from 'react';
-import { CelebrationOverlay } from './components/CelebrationOverlay';
+import { CSSProperties, useEffect } from 'react';
+import { usePractice } from './hooks/usePractice';
 import { Header } from './components/Header';
-import { ProgressPanel } from './components/ProgressPanel';
 import { SessionBar } from './components/SessionBar';
 import { TrainerPanel } from './components/TrainerPanel';
-import { WordBook } from './components/WordBook/WordBook';
-import { languages, type LanguageId, type PracticeTenseId } from './data/verbs';
-import { usePracticeSession } from './hooks/usePracticeSession';
-import { useWordbook } from './hooks/useWordbook';
-import type { StyleVars } from './lib/style';
-import { readActiveView, readLanguageId, readPracticeTense, writeActiveView, writeLanguageId, writePracticeTense } from './lib/storage';
-import type { AppView, Attempt } from './types';
-
-const StatsDashboard = lazy(async () => {
-  const module = await import('./components/StatsDashboard');
-
-  return { default: module.StatsDashboard };
-});
+import { ProgressPanel } from './components/ProgressPanel';
+import { WordBookPanel } from './components/WordBookPanel';
+import { CelebrationOverlay } from './components/CelebrationOverlay';
 
 export default function App() {
-  const [languageId, setLanguageId] = useState<LanguageId>(readLanguageId);
-  const [practiceTense, setPracticeTense] = useState<PracticeTenseId>(readPracticeTense);
-  const [activeView, setActiveView] = useState<AppView>(readActiveView);
-  const activeLanguage = useMemo(
-    () => languages.find((language) => language.id === languageId) ?? languages[0],
-    [languageId],
-  );
-  const practiceSession = usePracticeSession(activeLanguage, practiceTense);
-  const wordbook = useWordbook(activeLanguage);
+  const {
+    languageId,
+    switchLanguage,
+    practiceTense,
+    switchTense,
+    activeView,
+    setActiveView,
+    bookTense,
+    setBookTense,
+    selectedVerbIndex,
+    setSelectedVerbIndex,
+    wordbookQuery,
+    setWordbookQuery,
+    selectedAnswer,
+    attempts,
+    streak,
+    showCelebration,
+    stats,
+    activeLanguage,
+    prompt,
+    choices,
+    correctAnswer,
+    isAnswered,
+    isCorrect,
+    accuracy,
+    progress,
+    progressPercent,
+    recentMisses,
+    isSessionComplete,
+    selectChoice,
+    resetSession,
+    moveNext,
+    dismissCelebration,
+    clickReviewItem,
+    timeLeft,
+    timerEnabled,
+    toggleTimer,
+  } = usePractice();
 
-  const switchLanguage = (nextLanguageId: LanguageId) => {
-    setLanguageId(nextLanguageId);
-    writeLanguageId(nextLanguageId);
-  };
+  // Keyboard Shortcuts Support
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Skip if typing in an input
+      if (
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA'
+      ) {
+        return;
+      }
 
-  const switchTense = (nextTense: PracticeTenseId) => {
-    setPracticeTense(nextTense);
-    writePracticeTense(nextTense);
-  };
+      const key = event.key.toLowerCase();
 
-  const switchView = (nextView: AppView) => {
-    setActiveView(nextView);
-    writeActiveView(nextView);
-  };
+      // Reset shortcut
+      if (key === 'r') {
+        event.preventDefault();
+        resetSession();
+        return;
+      }
 
-  const openReviewInWordbook = (attempt: Attempt) => {
-    wordbook.openPromptInWordbook(attempt.prompt);
-    switchView('wordbook');
-  };
+      // Next / Reset when answered
+      if (isAnswered) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          if (isSessionComplete) {
+            resetSession();
+          } else if (!isCorrect) {
+            moveNext();
+          }
+        }
+        return;
+      }
+
+      // Choice selection (1-4 or A-D)
+      if (!isAnswered && !isSessionComplete) {
+        if (key === '1' || key === 'a') {
+          event.preventDefault();
+          if (choices[0]) selectChoice(choices[0]);
+        } else if (key === '2' || key === 'b') {
+          event.preventDefault();
+          if (choices[1]) selectChoice(choices[1]);
+        } else if (key === '3' || key === 'c') {
+          event.preventDefault();
+          if (choices[2]) selectChoice(choices[2]);
+        } else if (key === '4' || key === 'd') {
+          event.preventDefault();
+          if (choices[3]) selectChoice(choices[3]);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [
+    isAnswered,
+    isSessionComplete,
+    choices,
+    isCorrect,
+    selectChoice,
+    resetSession,
+    moveNext,
+  ]);
 
   return (
-    <main className="app-shell" style={{ '--language-accent': activeLanguage.accent } as StyleVars}>
-      {practiceSession.showCelebration && <CelebrationOverlay onRestart={practiceSession.startSession} />}
+    <main className="app-shell" style={{ '--language-accent': activeLanguage.accent } as CSSProperties}>
+      {showCelebration && (
+        <CelebrationOverlay
+          resetSession={resetSession}
+          dismissCelebration={dismissCelebration}
+        />
+      )}
 
       <Header
-        activeLanguage={activeLanguage}
-        activeView={activeView}
         languageId={languageId}
-        onLanguageChange={switchLanguage}
-        onViewChange={switchView}
+        switchLanguage={switchLanguage}
+        activeView={activeView}
+        setActiveView={setActiveView}
       />
 
-      {activeView === 'practice' && (
+      {activeView === 'practice' ? (
         <>
           <SessionBar
-            accuracy={practiceSession.accuracy}
-            onReset={practiceSession.startSession}
-            onTenseChange={switchTense}
+            languageId={languageId}
             practiceTense={practiceTense}
-            progress={practiceSession.progress}
-            streak={practiceSession.streak}
+            switchTense={switchTense}
+            progress={progress}
+            streak={streak}
+            accuracy={accuracy}
+            resetSession={resetSession}
           />
 
           <section className="practice-layout">
             <TrainerPanel
-              activeLanguage={activeLanguage}
-              attempts={practiceSession.attempts}
-              choices={practiceSession.choices}
-              correctAnswer={practiceSession.correctAnswer}
-              isAnswered={practiceSession.isAnswered}
-              isCorrect={practiceSession.isCorrect}
-              isSessionComplete={practiceSession.isSessionComplete}
-              onMoveNext={practiceSession.moveNext}
-              onReset={practiceSession.startSession}
-              onSelectChoice={practiceSession.selectChoice}
+              attempts={attempts}
+              prompt={prompt}
               practiceTense={practiceTense}
-              prompt={practiceSession.prompt}
-              selectedAnswer={practiceSession.selectedAnswer}
-              showCelebration={practiceSession.showCelebration}
+              choices={choices}
+              selectedAnswer={selectedAnswer}
+              correctAnswer={correctAnswer}
+              isAnswered={isAnswered}
+              isCorrect={isCorrect}
+              isSessionComplete={isSessionComplete}
+              showCelebration={showCelebration}
+              selectChoice={selectChoice}
+              resetSession={resetSession}
+              moveNext={moveNext}
+              timeLeft={timeLeft}
+              timerEnabled={timerEnabled}
+              toggleTimer={toggleTimer}
             />
 
             <ProgressPanel
-              accuracy={practiceSession.accuracy}
-              attempts={practiceSession.attempts}
-              onOpenReview={openReviewInWordbook}
-              progress={practiceSession.progress}
-              progressPercent={practiceSession.progressPercent}
-              recentMisses={practiceSession.recentMisses}
-              streak={practiceSession.streak}
+              progress={progress}
+              progressPercent={progressPercent}
+              attempts={attempts}
+              accuracy={accuracy}
+              streak={streak}
+              recentMisses={recentMisses}
+              cumulativeStats={stats}
+              clickReviewItem={clickReviewItem}
             />
           </section>
         </>
-      )}
-
-      {activeView === 'stats' && (
-        <Suspense fallback={<section className="stats-loading-card" aria-label="Loading performance dashboard">Loading dashboard</section>}>
-          <StatsDashboard
-            bestStreak={practiceSession.stats.bestStreak}
-            storedMisses={practiceSession.storedMisses}
-            stats={practiceSession.stats}
-            todayAccuracy={practiceSession.todayAccuracy}
-            todayStats={practiceSession.todayStats}
-            trend={practiceSession.trend}
-          />
-        </Suspense>
-      )}
-
-      {activeView === 'wordbook' && (
-        <WordBook
+      ) : (
+        <WordBookPanel
           activeLanguage={activeLanguage}
-          bookTense={wordbook.bookTense}
-          filteredVerbs={wordbook.filteredVerbs}
-          onQueryChange={wordbook.setWordbookQuery}
-          onSelectVerb={wordbook.setSelectedVerbInfinitive}
-          onTenseChange={wordbook.setBookTense}
-          query={wordbook.wordbookQuery}
-          selectedVerb={wordbook.selectedVerb}
-          selectedVerbInfinitive={wordbook.selectedVerbInfinitive}
+          selectedVerbIndex={selectedVerbIndex}
+          setSelectedVerbIndex={setSelectedVerbIndex}
+          wordbookQuery={wordbookQuery}
+          setWordbookQuery={setWordbookQuery}
+          bookTense={bookTense}
+          setBookTense={setBookTense}
         />
       )}
     </main>

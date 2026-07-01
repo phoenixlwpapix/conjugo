@@ -1,26 +1,47 @@
-import { Flame, RotateCcw, Target, Trophy } from 'lucide-react';
-import { tenseOptions, type PracticeTenseId } from '../data/verbs';
-import { sessionTarget } from '../lib/prompts';
-import { SegmentedControl } from './ui/SegmentedControl';
+import { Target, Flame, Trophy, RotateCcw } from 'lucide-react';
+import { tenseOptions, type PracticeTenseId, type LanguageId } from '../data/verbs';
 
-type SessionBarProps = {
-  accuracy: number;
-  onReset: () => void;
-  onTenseChange: (tense: PracticeTenseId) => void;
+interface SessionBarProps {
+  languageId: LanguageId;
   practiceTense: PracticeTenseId;
+  switchTense: (tense: PracticeTenseId) => void;
   progress: number;
   streak: number;
-};
+  accuracy: number;
+  resetSession: () => void;
+}
 
-export function SessionBar({ accuracy, onReset, onTenseChange, practiceTense, progress, streak }: SessionBarProps) {
+export function SessionBar({
+  languageId,
+  practiceTense,
+  switchTense,
+  progress,
+  streak,
+  accuracy,
+  resetSession,
+}: SessionBarProps) {
   return (
     <section className="session-bar" aria-label="Practice controls">
-      <SegmentedControl ariaLabel="Choose tense" onChange={onTenseChange} options={tenseOptions} value={practiceTense} />
+      <div className="segmented-control">
+        {tenseOptions
+          .filter((item) => item.id !== 'imperfect' || languageId !== 'english')
+          .map((item) => (
+            <button
+              className="segment-button"
+              data-active={item.id === practiceTense}
+              key={item.id}
+              onClick={() => switchTense(item.id)}
+              type="button"
+            >
+              {item.label}
+            </button>
+          ))}
+      </div>
 
       <div className="session-pills" aria-label="Session summary">
         <span>
           <Target size={16} aria-hidden="true" />
-          {progress}/{sessionTarget}
+          {progress}/20
         </span>
         <span>
           <Flame size={16} aria-hidden="true" />
@@ -32,7 +53,7 @@ export function SessionBar({ accuracy, onReset, onTenseChange, practiceTense, pr
         </span>
       </div>
 
-      <button className="reset-button" onClick={onReset} type="button">
+      <button className="reset-button" onClick={resetSession} type="button">
         <RotateCcw size={16} aria-hidden="true" />
         Reset
       </button>

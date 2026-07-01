@@ -22,7 +22,7 @@ export function ConjugationPanel({ activeLanguage, bookTense, onTenseChange, sel
           ariaLabel="Choose tense"
           className="book-tense-tabs"
           onChange={onTenseChange}
-          options={concreteTenses}
+          options={concreteTenses.filter((item) => item.id !== 'imperfect' || activeLanguage.id !== 'english')}
           value={bookTense}
         />
       </div>

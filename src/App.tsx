@@ -128,61 +128,63 @@ export default function App() {
         setActiveView={setActiveView}
       />
 
-      {activeView === 'practice' ? (
-        <>
-          <SessionBar
-            languageId={languageId}
-            practiceTense={practiceTense}
-            switchTense={switchTense}
-            progress={progress}
-            streak={streak}
-            accuracy={accuracy}
-            resetSession={resetSession}
-          />
-
-          <section className="practice-layout">
-            <TrainerPanel
-              attempts={attempts}
-              prompt={prompt}
+      <div className="app-content">
+        {activeView === 'practice' ? (
+          <>
+            <SessionBar
+              languageId={languageId}
               practiceTense={practiceTense}
-              choices={choices}
-              selectedAnswer={selectedAnswer}
-              correctAnswer={correctAnswer}
-              isAnswered={isAnswered}
-              isCorrect={isCorrect}
-              isSessionComplete={isSessionComplete}
-              showCelebration={showCelebration}
-              selectChoice={selectChoice}
+              switchTense={switchTense}
+              progress={progress}
+              streak={streak}
+              accuracy={accuracy}
               resetSession={resetSession}
-              moveNext={moveNext}
-              timeLeft={timeLeft}
-              timerEnabled={timerEnabled}
-              toggleTimer={toggleTimer}
             />
 
-            <ProgressPanel
-              progress={progress}
-              progressPercent={progressPercent}
-              attempts={attempts}
-              accuracy={accuracy}
-              streak={streak}
-              recentMisses={recentMisses}
-              cumulativeStats={stats}
-              clickReviewItem={clickReviewItem}
-            />
-          </section>
-        </>
-      ) : (
-        <WordBookPanel
-          activeLanguage={activeLanguage}
-          selectedVerbIndex={selectedVerbIndex}
-          setSelectedVerbIndex={setSelectedVerbIndex}
-          wordbookQuery={wordbookQuery}
-          setWordbookQuery={setWordbookQuery}
-          bookTense={bookTense}
-          setBookTense={setBookTense}
-        />
-      )}
+            <section className="practice-layout">
+              <TrainerPanel
+                attempts={attempts}
+                prompt={prompt}
+                practiceTense={practiceTense}
+                choices={choices}
+                selectedAnswer={selectedAnswer}
+                correctAnswer={correctAnswer}
+                isAnswered={isAnswered}
+                isCorrect={isCorrect}
+                isSessionComplete={isSessionComplete}
+                showCelebration={showCelebration}
+                selectChoice={selectChoice}
+                resetSession={resetSession}
+                moveNext={moveNext}
+                timeLeft={timeLeft}
+                timerEnabled={timerEnabled}
+                toggleTimer={toggleTimer}
+              />
+
+              <ProgressPanel
+                progress={progress}
+                progressPercent={progressPercent}
+                attempts={attempts}
+                accuracy={accuracy}
+                streak={streak}
+                recentMisses={recentMisses}
+                cumulativeStats={stats}
+                clickReviewItem={clickReviewItem}
+              />
+            </section>
+          </>
+        ) : (
+          <WordBookPanel
+            activeLanguage={activeLanguage}
+            selectedVerbIndex={selectedVerbIndex}
+            setSelectedVerbIndex={setSelectedVerbIndex}
+            wordbookQuery={wordbookQuery}
+            setWordbookQuery={setWordbookQuery}
+            bookTense={bookTense}
+            setBookTense={setBookTense}
+          />
+        )}
+      </div>
     </main>
   );
 }

@@ -5,7 +5,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 ## Product Plan
 
 - Single-page training app with no hero or product-intro section.
-- Compact desktop controls for language, workspace, and tense selection.
+- Desktop sidebar controls for brand, language, and workspace navigation, with tense controls kept near the practice flow.
 - Mobile-first header with a hamburger menu for language and workspace switching.
 - Top-right Word Book workspace for browsing every verb in the current language.
 - Compact Word Book layout with an independently scrolling verb list and sticky conjugation reference.
@@ -21,7 +21,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Local persistence for selected language, active workspace, tense, missed prompts, and cumulative practice stats.
 - Keyboard shortcuts for faster drills: A/B/C/D answer choices, Enter/Space for next missed question, and R reset.
 - Dedicated Stats workspace with cumulative answer counts, completed sets, best streak, review load, and a Recharts-powered seven-day accuracy bar chart.
-- Responsive layout: focused desktop trainer with side progress panel, compact mobile header, and single-column mobile flow.
+- Responsive layout: desktop sidebar navigation with a focused trainer area, adaptive tablet-width drill cards, compact mobile header, and single-column mobile flow.
 
 ## Current Features
 
@@ -44,7 +44,9 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - The Stats workspace uses a tighter dashboard layout with consistent KPI typography, today’s performance, review load, and a responsive Recharts accuracy bar chart.
 - The Stats workspace is lazy-loaded so chart dependencies do not inflate the initial practice bundle.
 - The prompt card no longer repeats the same build information in a side rail, giving the question more room.
+- Desktop navigation now uses a sticky left sidebar for brand, language, and workspace switching.
 - Mobile navigation now collapses language and workspace tabs behind a hamburger menu so the current drill stays visible first.
+- Mid-width practice layouts now move the progress rail below the drill and stack the prompt as pronoun, plus, and verb before words can wrap awkwardly.
 - Mobile practice controls use a compact horizontal tense selector, with the pronoun prompt prioritized above metadata tags.
 - Modern responsive interface using React 19, TypeScript, Vite, and lucide-react icons.
 - Generated modern app logo applied to the app header and browser favicon.

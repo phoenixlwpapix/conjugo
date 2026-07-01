@@ -146,39 +146,30 @@ export function TrainerPanel({
             </span>
           </div>
 
-          {/* Unified Grid for Pronoun + Infinitive alignment */}
-          <div 
-            style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'auto auto minmax(0, 1fr)', 
-              gap: '4px 18px',
-              alignItems: 'baseline',
-              marginTop: '4px'
-            }}
-          >
+          <div className="prompt-builder">
             {/* Row 1: Labels */}
-            <span style={{ gridColumn: 1, fontSize: '0.72rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--muted)' }}>
+            <span className="prompt-builder-label prompt-builder-pronoun-label">
               Pronoun
             </span>
-            <span style={{ gridColumn: 2, fontSize: '0.72rem', visibility: 'hidden' }}>
+            <span className="prompt-builder-label prompt-builder-plus-label" aria-hidden="true">
               +
             </span>
-            <span style={{ gridColumn: 3, fontSize: '0.72rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--muted)' }}>
+            <span className="prompt-builder-label prompt-builder-verb-label">
               Infinitive
             </span>
 
             {/* Row 2: Contents */}
-            <h2 style={{ gridColumn: 1, margin: 0, color: 'var(--ink)', fontFamily: 'Lora, serif', fontSize: 'clamp(2.2rem, 5.5vw, 3.8rem)', lineHeight: 1 }}>
+            <h2 className="prompt-builder-pronoun">
               {pronounLabel}
             </h2>
-            <div style={{ gridColumn: 2, fontSize: '2rem', fontWeight: 300, color: 'var(--muted)', fontFamily: 'sans-serif', lineHeight: 1, justifySelf: 'center' }}>
+            <div className="prompt-builder-plus" aria-hidden="true">
               +
             </div>
-            <div style={{ gridColumn: 3, display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
-              <strong style={{ fontSize: 'clamp(2.2rem, 5.5vw, 3.8rem)', fontWeight: 900, fontFamily: 'Lora, serif', color: 'var(--ink)', lineHeight: 1 }}>
+            <div className="prompt-builder-verb">
+              <strong>
                 {prompt.verb.infinitive}
               </strong>
-              <em style={{ fontSize: 'clamp(1.1rem, 2.2vw, 1.4rem)', color: 'var(--muted)', fontStyle: 'normal', fontWeight: 800 }}>
+              <em>
                 {prompt.verb.translation}
               </em>
             </div>

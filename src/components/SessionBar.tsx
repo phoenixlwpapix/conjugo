@@ -1,13 +1,10 @@
-import { Target, Flame, Trophy, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { tenseOptions, type PracticeTenseId, type LanguageId } from '../data/verbs';
 
 interface SessionBarProps {
   languageId: LanguageId;
   practiceTense: PracticeTenseId;
   switchTense: (tense: PracticeTenseId) => void;
-  progress: number;
-  streak: number;
-  accuracy: number;
   resetSession: () => void;
 }
 
@@ -15,9 +12,6 @@ export function SessionBar({
   languageId,
   practiceTense,
   switchTense,
-  progress,
-  streak,
-  accuracy,
   resetSession,
 }: SessionBarProps) {
   return (
@@ -36,21 +30,6 @@ export function SessionBar({
               {item.label}
             </button>
           ))}
-      </div>
-
-      <div className="session-pills" aria-label="Session summary">
-        <span>
-          <Target size={16} aria-hidden="true" />
-          {progress}/20
-        </span>
-        <span>
-          <Flame size={16} aria-hidden="true" />
-          {streak}
-        </span>
-        <span>
-          <Trophy size={16} aria-hidden="true" />
-          {accuracy}%
-        </span>
       </div>
 
       <button className="reset-button" onClick={resetSession} type="button">

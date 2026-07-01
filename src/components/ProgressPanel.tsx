@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BarChart3, BookOpenText, Trophy } from 'lucide-react';
+import { BarChart3, BookOpenText, Flame, Target, Trophy } from 'lucide-react';
 import { type Attempt, type CumulativeStats } from '../hooks/usePractice';
 import { concreteTenses, type TenseId } from '../data/verbs';
 
@@ -78,15 +78,24 @@ export function ProgressPanel({
       <section className="score-grid">
         <div>
           <span>Answered</span>
-          <strong>{attempts.length}</strong>
+          <strong>
+            <Target size={18} aria-hidden="true" />
+            {attempts.length}
+          </strong>
         </div>
         <div>
           <span>Accuracy</span>
-          <strong>{accuracy}%</strong>
+          <strong>
+            <Trophy size={18} aria-hidden="true" />
+            {accuracy}%
+          </strong>
         </div>
         <div>
           <span>Streak</span>
-          <strong>{streak}</strong>
+          <strong>
+            <Flame size={18} aria-hidden="true" />
+            {streak}
+          </strong>
         </div>
       </section>
 
@@ -98,15 +107,24 @@ export function ProgressPanel({
         <div className="score-grid" style={{ margin: '14px -16px -16px', borderRadius: '0 0 8px 8px', boxShadow: 'none', border: 'none', borderTop: '1px solid rgba(20, 32, 28, 0.1)' }}>
           <div>
             <span>Total Drills</span>
-            <strong>{cumulativeStats.totalAttempts}</strong>
+            <strong>
+              <Target size={18} aria-hidden="true" />
+              {cumulativeStats.totalAttempts}
+            </strong>
           </div>
           <div>
             <span>Accuracy</span>
-            <strong>{allTimeAccuracy}%</strong>
+            <strong>
+              <Trophy size={18} aria-hidden="true" />
+              {allTimeAccuracy}%
+            </strong>
           </div>
           <div>
             <span>Max Streak</span>
-            <strong>{cumulativeStats.maxStreak}</strong>
+            <strong>
+              <Flame size={18} aria-hidden="true" />
+              {cumulativeStats.maxStreak}
+            </strong>
           </div>
         </div>
       </section>

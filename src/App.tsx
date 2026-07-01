@@ -135,9 +135,6 @@ export default function App() {
               languageId={languageId}
               practiceTense={practiceTense}
               switchTense={switchTense}
-              progress={progress}
-              streak={streak}
-              accuracy={accuracy}
               resetSession={resetSession}
             />
 

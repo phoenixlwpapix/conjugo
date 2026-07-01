@@ -50,21 +50,6 @@ export function Header({ languageId, switchLanguage, activeView, setActiveView }
         </div>
       </div>
 
-      <nav className="language-tabs" aria-label="Choose language">
-        {languages.map((language) => (
-          <button
-            className="tab-button"
-            data-active={language.id === languageId}
-            key={language.id}
-            onClick={() => switchLanguage(language.id)}
-            style={{ '--accent': language.accent } as CSSProperties}
-            type="button"
-          >
-            <span>{language.name}</span>
-          </button>
-        ))}
-      </nav>
-
       <div className="view-switch" aria-label="Choose workspace">
         <button
           className="view-button"
@@ -86,6 +71,21 @@ export function Header({ languageId, switchLanguage, activeView, setActiveView }
         </button>
       </div>
 
+      <nav className="language-tabs" aria-label="Choose language">
+        {languages.map((language) => (
+          <button
+            className="tab-button"
+            data-active={language.id === languageId}
+            key={language.id}
+            onClick={() => switchLanguage(language.id)}
+            style={{ '--accent': language.accent } as CSSProperties}
+            type="button"
+          >
+            <span>{language.name}</span>
+          </button>
+        ))}
+      </nav>
+
       <div className="mobile-status" aria-label="Current selection">
         <strong>{activeLanguage.name}</strong>
         <span>{activeViewLabel}</span>
@@ -104,6 +104,20 @@ export function Header({ languageId, switchLanguage, activeView, setActiveView }
 
       <div className="mobile-menu-panel" data-open={isMenuOpen} id="mobile-navigation">
         <div className="mobile-menu-section">
+          <span>Workspace</span>
+          <div className="mobile-view-grid">
+            <button className="view-button" data-active={activeView === 'practice'} onClick={() => chooseView('practice')} type="button">
+              <Target size={16} aria-hidden="true" />
+              Practice
+            </button>
+            <button className="view-button" data-active={activeView === 'wordbook'} onClick={() => chooseView('wordbook')} type="button">
+              <BookOpenText size={16} aria-hidden="true" />
+              Word Book
+            </button>
+          </div>
+        </div>
+
+        <div className="mobile-menu-section">
           <span>Language</span>
           <div className="mobile-menu-grid">
             {languages.map((language) => (
@@ -118,20 +132,6 @@ export function Header({ languageId, switchLanguage, activeView, setActiveView }
                 {language.name}
               </button>
             ))}
-          </div>
-        </div>
-
-        <div className="mobile-menu-section">
-          <span>Workspace</span>
-          <div className="mobile-view-grid">
-            <button className="view-button" data-active={activeView === 'practice'} onClick={() => chooseView('practice')} type="button">
-              <Target size={16} aria-hidden="true" />
-              Practice
-            </button>
-            <button className="view-button" data-active={activeView === 'wordbook'} onClick={() => chooseView('wordbook')} type="button">
-              <BookOpenText size={16} aria-hidden="true" />
-              Word Book
-            </button>
           </div>
         </div>
       </div>

@@ -14,12 +14,18 @@ export const getPracticeTenses = (practiceTense: PracticeTenseId, languageId?: L
 export const createPromptPool = (language: Language, practiceTense: PracticeTenseId): Prompt[] =>
   language.verbs.flatMap((verb) =>
     getPracticeTenses(practiceTense, language.id).flatMap((tense) =>
-      pronouns.map((pronoun) => ({
-        language,
-        verb,
-        tense,
-        pronoun,
-      })),
+      pronouns.map((pronoun) => {
+        const fullLabel = language.pronounLabels[pronoun];
+        const parts = fullLabel.split('/');
+        const selectedPronounLabel = parts[Math.floor(Math.random() * parts.length)];
+        return {
+          language,
+          verb,
+          tense,
+          pronoun,
+          selectedPronounLabel,
+        };
+      }),
     ),
   );
 
@@ -67,17 +73,23 @@ export const getFallbackPrompt = (language: Language, practiceTense: PracticeTen
     throw new Error(`${language.name} needs at least one verb`);
   }
 
+  const pronoun = pronouns[0];
+  const fullLabel = language.pronounLabels[pronoun];
+  const parts = fullLabel.split('/');
+  const selectedPronounLabel = parts[Math.floor(Math.random() * parts.length)];
+
   return {
     language,
     verb: firstVerb,
     tense: getPracticeTenses(practiceTense, language.id)[0],
-    pronoun: pronouns[0],
+    pronoun,
+    selectedPronounLabel,
   };
 };
 
 export const getAnswer = (prompt: Prompt) => prompt.verb.forms[prompt.tense][prompt.pronoun];
 
-export const getPronounLabel = (prompt: Prompt) => prompt.language.pronounLabels[prompt.pronoun];
+export const getPronounLabel = (prompt: Prompt) => prompt.selectedPronounLabel || prompt.language.pronounLabels[prompt.pronoun];
 
 export const getTenseLabel = (tense: TenseId) => concreteTenses.find((item) => item.id === tense)?.label ?? tense;
 

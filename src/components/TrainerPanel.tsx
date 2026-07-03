@@ -21,7 +21,7 @@ interface TrainerPanelProps {
   toggleTimer: () => void;
 }
 
-const getPronounLabel = (prompt: Prompt) => prompt.language.pronounLabels[prompt.pronoun];
+const getPronounLabel = (prompt: Prompt) => prompt.selectedPronounLabel || prompt.language.pronounLabels[prompt.pronoun];
 const getTenseLabel = (tense: TenseId) => concreteTenses.find((item) => item.id === tense)?.label ?? tense;
 
 const getTenseColor = (tense: TenseId) => {
@@ -208,8 +208,9 @@ export function TrainerPanel({
             <div>
               <strong>{isTimeout ? "Time's up!" : isCorrect ? 'Good hit.' : 'Missed this one.'}</strong>
               <span>
-                {pronounLabel} + {prompt.verb.infinitive} = {correctAnswer}
-                {isCorrect && !showCelebration && !isSessionComplete ? ' · next question loading' : ''}
+                {isCorrect
+                  ? (!showCelebration && !isSessionComplete ? 'next question loading' : '')
+                  : `${pronounLabel} + ${prompt.verb.infinitive} = ${correctAnswer}`}
               </span>
             </div>
             {!isCorrect &&

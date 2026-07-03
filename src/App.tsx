@@ -143,6 +143,7 @@ export default function App() {
 
   const returnHome = () => {
     dismissCompletion();
+    dismissCelebration();
     setActiveView('practice');
   };
 
@@ -154,8 +155,12 @@ export default function App() {
     >
       {showCelebration && (
         <CelebrationOverlay
-          resetSession={resetSession}
+          accuracy={accuracy}
+          correctCount={sessionCorrectCount}
           dismissCelebration={dismissCelebration}
+          resetSession={resetSession}
+          returnHome={returnHome}
+          totalCount={attempts.length}
         />
       )}
 

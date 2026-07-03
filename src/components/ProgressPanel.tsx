@@ -14,7 +14,7 @@ interface ProgressPanelProps {
   clickReviewItem: (verbInfinitive: string) => void;
 }
 
-const getPronounLabel = (prompt: Attempt['prompt']) => prompt.language.pronounLabels[prompt.pronoun];
+const getPronounLabel = (prompt: Attempt['prompt']) => prompt.selectedPronounLabel || prompt.language.pronounLabels[prompt.pronoun];
 const getTenseLabel = (tense: TenseId) => concreteTenses.find((item) => item.id === tense)?.label ?? tense;
 const getAnswer = (prompt: Attempt['prompt']) => prompt.verb.forms[prompt.tense][prompt.pronoun];
 

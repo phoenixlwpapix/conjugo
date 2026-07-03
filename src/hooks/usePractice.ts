@@ -18,6 +18,7 @@ export type Prompt = {
   verb: VerbEntry;
   tense: TenseId;
   pronoun: Pronoun;
+  selectedPronounLabel?: string;
 };
 
 export type Attempt = {
@@ -52,12 +53,18 @@ const getPracticeTenses = (practiceTense: PracticeTenseId, languageId?: Language
 const createPromptPool = (language: Language, practiceTense: PracticeTenseId): Prompt[] =>
   language.verbs.flatMap((verb) =>
     getPracticeTenses(practiceTense, language.id).flatMap((tense) =>
-      pronouns.map((pronoun) => ({
-        language,
-        verb,
-        tense,
-        pronoun,
-      })),
+      pronouns.map((pronoun) => {
+        const fullLabel = language.pronounLabels[pronoun];
+        const parts = fullLabel.split('/');
+        const selectedPronounLabel = parts[Math.floor(Math.random() * parts.length)];
+        return {
+          language,
+          verb,
+          tense,
+          pronoun,
+          selectedPronounLabel,
+        };
+      }),
     ),
   );
 
@@ -107,11 +114,16 @@ const getFallbackPrompt = (language: Language, practiceTense: PracticeTenseId): 
   if (!firstVerb) {
     throw new Error(`${language.name} needs at least one verb`);
   }
+  const pronoun = pronouns[0];
+  const fullLabel = language.pronounLabels[pronoun];
+  const parts = fullLabel.split('/');
+  const selectedPronounLabel = parts[Math.floor(Math.random() * parts.length)];
   return {
     language,
     verb: firstVerb,
     tense: getPracticeTenses(practiceTense, language.id)[0],
-    pronoun: pronouns[0],
+    pronoun,
+    selectedPronounLabel,
   };
 };
 
@@ -188,11 +200,15 @@ export function usePractice() {
     applicableMisses.forEach((miss) => {
       const verb = lang.verbs.find((v) => v.infinitive === miss.verbInfinitive);
       if (verb) {
+        const fullLabel = lang.pronounLabels[miss.pronoun];
+        const parts = fullLabel.split('/');
+        const selectedPronounLabel = parts[Math.floor(Math.random() * parts.length)];
         resolvedMisses.push({
           language: lang,
           verb,
           tense: miss.tense,
           pronoun: miss.pronoun,
+          selectedPronounLabel,
         });
       }
     });

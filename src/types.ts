@@ -7,6 +7,7 @@ export type Prompt = {
   verb: VerbEntry;
   tense: TenseId;
   pronoun: Pronoun;
+  selectedPronounLabel?: string;
 };
 
 export type Attempt = {

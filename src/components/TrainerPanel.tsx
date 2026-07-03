@@ -31,6 +31,19 @@ const getTenseColor = (tense: TenseId) => {
   return 'var(--blue)';
 };
 
+const getLocalizedTitle = (languageId: string) => {
+  switch (languageId) {
+    case 'spanish':
+      return 'Selecciona la forma verbal correcta';
+    case 'french':
+      return 'Sélectionnez la forme verbale correcte';
+    case 'italian':
+      return 'Seleziona la forma verbale corretta';
+    default:
+      return 'Select the correct verb form';
+  }
+};
+
 export function TrainerPanel({
   attempts,
   prompt,
@@ -60,7 +73,7 @@ export function TrainerPanel({
       <div className="trainer-head">
         <div>
           <span className="eyebrow">Question {Math.min(attempts.length + 1, 20)}</span>
-          <h1>Conjugation drill</h1>
+          <h1>{getLocalizedTitle(prompt.language.id)}</h1>
         </div>
         <button 
           className="timer-chip"

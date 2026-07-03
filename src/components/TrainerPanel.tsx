@@ -146,30 +146,29 @@ export function TrainerPanel({
             </span>
           </div>
 
-          <div className="prompt-builder">
-            {/* Row 1: Labels */}
-            <span className="prompt-builder-label prompt-builder-pronoun-label">
-              Pronoun
-            </span>
-            <span className="prompt-builder-label prompt-builder-plus-label" aria-hidden="true">
-              +
-            </span>
-            <span className="prompt-builder-label prompt-builder-verb-label">
-              Infinitive
+          {/* Clean, typographic prompt layout (No stiff labels or math signs) */}
+          <div 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'baseline', 
+              flexWrap: 'wrap', 
+              gap: '12px 20px',
+              marginTop: '4px'
+            }}
+          >
+            <span style={{ fontFamily: 'Lora, serif', fontSize: 'clamp(2.2rem, 5.5vw, 3.8rem)', fontWeight: 900, color: 'var(--ink)', lineHeight: 1 }}>
+              {pronounLabel}
             </span>
 
-            {/* Row 2: Contents */}
-            <h2 className="prompt-builder-pronoun">
-              {pronounLabel}
-            </h2>
-            <div className="prompt-builder-plus" aria-hidden="true">
-              +
-            </div>
-            <div className="prompt-builder-verb">
-              <strong>
+            <span style={{ fontSize: 'clamp(1.8rem, 4.5vw, 3rem)', fontWeight: 300, color: 'rgba(20, 32, 28, 0.15)', fontFamily: 'Lora, serif', lineHeight: 1 }}>
+              /
+            </span>
+
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap' }}>
+              <strong style={{ fontSize: 'clamp(2.2rem, 5.5vw, 3.8rem)', fontWeight: 900, fontFamily: 'Lora, serif', color: 'var(--language-accent, var(--green))', lineHeight: 1 }}>
                 {prompt.verb.infinitive}
               </strong>
-              <em>
+              <em style={{ fontSize: 'clamp(1.1rem, 2.2vw, 1.4rem)', color: 'var(--muted)', fontStyle: 'normal', fontWeight: 800 }}>
                 {prompt.verb.translation}
               </em>
             </div>
@@ -210,7 +209,7 @@ export function TrainerPanel({
               <strong>{isTimeout ? "Time's up!" : isCorrect ? 'Good hit.' : 'Missed this one.'}</strong>
               <span>
                 {pronounLabel} + {prompt.verb.infinitive} = {correctAnswer}
-                {isCorrect && !showCelebration ? ' · next question loading' : ''}
+                {isCorrect && !showCelebration && !isSessionComplete ? ' · next question loading' : ''}
               </span>
             </div>
             {!isCorrect &&

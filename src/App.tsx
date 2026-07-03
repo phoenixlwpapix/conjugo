@@ -6,6 +6,7 @@ import { TrainerPanel } from './components/TrainerPanel';
 import { ProgressPanel } from './components/ProgressPanel';
 import { WordBookPanel } from './components/WordBookPanel';
 import { CelebrationOverlay } from './components/CelebrationOverlay';
+import { CompletionOverlay } from './components/CompletionOverlay';
 import { isThemeId, themeStorageKey, type ThemeId } from './data/themes';
 
 export default function App() {
@@ -39,6 +40,7 @@ export default function App() {
     attempts,
     streak,
     showCelebration,
+    showCompletion,
     stats,
     activeLanguage,
     prompt,
@@ -55,6 +57,7 @@ export default function App() {
     resetSession,
     moveNext,
     dismissCelebration,
+    dismissCompletion,
     clickReviewItem,
     timeLeft,
     timerEnabled,
@@ -136,6 +139,13 @@ export default function App() {
     moveNext,
   ]);
 
+  const sessionCorrectCount = attempts.filter((attempt) => attempt.correct).length;
+
+  const returnHome = () => {
+    dismissCompletion();
+    setActiveView('practice');
+  };
+
   return (
     <main
       className="app-shell"
@@ -146,6 +156,17 @@ export default function App() {
         <CelebrationOverlay
           resetSession={resetSession}
           dismissCelebration={dismissCelebration}
+        />
+      )}
+
+      {showCompletion && (
+        <CompletionOverlay
+          accuracy={accuracy}
+          correctCount={sessionCorrectCount}
+          dismissCompletion={dismissCompletion}
+          resetSession={resetSession}
+          returnHome={returnHome}
+          totalCount={attempts.length}
         />
       )}
 

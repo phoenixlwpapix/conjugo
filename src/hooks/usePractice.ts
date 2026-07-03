@@ -140,6 +140,7 @@ export function usePractice() {
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [streak, setStreak] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showCompletion, setShowCompletion] = useState(false);
 
   // Cumulative stats
   const [stats, setStats] = useState<CumulativeStats>(() => {
@@ -285,11 +286,15 @@ export function usePractice() {
     });
 
     setSelectedAnswer('[Timeout]');
+
+    if (nextAttempts.length >= sessionTarget) {
+      setShowCompletion(true);
+    }
   }, [selectedAnswer, isSessionComplete, prompt, attempts, languageId]);
 
   // Timer countdown effect for "Fast recall"
   useEffect(() => {
-    if (!timerEnabled || selectedAnswer !== null || isSessionComplete || showCelebration || activeView !== 'practice') {
+    if (!timerEnabled || selectedAnswer !== null || isSessionComplete || showCelebration || showCompletion || activeView !== 'practice') {
       return;
     }
 
@@ -307,7 +312,7 @@ export function usePractice() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [promptIndex, selectedAnswer, isSessionComplete, showCelebration, activeView, timerEnabled, handleTimeout]);
+  }, [promptIndex, selectedAnswer, isSessionComplete, showCelebration, showCompletion, activeView, timerEnabled, handleTimeout]);
 
   const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -369,6 +374,7 @@ export function usePractice() {
     setAttempts([]);
     setStreak(0);
     setShowCelebration(false);
+    setShowCompletion(false);
     setSelectedAnswer(null);
   };
 
@@ -474,6 +480,11 @@ export function usePractice() {
       return;
     }
 
+    if (nextAttemptTotal >= sessionTarget) {
+      setShowCompletion(true);
+      return;
+    }
+
     if (choiceIsCorrect && nextAttemptTotal < sessionTarget) {
       autoAdvanceTimer.current = setTimeout(() => {
         setPromptIndex((current) => Math.min(current + 1, sessionTarget - 1));
@@ -485,6 +496,10 @@ export function usePractice() {
 
   const dismissCelebration = () => {
     setShowCelebration(false);
+  };
+
+  const dismissCompletion = () => {
+    setShowCompletion(false);
   };
 
   // Jump from review item to word book
@@ -515,6 +530,7 @@ export function usePractice() {
     attempts,
     streak,
     showCelebration,
+    showCompletion,
     setShowCelebration,
     stats,
     missedPrompts,
@@ -534,6 +550,7 @@ export function usePractice() {
     resetSession,
     moveNext,
     dismissCelebration,
+    dismissCompletion,
     clickReviewItem,
     timeLeft,
     timerEnabled,

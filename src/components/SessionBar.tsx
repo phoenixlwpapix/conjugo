@@ -32,9 +32,9 @@ export function SessionBar({
           ))}
       </div>
 
-      <button className="reset-button" onClick={resetSession} type="button">
+      <button className="reset-button" onClick={resetSession} type="button" title="Reset session">
         <RotateCcw size={16} aria-hidden="true" />
-        Reset
+        <span className="reset-button-text">Reset</span>
       </button>
     </section>
   );

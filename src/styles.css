@@ -126,6 +126,8 @@ button {
   inset: 0;
   background: rgba(20, 32, 28, 0.34);
   backdrop-filter: blur(3px);
+  pointer-events: auto;
+  animation: celebration-pop 280ms ease-out both;
 }
 
 .confetti-field {
@@ -193,6 +195,122 @@ button {
   color: var(--active-text);
   background: var(--active-bg);
   font-weight: 900;
+}
+
+.completion-card {
+  position: relative;
+  z-index: 1;
+  width: min(520px, calc(100% - 32px));
+  padding: 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  color: var(--ink);
+  background:
+    linear-gradient(135deg, var(--panel-strong), var(--panel)),
+    repeating-linear-gradient(90deg, var(--body-rule) 0 1px, transparent 1px 58px);
+  box-shadow: 0 28px 75px rgba(20, 32, 28, 0.28);
+  pointer-events: auto;
+  animation: celebration-pop 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.completion-inner {
+  display: grid;
+  gap: 20px;
+  padding: 24px;
+  border: 1px dashed rgba(20, 32, 28, 0.15);
+  border-radius: 8px;
+}
+
+.completion-close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  color: var(--muted);
+  background: var(--button-surface);
+  transition: transform 100ms, color 100ms, border-color 100ms;
+}
+
+.completion-close:hover {
+  transform: scale(1.05);
+  color: var(--ink);
+  border-color: rgba(20, 32, 28, 0.25);
+}
+
+.completion-header {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+}
+
+.completion-header .eyebrow {
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--language-accent, var(--green));
+}
+
+.completion-header h2 {
+  margin: 0;
+  color: var(--ink);
+  font-family: 'Lora', serif;
+  font-size: 1.6rem;
+  line-height: 1.15;
+  font-weight: 900;
+}
+
+
+
+.completion-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.completion-actions button {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 100ms ease, background-color 160ms, border-color 160ms;
+}
+
+.completion-actions button:active {
+  transform: scale(0.97);
+}
+
+.completion-primary {
+  color: var(--active-text);
+  background: var(--active-bg);
+}
+
+.completion-primary:hover {
+  background: color-mix(in srgb, var(--active-bg) 90%, black);
+}
+
+.completion-secondary {
+  color: var(--ink);
+  background: var(--control-strong);
+  border-color: var(--panel-border) !important;
+}
+
+.completion-secondary:hover {
+  background: color-mix(in srgb, var(--control-strong) 92%, black);
+  border-color: rgba(20, 32, 28, 0.25) !important;
 }
 
 @keyframes confetti-fall {
@@ -856,141 +974,7 @@ button {
   overflow-wrap: anywhere;
 }
 
-.prompt-builder {
-  display: grid;
-  grid-template-columns: minmax(0, auto) auto minmax(0, 1fr);
-  gap: 4px 18px;
-  align-items: center;
-  min-width: 0;
-  margin-top: 4px;
-}
 
-.prompt-builder-label {
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-.prompt-builder-pronoun-label,
-.prompt-builder-pronoun {
-  grid-column: 1;
-}
-
-.prompt-builder-plus-label,
-.prompt-builder-plus {
-  grid-column: 2;
-  justify-self: center;
-}
-
-.prompt-builder-plus-label {
-  visibility: hidden;
-}
-
-.prompt-builder-verb-label,
-.prompt-builder-verb {
-  grid-column: 3;
-}
-
-.prompt-builder-pronoun {
-  min-width: 0;
-}
-
-.prompt-builder-plus {
-  display: grid;
-  place-items: center;
-  align-self: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  color: var(--muted);
-  background: color-mix(in srgb, var(--language-accent, var(--green)) 10%, var(--mix-base));
-  font-size: 1.35rem;
-  line-height: 1;
-  font-weight: 800;
-}
-
-.prompt-builder-verb {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: baseline;
-  min-width: 0;
-}
-
-.prompt-builder-verb strong {
-  min-width: 0;
-  color: var(--ink);
-  font-family: 'Lora', serif;
-  font-size: clamp(2rem, 4.25vw, 3.05rem);
-  line-height: 1;
-  font-weight: 900;
-  overflow-wrap: anywhere;
-}
-
-.prompt-builder-verb em {
-  min-width: 0;
-  color: var(--muted);
-  font-size: clamp(1.1rem, 2.2vw, 1.4rem);
-  font-style: normal;
-  font-weight: 800;
-  overflow-wrap: anywhere;
-}
-
-@container trainer-panel (max-width: 720px) {
-  .prompt-builder {
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: center;
-    gap: 8px;
-    margin-top: 2px;
-    padding: 10px 0 4px;
-    text-align: center;
-  }
-
-  .prompt-builder-label {
-    display: none;
-  }
-
-  .prompt-builder-pronoun,
-  .prompt-builder-plus,
-  .prompt-builder-verb {
-    grid-column: 1;
-  }
-
-  .prompt-builder-pronoun {
-    max-width: 100%;
-    font-size: clamp(2.35rem, 9.2cqw, 3.45rem);
-    line-height: 0.98;
-    text-align: center;
-  }
-
-  .prompt-builder-plus {
-    color: var(--language-accent, var(--green));
-  }
-
-  .prompt-builder-verb {
-    display: grid;
-    justify-items: center;
-    gap: 6px;
-    width: 100%;
-  }
-
-  .prompt-builder-verb strong {
-    max-width: 100%;
-    font-size: clamp(2.2rem, 7.7cqw, 3.05rem);
-    line-height: 0.98;
-    overflow-wrap: normal;
-    text-align: center;
-  }
-
-  .prompt-builder-verb em {
-    max-width: 100%;
-    font-size: clamp(0.96rem, 2.7cqw, 1.18rem);
-    line-height: 1.25;
-    text-align: center;
-  }
-}
 
 .verb-meaning {
   position: relative;
@@ -1911,24 +1895,36 @@ button {
   }
 
   .session-bar {
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
     gap: 8px;
     margin-top: 9px;
-  }
-
-  .reset-button {
-    order: 1;
-    min-height: 34px;
-    padding: 0 10px;
+    width: 100%;
   }
 
   .segmented-control {
-    order: 2;
-    grid-column: 1 / -1;
+    flex: 1 1 auto;
     display: flex;
     overflow-x: auto;
     scrollbar-width: none;
-    width: 100%;
+    width: auto;
+  }
+
+  .reset-button {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+  }
+
+  .reset-button-text {
+    display: none;
   }
 
   .segmented-control::-webkit-scrollbar {
@@ -1977,74 +1973,17 @@ button {
     padding: 14px;
   }
 
-  .prompt-context {
-    order: 2;
-  }
-
   .prompt-context span {
     min-height: 26px;
     padding: 0 8px;
     font-size: 0.68rem;
   }
 
-  .prompt-stem {
-    order: 1;
-    min-height: auto;
-  }
-
   .prompt-main h2 {
     font-size: clamp(2.2rem, 11.5vw, 3.2rem);
   }
 
-  .prompt-builder {
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: center;
-    gap: 8px;
-    margin-top: 2px;
-    padding: 10px 0 4px;
-    text-align: center;
-  }
 
-  .prompt-builder-label {
-    display: none;
-  }
-
-  .prompt-builder-pronoun,
-  .prompt-builder-plus,
-  .prompt-builder-verb {
-    grid-column: 1;
-  }
-
-  .prompt-builder-pronoun {
-    font-size: clamp(2.55rem, 15vw, 4rem);
-    line-height: 0.98;
-    max-width: 100%;
-  }
-
-  .prompt-builder-plus {
-    color: var(--language-accent, var(--green));
-  }
-
-  .prompt-builder-verb {
-    display: grid;
-    justify-items: center;
-    gap: 6px;
-    width: 100%;
-  }
-
-  .prompt-builder-verb strong {
-    max-width: 100%;
-    font-size: clamp(2.05rem, 10.5vw, 2.9rem);
-    line-height: 0.98;
-    text-align: center;
-  }
-
-  .prompt-builder-verb em {
-    max-width: 100%;
-    font-size: 0.96rem;
-    line-height: 1.25;
-    text-align: center;
-  }
 
   .verb-meaning {
     order: 3;
@@ -2108,11 +2047,26 @@ button {
   .celebration-card {
     grid-template-columns: 1fr;
   }
+
+  .completion-card {
+    padding: 8px;
+  }
+
+  .completion-inner {
+    padding: 18px;
+    gap: 16px;
+  }
+
+
+
+
 }
 
 @media (prefers-reduced-motion: reduce) {
   .confetti-field span,
-  .celebration-card {
+  .celebration-card,
+  .completion-card,
+  .celebration-backdrop {
     animation-duration: 1ms;
   }
 }

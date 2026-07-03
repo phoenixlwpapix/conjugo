@@ -13,6 +13,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Card-based multiple-choice drills with instant feedback and one-tap next-question flow.
 - Correct answers auto-advance after a short pause; wrong answers keep the correction visible.
 - Perfect 20/20 sessions trigger a confetti completion moment.
+- Completed 20-question sets with misses show a summary modal with new-set and return-home actions.
 - Mixed tense mode that rotates through present, past, and future prompts.
 - Language-specific pronoun prompts instead of English-only pronouns.
 - Answer choices are generated from the current verb's conjugation family, prioritizing the same tense and other pronouns.
@@ -40,6 +41,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Searchable compact verb list built for larger future vocabularies.
 - Card-style multiple-choice answer selection.
 - Auto-advance on correct answers and confetti for a perfect set.
+- Non-perfect completed sets now open a completion summary modal instead of ending silently.
 - Completion stats persist in localStorage across browser sessions.
 - The practice side panel stays focused on current-session metrics and review prompts.
 - The Stats workspace uses a tighter dashboard layout with consistent KPI typography, today’s performance, review load, and a responsive Recharts accuracy bar chart.

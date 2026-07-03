@@ -151,7 +151,7 @@ export default function App() {
     <main
       className="app-shell"
       data-theme={themeId}
-      style={{ '--language-accent': activeLanguage.accent } as CSSProperties}
+      style={{ '--language-accent': themeId === 'dark' ? activeLanguage.darkAccent : activeLanguage.accent } as CSSProperties}
     >
       {showCelebration && (
         <CelebrationOverlay

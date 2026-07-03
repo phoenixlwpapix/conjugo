@@ -14,6 +14,7 @@ export type Language = {
   name: string;
   nativeName: string;
   accent: string;
+  darkAccent: string;
   pronounLabels: Record<Pronoun, string>;
   verbs: VerbEntry[];
 };
@@ -753,6 +754,7 @@ export const languages: Language[] = [
     name: 'English',
     nativeName: 'English',
     accent: '#2563eb',
+    darkAccent: '#6d9ff5',
     pronounLabels: { I: 'I', you: 'you', 'he/she': 'he/she', we: 'we', they: 'they' },
     verbs: englishVerbs,
   },
@@ -761,6 +763,7 @@ export const languages: Language[] = [
     name: 'French',
     nativeName: 'Français',
     accent: '#0f766e',
+    darkAccent: '#5ec4b8',
     pronounLabels: { I: 'je', you: 'tu', 'he/she': 'il/elle', we: 'nous', they: 'ils/elles' },
     verbs: frenchVerbs,
   },
@@ -769,6 +772,7 @@ export const languages: Language[] = [
     name: 'Spanish',
     nativeName: 'Español',
     accent: '#d97706',
+    darkAccent: '#f5a623',
     pronounLabels: { I: 'yo', you: 'tú', 'he/she': 'él/ella', we: 'nosotros', they: 'ellos/ellas' },
     verbs: spanishVerbs,
   },
@@ -777,6 +781,7 @@ export const languages: Language[] = [
     name: 'Italian',
     nativeName: 'Italiano',
     accent: '#be123c',
+    darkAccent: '#f06680',
     pronounLabels: { I: 'io', you: 'tu', 'he/she': 'lui/lei', we: 'noi', they: 'loro' },
     verbs: italianVerbs,
   },

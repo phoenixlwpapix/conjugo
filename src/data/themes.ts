@@ -7,7 +7,7 @@ export const themeOptions = [
   {
     id: 'dark',
     label: 'Dark',
-    swatches: ['#131814', '#7cc7a6', '#d8a94b'],
+    swatches: ['#0f121a', '#6d9ff5', '#e4b650'],
   },
 ] as const;
 

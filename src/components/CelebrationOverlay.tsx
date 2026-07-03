@@ -40,7 +40,7 @@ export function CelebrationOverlay({
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'rgba(20, 32, 28, 0.4)',
+          background: 'color-mix(in srgb, var(--ink) 35%, transparent)',
           backdropFilter: 'blur(3px)',
           zIndex: 0,
           pointerEvents: 'auto',

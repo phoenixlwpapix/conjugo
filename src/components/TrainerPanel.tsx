@@ -76,59 +76,124 @@ export function TrainerPanel({
           <span className="eyebrow">Question {Math.min(attempts.length + 1, 20)}</span>
           <h1>{getLocalizedTitle(prompt.language.id)}</h1>
         </div>
-        <button 
-          className="timer-chip"
-          onClick={toggleTimer}
-          type="button"
-          title={timerEnabled ? "Click to disable fast recall timer" : "Click to enable fast recall timer"}
-          style={{
-            cursor: 'pointer',
-            color: !timerEnabled
-              ? 'var(--muted)'
-              : isTimeout || showAlertStyle
-                ? 'var(--red)'
-                : 'var(--muted)',
-            background: !timerEnabled
-              ? 'rgba(20, 32, 28, 0.04)'
-              : isTimeout
-                ? 'rgba(199, 71, 53, 0.08)'
-                : showAlertStyle
-                  ? 'rgba(199, 71, 53, 0.04)'
-                  : 'transparent',
-            borderColor: !timerEnabled
-              ? 'var(--line)'
-              : isTimeout
-                ? 'var(--red)'
-                : showAlertStyle
-                  ? 'rgba(199, 71, 53, 0.3)'
-                  : 'var(--line)',
-            borderStyle: isTimeout ? 'dashed' : 'solid',
-            borderWidth: '1px',
-            fontSize: '0.8rem',
-            padding: '4px 10px',
-            minHeight: '30px',
-            borderRadius: '6px',
-            fontWeight: 800,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            boxShadow: 'none',
-            outline: 'none',
-            transition: 'color 0.2s, background-color 0.2s, border-color 0.2s, transform 100ms ease',
-          }}
-          onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.96)'; }}
-          onMouseUp={(e) => { e.currentTarget.style.transform = 'none'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; }}
-        >
-          <TimerReset size={14} aria-hidden="true" style={{ opacity: timerEnabled ? 1 : 0.5 }} />
-          {!timerEnabled
-            ? 'Timer off'
+        {(() => {
+          const TIMER_TOTAL = 8;
+          const size = 40;
+          const strokeWidth = 3;
+          const radius = (size - strokeWidth) / 2;
+          const circumference = 2 * Math.PI * radius;
+          const progress = timerEnabled && !isAnswered ? timeLeft / TIMER_TOTAL : isAnswered && timerEnabled ? 0 : 1;
+          const dashOffset = circumference * (1 - progress);
+
+          const ringColor = !timerEnabled
+            ? 'var(--line)'
             : isTimeout
-              ? "Time's up!" 
-              : isAnswered 
-                ? 'Recall complete' 
-                : `Fast recall: ${timeLeft}s`}
-        </button>
+              ? 'var(--red)'
+              : showAlertStyle
+                ? 'var(--red)'
+                : 'var(--language-accent, var(--green))';
+
+          const iconColor = !timerEnabled
+            ? 'var(--muted)'
+            : isTimeout || showAlertStyle
+              ? 'var(--red)'
+              : 'var(--ink)';
+
+          return (
+            <button
+              className="timer-ring-btn"
+              onClick={toggleTimer}
+              type="button"
+              title={timerEnabled ? "Click to disable timer" : "Click to enable timer"}
+              aria-label={
+                !timerEnabled
+                  ? 'Timer off'
+                  : isTimeout
+                    ? "Time's up"
+                    : isAnswered
+                      ? 'Timer complete'
+                      : `${timeLeft} seconds left`
+              }
+              style={{
+                cursor: 'pointer',
+                position: 'relative',
+                width: size,
+                height: size,
+                padding: 0,
+                border: 'none',
+                borderRadius: '50%',
+                background: 'transparent',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                outline: 'none',
+                flexShrink: 0,
+                transition: 'transform 100ms ease',
+              }}
+              onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.9)'; }}
+              onMouseUp={(e) => { e.currentTarget.style.transform = 'none'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; }}
+            >
+              <svg
+                width={size}
+                height={size}
+                viewBox={`0 0 ${size} ${size}`}
+                style={{ position: 'absolute', top: 0, left: 0, transform: 'rotate(-90deg)' }}
+              >
+                {/* Track ring */}
+                <circle
+                  cx={size / 2}
+                  cy={size / 2}
+                  r={radius}
+                  fill="none"
+                  stroke="var(--panel-border)"
+                  strokeWidth={strokeWidth}
+                />
+                {/* Progress ring */}
+                <circle
+                  cx={size / 2}
+                  cy={size / 2}
+                  r={radius}
+                  fill="none"
+                  stroke={ringColor}
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={dashOffset}
+                  style={{
+                    transition: timerEnabled && !isAnswered
+                      ? 'stroke-dashoffset 1s linear, stroke 0.3s ease'
+                      : 'stroke-dashoffset 0.3s ease, stroke 0.3s ease',
+                  }}
+                />
+              </svg>
+              <TimerReset
+                size={16}
+                aria-hidden="true"
+                style={{
+                  color: iconColor,
+                  opacity: timerEnabled ? 1 : 0.4,
+                  transition: 'color 0.2s, opacity 0.2s',
+                  position: 'relative',
+                  zIndex: 1,
+                }}
+              />
+              {/* Pulse animation on alert */}
+              {showAlertStyle && timerEnabled && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    inset: -2,
+                    borderRadius: '50%',
+                    border: '2px solid var(--red)',
+                    opacity: 0.4,
+                    animation: 'timer-pulse 1s ease-in-out infinite',
+                  }}
+                />
+              )}
+            </button>
+          );
+        })()}
       </div>
 
       <div className="prompt-card" style={{ position: 'relative', overflow: 'hidden' }}>
@@ -150,14 +215,14 @@ export function TrainerPanel({
 
         <div className="prompt-main" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px', width: '100%' }}>
           <div className="prompt-context" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-            <div style={{ display: 'flex', gap: '7px', alignItems: 'center' }}>
-              <span>{prompt.language.name}</span>
-              {practiceTense === 'mixed' && <span style={{ background: 'var(--gold)', color: 'var(--ink)' }}>Mixed Mode</span>}
-            </div>
-            
-            <span style={{ background: getTenseColor(prompt.tense), color: 'var(--on-accent)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+            <span style={{ background: getTenseColor(prompt.tense), color: '#111', border: '1px solid rgba(255, 255, 255, 0.15)' }}>
               {tenseLabel}
             </span>
+
+            <div style={{ display: 'flex', gap: '7px', alignItems: 'center' }}>
+              {practiceTense === 'mixed' && <span style={{ background: 'var(--gold)', color: '#111' }}>Mixed Mode</span>}
+              <span>{prompt.language.name}</span>
+            </div>
           </div>
 
           {/* Clean, typographic prompt layout (No stiff labels or math signs) */}
@@ -174,7 +239,7 @@ export function TrainerPanel({
               {pronounLabel}
             </span>
 
-            <span style={{ fontSize: 'clamp(1.8rem, 4.5vw, 3rem)', fontWeight: 300, color: 'rgba(20, 32, 28, 0.15)', fontFamily: 'Lora, serif', lineHeight: 1 }}>
+            <span style={{ fontSize: 'clamp(1.8rem, 4.5vw, 3rem)', fontWeight: 300, color: 'var(--muted)', opacity: 0.5, fontFamily: 'Lora, serif', lineHeight: 1 }}>
               /
             </span>
 

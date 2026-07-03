@@ -109,32 +109,32 @@ export function StatsDashboard({ bestStreak, storedMisses, stats, todayAccuracy,
           <div className="stats-trend-chart" role="img" aria-label="Seven day accuracy trend">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ bottom: 8, left: -8, right: 10, top: 12 }}>
-                <CartesianGrid stroke="rgba(20, 32, 28, 0.09)" strokeDasharray="3 5" vertical={false} />
+                <CartesianGrid stroke="var(--subtle-border)" strokeDasharray="3 5" vertical={false} />
                 <XAxis
                   axisLine={false}
                   dataKey="label"
                   dy={8}
-                  tick={{ fill: '#66736d', fontSize: 12, fontWeight: 800 }}
+                  tick={{ fill: 'var(--muted)', fontSize: 12, fontWeight: 800 }}
                   tickLine={false}
                 />
                 <YAxis
                   axisLine={false}
                   domain={[0, 100]}
-                  tick={{ fill: '#66736d', fontSize: 12, fontWeight: 800 }}
+                  tick={{ fill: 'var(--muted)', fontSize: 12, fontWeight: 800 }}
                   tickFormatter={formatPercentTick}
                   tickLine={false}
                   width={44}
                 />
                 <Tooltip
                   contentStyle={{
-                    background: '#fffdf7',
-                    border: '1px solid rgba(20, 32, 28, 0.12)',
+                    background: 'var(--paper)',
+                    border: '1px solid var(--panel-border)',
                     borderRadius: 8,
-                    boxShadow: '0 16px 34px rgba(20, 32, 28, 0.16)',
-                    color: '#14201c',
+                    boxShadow: 'var(--shadow)',
+                    color: 'var(--ink)',
                     fontWeight: 800,
                   }}
-                  cursor={{ stroke: 'rgba(20, 32, 28, 0.16)', strokeWidth: 1 }}
+                  cursor={{ stroke: 'var(--subtle-border)', strokeWidth: 1 }}
                   formatter={(value, _name, item) => {
                     const payload = item.payload as ChartPoint;
 
@@ -145,7 +145,7 @@ export function StatsDashboard({ bestStreak, storedMisses, stats, todayAccuracy,
                 <Bar dataKey="chartAccuracy" name="Accuracy" radius={[8, 8, 3, 3]} barSize={36}>
                   {chartData.map((item) => (
                     <Cell
-                      fill={item.answered === 0 ? 'rgba(20, 32, 28, 0.08)' : 'var(--language-accent, var(--green))'}
+                      fill={item.answered === 0 ? 'var(--control)' : 'var(--language-accent, var(--green))'}
                       key={item.key}
                     />
                   ))}

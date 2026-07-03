@@ -104,7 +104,7 @@ export function ProgressPanel({
           <Trophy size={18} aria-hidden="true" />
           <h2>All-time Progress</h2>
         </div>
-        <div className="score-grid" style={{ margin: '14px -16px -16px', borderRadius: '0 0 8px 8px', boxShadow: 'none', border: 'none', borderTop: '1px solid rgba(20, 32, 28, 0.1)' }}>
+        <div className="score-grid" style={{ margin: '14px -16px -16px', borderRadius: '0 0 8px 8px', boxShadow: 'none', border: 'none', borderTop: '1px solid var(--subtle-border)' }}>
           <div>
             <span>Total Drills</span>
             <strong>

@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { BookOpenText, Menu, Moon, Sun, Target, X } from 'lucide-react';
 import { languages, type LanguageId } from '../data/verbs';
-import { themeOptions, type ThemeId } from '../data/themes';
+import { type ThemeId } from '../data/themes';
 import { type AppView } from '../hooks/usePractice';
 
 interface HeaderProps {
@@ -50,32 +50,11 @@ export function Header({
     setIsMenuOpen(false);
   };
 
-  const chooseTheme = (nextThemeId: ThemeId) => {
-    setThemeId(nextThemeId);
-    setIsMenuOpen(false);
+  const toggleTheme = () => {
+    setThemeId(themeId === 'dark' ? 'light' : 'dark');
   };
 
-  const renderThemeButton = (themeOption: (typeof themeOptions)[number]) => {
-    const Icon = themeOption.id === 'dark' ? Moon : Sun;
-
-    return (
-      <button
-        className="theme-button"
-        data-active={themeOption.id === themeId}
-        key={themeOption.id}
-        onClick={() => chooseTheme(themeOption.id)}
-        type="button"
-      >
-        <Icon size={16} aria-hidden="true" />
-        <span>{themeOption.label}</span>
-        <span className="theme-swatches" aria-hidden="true">
-          {themeOption.swatches.map((swatch) => (
-            <i key={swatch} style={{ background: swatch }} />
-          ))}
-        </span>
-      </button>
-    );
-  };
+  const ThemeIcon = themeId === 'dark' ? Sun : Moon;
 
   return (
     <header className="app-topbar">
@@ -115,7 +94,7 @@ export function Header({
             data-active={language.id === languageId}
             key={language.id}
             onClick={() => switchLanguage(language.id)}
-            style={{ '--accent': language.accent } as CSSProperties}
+            style={{ '--accent': themeId === 'dark' ? language.darkAccent : language.accent } as CSSProperties}
             type="button"
           >
             <span>{language.name}</span>
@@ -123,12 +102,29 @@ export function Header({
         ))}
       </nav>
 
-      <div className="theme-switch" aria-label="Choose theme">
-        <span>Theme</span>
-        <div className="theme-grid">
-          {themeOptions.map(renderThemeButton)}
-        </div>
+      <div className="language-select-wrapper">
+        <select
+          value={languageId}
+          onChange={(e) => switchLanguage(e.target.value as LanguageId)}
+          aria-label="Choose language"
+          className="language-select"
+        >
+          {languages.map((language) => (
+            <option key={language.id} value={language.id}>
+              {language.name}
+            </option>
+          ))}
+        </select>
       </div>
+
+      <button
+        className="theme-toggle"
+        onClick={toggleTheme}
+        type="button"
+        aria-label={themeId === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        <ThemeIcon size={18} aria-hidden="true" />
+      </button>
 
       <div className="mobile-status" aria-label="Current selection">
         <strong>{activeLanguage.name}</strong>
@@ -170,7 +166,7 @@ export function Header({
                 data-active={language.id === languageId}
                 key={language.id}
                 onClick={() => chooseLanguage(language.id)}
-                style={{ '--accent': language.accent } as CSSProperties}
+                style={{ '--accent': themeId === 'dark' ? language.darkAccent : language.accent } as CSSProperties}
                 type="button"
               >
                 {language.name}
@@ -180,9 +176,16 @@ export function Header({
         </div>
 
         <div className="mobile-menu-section">
-          <span>Theme</span>
-          <div className="theme-grid">
-            {themeOptions.map(renderThemeButton)}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ color: 'var(--muted)', fontSize: '0.74rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Theme</span>
+            <button
+              className="theme-toggle"
+              onClick={toggleTheme}
+              type="button"
+              aria-label={themeId === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              <ThemeIcon size={18} aria-hidden="true" />
+            </button>
           </div>
         </div>
       </div>

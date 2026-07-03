@@ -910,6 +910,19 @@ button {
   text-transform: uppercase;
 }
 
+.tense-badge {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff !important;
+}
+
+.tense-badge[data-tense='conditional'] {
+  color: #111111 !important;
+}
+
+:root[data-theme='dark'] .tense-badge {
+  color: #0f121a !important;
+}
+
 .prompt-stem {
   display: grid;
   align-content: center;

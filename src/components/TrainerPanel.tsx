@@ -215,7 +215,7 @@ export function TrainerPanel({
 
         <div className="prompt-main" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px', width: '100%' }}>
           <div className="prompt-context" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-            <span style={{ background: getTenseColor(prompt.tense), color: '#111', border: '1px solid rgba(255, 255, 255, 0.15)' }}>
+            <span className="tense-badge" data-tense={prompt.tense} style={{ background: getTenseColor(prompt.tense) }}>
               {tenseLabel}
             </span>
 

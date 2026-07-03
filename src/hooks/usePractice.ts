@@ -45,7 +45,7 @@ const autoAdvanceDelayMs = 1200;
 
 const getPracticeTenses = (practiceTense: PracticeTenseId, languageId?: LanguageId): TenseId[] => {
   const tenses = languageId === 'english'
-    ? concreteTenses.filter((t) => t.id !== 'imperfect')
+    ? concreteTenses.filter((t) => t.id !== 'imperfect' && t.id !== 'conditional')
     : concreteTenses;
   return practiceTense === 'mixed' ? tenses.map((t) => t.id) : [practiceTense];
 };
@@ -91,7 +91,7 @@ const getChoices = (prompt: Prompt, seed: number) => {
     .slice(0, 3);
   
   const languageTenses = prompt.language.id === 'english'
-    ? concreteTenses.filter((t) => t.id !== 'imperfect')
+    ? concreteTenses.filter((t) => t.id !== 'imperfect' && t.id !== 'conditional')
     : concreteTenses;
 
   const fallbackDistractors = languageTenses
@@ -405,11 +405,11 @@ export function usePractice() {
     setWordbookQuery('');
     
     let activeTense = practiceTense;
-    if (nextLanguageId === 'english' && practiceTense === 'imperfect') {
+    if (nextLanguageId === 'english' && (practiceTense === 'imperfect' || practiceTense === 'conditional')) {
       activeTense = 'present';
       setPracticeTense('present');
     }
-    if (nextLanguageId === 'english' && bookTense === 'imperfect') {
+    if (nextLanguageId === 'english' && (bookTense === 'imperfect' || bookTense === 'conditional')) {
       setBookTense('present');
     }
     

@@ -6,7 +6,7 @@ export const autoAdvanceDelayMs = 1200;
 
 export const getPracticeTenses = (practiceTense: PracticeTenseId, languageId?: Language['id']): TenseId[] => {
   const tenses = languageId === 'english'
-    ? concreteTenses.filter((t) => t.id !== 'imperfect')
+    ? concreteTenses.filter((t) => t.id !== 'imperfect' && t.id !== 'conditional')
     : concreteTenses;
   return practiceTense === 'mixed' ? tenses.map((tense) => tense.id) : [practiceTense];
 };
@@ -113,7 +113,7 @@ export const getChoices = (prompt: Prompt, seed: number, choiceCount = 4) => {
     .slice(0, choiceCount - 1);
   
   const languageTenses = prompt.language.id === 'english'
-    ? concreteTenses.filter((t) => t.id !== 'imperfect')
+    ? concreteTenses.filter((t) => t.id !== 'imperfect' && t.id !== 'conditional')
     : concreteTenses;
 
   const fallbackDistractors = languageTenses

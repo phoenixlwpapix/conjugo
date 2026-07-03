@@ -28,6 +28,7 @@ const getTenseColor = (tense: TenseId) => {
   if (tense === 'present') return 'var(--green)';
   if (tense === 'past') return 'var(--red)';
   if (tense === 'imperfect') return 'var(--purple)';
+  if (tense === 'conditional') return 'var(--gold)';
   return 'var(--blue)';
 };
 

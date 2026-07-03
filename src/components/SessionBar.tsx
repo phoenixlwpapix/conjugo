@@ -18,7 +18,7 @@ export function SessionBar({
     <section className="session-bar" aria-label="Practice controls">
       <div className="segmented-control">
         {tenseOptions
-          .filter((item) => item.id !== 'imperfect' || languageId !== 'english')
+          .filter((item) => (item.id !== 'imperfect' && item.id !== 'conditional') || languageId !== 'english')
           .map((item) => (
             <button
               className="segment-button"

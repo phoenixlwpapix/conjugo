@@ -43,6 +43,7 @@ export function WordBookPanel({
       past: { I: '', you: '', 'he/she': '', we: '', they: '' },
       imperfect: { I: '', you: '', 'he/she': '', we: '', they: '' },
       future: { I: '', you: '', 'he/she': '', we: '', they: '' },
+      conditional: { I: '', you: '', 'he/she': '', we: '', they: '' },
     }
   };
 
@@ -99,7 +100,7 @@ export function WordBookPanel({
 
           <div className="book-tense-tabs" aria-label="Choose tense">
             {concreteTenses
-              .filter((item) => item.id !== 'imperfect' || activeLanguage.id !== 'english')
+              .filter((item) => (item.id !== 'imperfect' && item.id !== 'conditional') || activeLanguage.id !== 'english')
               .map((item) => (
                 <button
                   className="book-tense-button"

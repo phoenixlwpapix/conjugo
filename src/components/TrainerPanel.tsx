@@ -141,7 +141,7 @@ export function TrainerPanel({
               {practiceTense === 'mixed' && <span style={{ background: 'var(--gold)', color: 'var(--ink)' }}>Mixed Mode</span>}
             </div>
             
-            <span style={{ background: getTenseColor(prompt.tense), color: '#ffffff', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+            <span style={{ background: getTenseColor(prompt.tense), color: 'var(--on-accent)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
               {tenseLabel}
             </span>
           </div>

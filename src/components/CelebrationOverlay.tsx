@@ -70,10 +70,10 @@ export function CelebrationOverlay({ resetSession, dismissCelebration }: Celebra
               minHeight: '40px',
               width: '40px',
               padding: 0,
-              border: '1px solid rgba(20, 32, 28, 0.15)',
+              border: '1px solid var(--panel-border)',
               borderRadius: '8px',
               color: 'var(--ink)',
-              background: '#ffffff',
+              background: 'var(--button-surface)',
               display: 'grid',
               placeItems: 'center'
             }}

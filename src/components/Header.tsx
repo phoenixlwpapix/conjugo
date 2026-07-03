@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { BookOpenText, Menu, Target, X } from 'lucide-react';
+import { BookOpenText, Menu, Moon, Sun, Target, X } from 'lucide-react';
 import { languages, type LanguageId } from '../data/verbs';
+import { themeOptions, type ThemeId } from '../data/themes';
 import { type AppView } from '../hooks/usePractice';
 
 interface HeaderProps {
@@ -8,9 +9,18 @@ interface HeaderProps {
   switchLanguage: (id: LanguageId) => void;
   activeView: AppView;
   setActiveView: (view: AppView) => void;
+  themeId: ThemeId;
+  setThemeId: (themeId: ThemeId) => void;
 }
 
-export function Header({ languageId, switchLanguage, activeView, setActiveView }: HeaderProps) {
+export function Header({
+  languageId,
+  switchLanguage,
+  activeView,
+  setActiveView,
+  themeId,
+  setThemeId,
+}: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const activeLanguage = languages.find((language) => language.id === languageId) ?? languages[0];
   const activeViewLabel = activeView === 'practice' ? 'Practice' : 'Word Book';
@@ -38,6 +48,33 @@ export function Header({ languageId, switchLanguage, activeView, setActiveView }
   const chooseView = (nextView: AppView) => {
     setActiveView(nextView);
     setIsMenuOpen(false);
+  };
+
+  const chooseTheme = (nextThemeId: ThemeId) => {
+    setThemeId(nextThemeId);
+    setIsMenuOpen(false);
+  };
+
+  const renderThemeButton = (themeOption: (typeof themeOptions)[number]) => {
+    const Icon = themeOption.id === 'dark' ? Moon : Sun;
+
+    return (
+      <button
+        className="theme-button"
+        data-active={themeOption.id === themeId}
+        key={themeOption.id}
+        onClick={() => chooseTheme(themeOption.id)}
+        type="button"
+      >
+        <Icon size={16} aria-hidden="true" />
+        <span>{themeOption.label}</span>
+        <span className="theme-swatches" aria-hidden="true">
+          {themeOption.swatches.map((swatch) => (
+            <i key={swatch} style={{ background: swatch }} />
+          ))}
+        </span>
+      </button>
+    );
   };
 
   return (
@@ -86,6 +123,13 @@ export function Header({ languageId, switchLanguage, activeView, setActiveView }
         ))}
       </nav>
 
+      <div className="theme-switch" aria-label="Choose theme">
+        <span>Theme</span>
+        <div className="theme-grid">
+          {themeOptions.map(renderThemeButton)}
+        </div>
+      </div>
+
       <div className="mobile-status" aria-label="Current selection">
         <strong>{activeLanguage.name}</strong>
         <span>{activeViewLabel}</span>
@@ -132,6 +176,13 @@ export function Header({ languageId, switchLanguage, activeView, setActiveView }
                 {language.name}
               </button>
             ))}
+          </div>
+        </div>
+
+        <div className="mobile-menu-section">
+          <span>Theme</span>
+          <div className="theme-grid">
+            {themeOptions.map(renderThemeButton)}
           </div>
         </div>
       </div>

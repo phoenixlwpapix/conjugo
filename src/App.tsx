@@ -1,4 +1,4 @@
-import { CSSProperties, useEffect } from 'react';
+import { CSSProperties, useEffect, useState } from 'react';
 import { usePractice } from './hooks/usePractice';
 import { Header } from './components/Header';
 import { SessionBar } from './components/SessionBar';
@@ -6,8 +6,22 @@ import { TrainerPanel } from './components/TrainerPanel';
 import { ProgressPanel } from './components/ProgressPanel';
 import { WordBookPanel } from './components/WordBookPanel';
 import { CelebrationOverlay } from './components/CelebrationOverlay';
+import { isThemeId, themeStorageKey, type ThemeId } from './data/themes';
 
 export default function App() {
+  const [themeId, setThemeId] = useState<ThemeId>(() => {
+    if (typeof window === 'undefined') {
+      return 'light';
+    }
+
+    try {
+      const storedTheme = window.localStorage.getItem(themeStorageKey);
+      return isThemeId(storedTheme) ? storedTheme : 'light';
+    } catch {
+      return 'light';
+    }
+  });
+
   const {
     languageId,
     switchLanguage,
@@ -46,6 +60,16 @@ export default function App() {
     timerEnabled,
     toggleTimer,
   } = usePractice();
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = themeId;
+
+    try {
+      window.localStorage.setItem(themeStorageKey, themeId);
+    } catch {
+      // Theme choice is cosmetic; keep the UI usable if storage is blocked.
+    }
+  }, [themeId]);
 
   // Keyboard Shortcuts Support
   useEffect(() => {
@@ -113,7 +137,11 @@ export default function App() {
   ]);
 
   return (
-    <main className="app-shell" style={{ '--language-accent': activeLanguage.accent } as CSSProperties}>
+    <main
+      className="app-shell"
+      data-theme={themeId}
+      style={{ '--language-accent': activeLanguage.accent } as CSSProperties}
+    >
       {showCelebration && (
         <CelebrationOverlay
           resetSession={resetSession}
@@ -126,6 +154,8 @@ export default function App() {
         switchLanguage={switchLanguage}
         activeView={activeView}
         setActiveView={setActiveView}
+        themeId={themeId}
+        setThemeId={setThemeId}
       />
 
       <div className="app-content">

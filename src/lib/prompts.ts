@@ -126,7 +126,5 @@ export const getChoices = (prompt: Prompt, seed: number, choiceCount = 4) => {
     .slice(0, choiceCount - 1 - sameTenseDistractors.length);
   const distractors = [...sameTenseDistractors, ...fallbackDistractors];
 
-  return [correctAnswer, ...distractors].sort(
-    (first, second) => stableScore(first, seed + 11) - stableScore(second, seed + 11),
-  );
+  return shufflePrompts([correctAnswer, ...distractors]);
 };

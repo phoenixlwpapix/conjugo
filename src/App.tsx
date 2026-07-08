@@ -58,9 +58,9 @@ export default function App() {
     moveNext,
     dismissCelebration,
     dismissCompletion,
-    clickReviewItem,
     timeLeft,
     timerEnabled,
+    setTimerPaused,
     toggleTimer,
   } = usePractice();
 
@@ -215,6 +215,7 @@ export default function App() {
               />
 
               <ProgressPanel
+                activeLanguage={activeLanguage}
                 progress={progress}
                 progressPercent={progressPercent}
                 attempts={attempts}
@@ -222,7 +223,7 @@ export default function App() {
                 streak={streak}
                 recentMisses={recentMisses}
                 cumulativeStats={stats}
-                clickReviewItem={clickReviewItem}
+                onReviewModalChange={setTimerPaused}
               />
             </section>
           </>

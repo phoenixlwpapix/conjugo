@@ -40,6 +40,8 @@ export type CumulativeStats = {
   maxStreak: number;
 };
 
+type CumulativeStatsByLanguage = Partial<Record<LanguageId, CumulativeStats>>;
+
 const sessionTarget = 20;
 const autoAdvanceDelayMs = 1200;
 
@@ -82,6 +84,17 @@ const getAnswer = (prompt: Prompt) => prompt.verb.forms[prompt.tense][prompt.pro
 const stableScore = (value: string, seed: number) =>
   Array.from(value).reduce((score, character) => score + character.charCodeAt(0), seed * 37);
 
+const shuffleChoices = <Item>(items: Item[]) => {
+  const shuffled = [...items];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+
+  return shuffled;
+};
+
 const getChoices = (prompt: Prompt, seed: number) => {
   const correctAnswer = getAnswer(prompt);
   const sameTenseDistractors = pronouns
@@ -104,9 +117,61 @@ const getChoices = (prompt: Prompt, seed: number) => {
     .slice(0, 3 - sameTenseDistractors.length);
   const distractors = [...sameTenseDistractors, ...fallbackDistractors];
 
-  return [correctAnswer, ...distractors].sort(
-    (first, second) => stableScore(first, seed + 11) - stableScore(second, seed + 11)
+  return shuffleChoices([correctAnswer, ...distractors]);
+};
+
+const createEmptyStats = (): CumulativeStats => ({
+  totalAttempts: 0,
+  totalCorrect: 0,
+  maxStreak: 0,
+});
+
+const createEmptyStatsByLanguage = (): CumulativeStatsByLanguage =>
+  Object.fromEntries(languages.map((language) => [language.id, createEmptyStats()])) as CumulativeStatsByLanguage;
+
+const isCumulativeStats = (value: unknown): value is CumulativeStats => {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const stats = value as Record<string, unknown>;
+  return (
+    typeof stats.totalAttempts === 'number' &&
+    typeof stats.totalCorrect === 'number' &&
+    typeof stats.maxStreak === 'number'
   );
+};
+
+const readStatsByLanguage = (): CumulativeStatsByLanguage => {
+  const emptyStats = createEmptyStatsByLanguage();
+  const saved = localStorage.getItem('conjugo_stats_by_language');
+
+  if (!saved) {
+    return emptyStats;
+  }
+
+  try {
+    const parsed = JSON.parse(saved) as unknown;
+
+    if (!parsed || typeof parsed !== 'object') {
+      return emptyStats;
+    }
+
+    const parsedStats = parsed as Record<string, unknown>;
+    const nextStats = { ...emptyStats };
+
+    languages.forEach((language) => {
+      const languageStats = parsedStats[language.id];
+
+      if (isCumulativeStats(languageStats)) {
+        nextStats[language.id] = languageStats;
+      }
+    });
+
+    return nextStats;
+  } catch {
+    return emptyStats;
+  }
 };
 
 const getFallbackPrompt = (language: Language, practiceTense: PracticeTenseId): Prompt => {
@@ -154,18 +219,7 @@ export function usePractice() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
 
-  // Cumulative stats
-  const [stats, setStats] = useState<CumulativeStats>(() => {
-    const saved = localStorage.getItem('conjugo_stats');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        // ignore
-      }
-    }
-    return { totalAttempts: 0, totalCorrect: 0, maxStreak: 0 };
-  });
+  const [statsByLanguage, setStatsByLanguage] = useState<CumulativeStatsByLanguage>(readStatsByLanguage);
 
   // Saved missed prompts for review queue
   const [missedPrompts, setMissedPrompts] = useState<SavedMissedPrompt[]>(() => {
@@ -184,6 +238,7 @@ export function usePractice() {
     () => languages.find((lang) => lang.id === languageId) ?? languages[0],
     [languageId]
   );
+  const activeLanguageStats = statsByLanguage[languageId] ?? createEmptyStats();
 
   // Generate session prompts combining normal pool and missed review queue prompts
   const createSessionPromptsWithReview = (lang: Language, tense: PracticeTenseId, misses: SavedMissedPrompt[]) => {
@@ -246,6 +301,7 @@ export function usePractice() {
   );
 
   const [timeLeft, setTimeLeft] = useState(8);
+  const [timerPaused, setTimerPaused] = useState(false);
   const [timerEnabled, setTimerEnabled] = useState<boolean>(() => {
     const saved = localStorage.getItem('conjugo_timerEnabled');
     return saved !== 'false';
@@ -275,10 +331,17 @@ export function usePractice() {
     setAttempts(nextAttempts);
     setStreak(0);
 
-    setStats((current) => ({
-      ...current,
-      totalAttempts: current.totalAttempts + 1,
-    }));
+    setStatsByLanguage((current) => {
+      const currentStats = current[languageId] ?? createEmptyStats();
+
+      return {
+        ...current,
+        [languageId]: {
+          ...currentStats,
+          totalAttempts: currentStats.totalAttempts + 1,
+        },
+      };
+    });
 
     setMissedPrompts((current) => {
       const exists = current.some(
@@ -308,13 +371,25 @@ export function usePractice() {
     }
   }, [selectedAnswer, isSessionComplete, prompt, attempts, languageId]);
 
+  useEffect(() => {
+    if (selectedAnswer === null && !isSessionComplete) {
+      setTimeLeft(8);
+    }
+  }, [promptIndex, selectedAnswer, isSessionComplete]);
+
   // Timer countdown effect for "Fast recall"
   useEffect(() => {
-    if (!timerEnabled || selectedAnswer !== null || isSessionComplete || showCelebration || showCompletion || activeView !== 'practice') {
+    if (
+      !timerEnabled ||
+      timerPaused ||
+      selectedAnswer !== null ||
+      isSessionComplete ||
+      showCelebration ||
+      showCompletion ||
+      activeView !== 'practice'
+    ) {
       return;
     }
-
-    setTimeLeft(8);
 
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
@@ -328,7 +403,16 @@ export function usePractice() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [promptIndex, selectedAnswer, isSessionComplete, showCelebration, showCompletion, activeView, timerEnabled, handleTimeout]);
+  }, [
+    timerEnabled,
+    timerPaused,
+    selectedAnswer,
+    isSessionComplete,
+    showCelebration,
+    showCompletion,
+    activeView,
+    handleTimeout,
+  ]);
 
   const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -351,8 +435,8 @@ export function usePractice() {
 
   // Sync stats and missed prompts
   useEffect(() => {
-    localStorage.setItem('conjugo_stats', JSON.stringify(stats));
-  }, [stats]);
+    localStorage.setItem('conjugo_stats_by_language', JSON.stringify(statsByLanguage));
+  }, [statsByLanguage]);
 
   useEffect(() => {
     localStorage.setItem('conjugo_missed_prompts', JSON.stringify(missedPrompts));
@@ -438,11 +522,17 @@ export function usePractice() {
     setStreak(nextStreak);
 
     // Update stats
-    setStats((current) => {
-      const totalAttempts = current.totalAttempts + 1;
-      const totalCorrect = current.totalCorrect + (choiceIsCorrect ? 1 : 0);
-      const maxStreak = Math.max(current.maxStreak, nextStreak);
-      return { totalAttempts, totalCorrect, maxStreak };
+    setStatsByLanguage((current) => {
+      const currentStats = current[languageId] ?? createEmptyStats();
+
+      return {
+        ...current,
+        [languageId]: {
+          totalAttempts: currentStats.totalAttempts + 1,
+          totalCorrect: currentStats.totalCorrect + (choiceIsCorrect ? 1 : 0),
+          maxStreak: Math.max(currentStats.maxStreak, nextStreak),
+        },
+      };
     });
 
     // Update missed prompts queue
@@ -518,16 +608,6 @@ export function usePractice() {
     setShowCompletion(false);
   };
 
-  // Jump from review item to word book
-  const clickReviewItem = (verbInfinitive: string) => {
-    const index = activeLanguage.verbs.findIndex((v) => v.infinitive === verbInfinitive);
-    if (index !== -1) {
-      setSelectedVerbIndex(index);
-      setActiveView('wordbook');
-      setWordbookQuery('');
-    }
-  };
-
   return {
     languageId,
     switchLanguage,
@@ -548,7 +628,7 @@ export function usePractice() {
     showCelebration,
     showCompletion,
     setShowCelebration,
-    stats,
+    stats: activeLanguageStats,
     missedPrompts,
     activeLanguage,
     sessionPrompts,
@@ -567,9 +647,9 @@ export function usePractice() {
     moveNext,
     dismissCelebration,
     dismissCompletion,
-    clickReviewItem,
     timeLeft,
     timerEnabled,
+    setTimerPaused,
     toggleTimer: () => setTimerEnabled((prev) => !prev),
   };
 }

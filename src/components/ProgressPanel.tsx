@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { BarChart3, BookOpenText, Flame, Target, Trophy } from 'lucide-react';
+import { BarChart3, BookOpenText, Flame, Target, Trophy, X } from 'lucide-react';
 import { type Attempt, type CumulativeStats } from '../hooks/usePractice';
-import { concreteTenses, type TenseId } from '../data/verbs';
+import { concreteTenses, pronouns, type Language, type TenseId } from '../data/verbs';
 
 interface ProgressPanelProps {
+  activeLanguage: Language;
   progress: number;
   progressPercent: number;
   attempts: Attempt[];
@@ -11,7 +12,7 @@ interface ProgressPanelProps {
   streak: number;
   recentMisses: Attempt[];
   cumulativeStats: CumulativeStats;
-  clickReviewItem: (verbInfinitive: string) => void;
+  onReviewModalChange: (isOpen: boolean) => void;
 }
 
 const getPronounLabel = (prompt: Attempt['prompt']) => prompt.selectedPronounLabel || prompt.language.pronounLabels[prompt.pronoun];
@@ -47,6 +48,7 @@ function RingMeter({ percent }: { percent: number }) {
 }
 
 export function ProgressPanel({
+  activeLanguage,
   progress,
   progressPercent,
   attempts,
@@ -54,11 +56,34 @@ export function ProgressPanel({
   streak,
   recentMisses,
   cumulativeStats,
-  clickReviewItem,
+  onReviewModalChange,
 }: ProgressPanelProps) {
+  const [activeMiss, setActiveMiss] = useState<Attempt | null>(null);
   const allTimeAccuracy = cumulativeStats.totalAttempts === 0 
     ? 0 
     : Math.round((cumulativeStats.totalCorrect / cumulativeStats.totalAttempts) * 100);
+  const activeMissTenseLabel = activeMiss ? getTenseLabel(activeMiss.prompt.tense) : '';
+
+  useEffect(() => {
+    onReviewModalChange(Boolean(activeMiss));
+
+    return () => onReviewModalChange(false);
+  }, [activeMiss, onReviewModalChange]);
+
+  useEffect(() => {
+    if (!activeMiss) {
+      return undefined;
+    }
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setActiveMiss(null);
+      }
+    };
+
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [activeMiss]);
 
   return (
     <aside className="progress-panel" aria-label="Practice progress">
@@ -100,9 +125,12 @@ export function ProgressPanel({
       </section>
 
       <section className="progress-card" style={{ paddingBottom: '12px' }}>
-        <div className="panel-title">
-          <Trophy size={18} aria-hidden="true" />
-          <h2>All-time Progress</h2>
+        <div className="panel-title-row">
+          <div className="panel-title">
+            <Trophy size={18} aria-hidden="true" />
+            <h2>All-time Progress</h2>
+          </div>
+          <span className="language-stat-tag">{activeLanguage.name}</span>
         </div>
         <div className="score-grid" style={{ margin: '14px -16px -16px', borderRadius: '0 0 8px 8px', boxShadow: 'none', border: 'none', borderTop: '1px solid var(--subtle-border)' }}>
           <div>
@@ -136,7 +164,7 @@ export function ProgressPanel({
         </div>
         {recentMisses.length === 0 ? (
           <p className="empty-state" style={{ marginTop: '12px' }}>
-            Wrong choices will land here. Click a card to look up the verb in the Word Book.
+            Wrong choices will land here. Click a card to inspect this tense.
           </p>
         ) : (
           <div className="miss-list">
@@ -150,7 +178,7 @@ export function ProgressPanel({
                 <button
                   className="miss-item clickable-miss-item"
                   key={`${infinitive}-${attempt.answer}-${index}`}
-                  onClick={() => clickReviewItem(infinitive)}
+                  onClick={() => setActiveMiss(attempt)}
                   style={{
                     border: 'none',
                     textAlign: 'left',
@@ -161,7 +189,7 @@ export function ProgressPanel({
                     transition: 'transform 150ms ease, background 150ms ease'
                   }}
                   type="button"
-                  title="Click to view conjugation in Word Book"
+                  title="View this tense"
                 >
                   <span>
                     {label} · {tense} · {infinitive}
@@ -173,6 +201,49 @@ export function ProgressPanel({
           </div>
         )}
       </section>
+
+      {activeMiss && (
+        <div
+          className="miss-modal-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setActiveMiss(null);
+            }
+          }}
+        >
+          <section
+            aria-labelledby="miss-modal-title"
+            aria-modal="true"
+            className="miss-modal"
+            role="dialog"
+          >
+            <div className="miss-modal-head">
+              <div>
+                <span className="eyebrow">{activeMissTenseLabel}</span>
+                <h2 id="miss-modal-title">{activeMiss.prompt.verb.infinitive}</h2>
+                <p>{activeMiss.prompt.verb.translation}</p>
+              </div>
+              <button
+                aria-label="Close conjugation detail"
+                className="modal-close-button"
+                onClick={() => setActiveMiss(null)}
+                type="button"
+              >
+                <X size={18} aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="miss-conjugation-list">
+              {pronouns.map((pronoun) => (
+                <div className="miss-conjugation-row" data-current={pronoun === activeMiss.prompt.pronoun} key={pronoun}>
+                  <span>{activeMiss.prompt.language.pronounLabels[pronoun]}</span>
+                  <strong>{activeMiss.prompt.verb.forms[activeMiss.prompt.tense][pronoun]}</strong>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
     </aside>
   );
 }

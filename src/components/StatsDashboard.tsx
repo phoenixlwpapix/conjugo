@@ -1,5 +1,6 @@
 import { BarChart3, CalendarDays, Flame, RotateCcw, Target, Trophy, type LucideIcon } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { languages } from '../data/verbs';
 import { getAccuracy } from '../lib/scoring';
 import type { StyleVars } from '../lib/style';
 import type { DailyStats, PracticeStats, StoredMiss } from '../types';
@@ -193,15 +194,22 @@ export function StatsDashboard({ bestStreak, storedMisses, stats, todayAccuracy,
               <p className="empty-state">No saved misses yet. Your future review load will appear here.</p>
             ) : (
               <div className="stats-review-list">
-                {recentMisses.map((miss) => (
-                  <div key={`${miss.languageId}-${miss.verbInfinitive}-${miss.tense}-${miss.pronoun}`}>
-                    <span>
-                      {miss.languageId} · {miss.tense} · {miss.pronoun}
-                    </span>
-                    <strong>{miss.verbInfinitive}</strong>
-                    <em>{miss.answer}</em>
-                  </div>
-                ))}
+                {recentMisses.map((miss) => {
+                  const lang = languages.find((l) => l.id === miss.languageId);
+                  const verb = lang?.verbs.find((v) => v.infinitive === miss.verbInfinitive);
+                  const correctAnswer = verb ? verb.forms[miss.tense][miss.pronoun] : '';
+                  const displayAnswer = miss.answer || correctAnswer;
+
+                  return (
+                    <div key={`${miss.languageId}-${miss.verbInfinitive}-${miss.tense}-${miss.pronoun}`}>
+                      <span>
+                        {miss.languageId} · {miss.tense} · {miss.pronoun}
+                      </span>
+                      <strong>{miss.verbInfinitive}</strong>
+                      <em>{displayAnswer}</em>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>

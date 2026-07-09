@@ -1,15 +1,21 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { languages } from '../../data/verbs';
 import {
   clampEnglishTense,
+  createPromptPool,
   getChoices,
   createSessionPrompts,
   getAnswer,
+  getPronounLabel,
 } from '../prompts';
 
 describe('prompts', () => {
   const spanish = languages.find((l) => l.id === 'spanish')!;
   const english = languages.find((l) => l.id === 'english')!;
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
   describe('clampEnglishTense', () => {
     it('should clamp imperfect and conditional tenses to present for English', () => {
@@ -121,6 +127,15 @@ describe('prompts', () => {
       expect(answer).toBeDefined();
       expect(typeof answer).toBe('string');
       expect(answer.length).toBeGreaterThan(0);
+    });
+
+    it('should expand Spanish abbreviated second-person plural labels', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99);
+
+      const prompt = createPromptPool(spanish, 'present').find((item) => item.pronoun === 'you plural');
+
+      expect(prompt).toBeDefined();
+      expect(getPronounLabel(prompt!)).toBe('vosotras');
     });
   });
 });

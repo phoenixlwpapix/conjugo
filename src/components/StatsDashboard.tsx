@@ -2,8 +2,8 @@ import { BarChart3, CalendarDays, Flame, RotateCcw, Target, Trophy, type LucideI
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { languages } from '../data/verbs';
 import { getAccuracy } from '../lib/scoring';
-import type { StyleVars } from '../lib/style';
 import type { DailyStats, PracticeStats, StoredMiss } from '../types';
+import { RingMeter } from './ui/RingMeter';
 
 type TrendPoint = {
   key: string;
@@ -67,16 +67,12 @@ export function StatsDashboard({ bestStreak, storedMisses, stats, todayAccuracy,
             <span>{totalWeekAnswers} answers this week</span>
           </div>
         </div>
-        <div
+        <RingMeter
+          progressPercent={overallAccuracy}
+          label="overall"
           className="stats-hero-score"
-          aria-label={`Overall accuracy ${overallAccuracy}%`}
-          style={{ '--score-progress': `${overallAccuracy}%` } as StyleVars}
-        >
-          <div className="stats-hero-score-content">
-            <strong>{overallAccuracy}%</strong>
-            <span>overall</span>
-          </div>
-        </div>
+          ariaLabel={`Overall accuracy ${overallAccuracy}%`}
+        />
       </div>
 
       <div className="stats-kpi-grid">
@@ -110,32 +106,33 @@ export function StatsDashboard({ bestStreak, storedMisses, stats, todayAccuracy,
           <div className="stats-trend-chart" role="img" aria-label="Seven day accuracy trend">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ bottom: 8, left: -8, right: 10, top: 12 }}>
-                <CartesianGrid stroke="var(--subtle-border)" strokeDasharray="3 5" vertical={false} />
+                <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 5" vertical={false} />
                 <XAxis
                   axisLine={false}
                   dataKey="label"
                   dy={8}
-                  tick={{ fill: 'var(--muted)', fontSize: 12, fontWeight: 800 }}
+                  tick={{ fill: 'var(--chart-axis-text)', fontSize: 12, fontWeight: 800 }}
                   tickLine={false}
                 />
                 <YAxis
                   axisLine={false}
                   domain={[0, 100]}
-                  tick={{ fill: 'var(--muted)', fontSize: 12, fontWeight: 800 }}
+                  tick={{ fill: 'var(--chart-axis-text)', fontSize: 12, fontWeight: 800 }}
                   tickFormatter={formatPercentTick}
                   tickLine={false}
                   width={44}
                 />
                 <Tooltip
                   contentStyle={{
-                    background: 'var(--paper)',
-                    border: '1px solid var(--panel-border)',
+                    background: 'var(--chart-tooltip-surface)',
+                    border: '1px solid var(--chart-tooltip-border)',
                     borderRadius: 8,
                     boxShadow: 'var(--shadow)',
-                    color: 'var(--ink)',
                     fontWeight: 800,
                   }}
-                  cursor={{ stroke: 'var(--subtle-border)', strokeWidth: 1 }}
+                  cursor={{ stroke: 'var(--chart-grid)', strokeWidth: 1 }}
+                  itemStyle={{ color: 'var(--chart-tooltip-value)', fontWeight: 900 }}
+                  labelStyle={{ color: 'var(--chart-tooltip-label)', fontWeight: 900 }}
                   formatter={(value, _name, item) => {
                     const payload = item.payload as ChartPoint;
 

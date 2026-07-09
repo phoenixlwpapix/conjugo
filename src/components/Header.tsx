@@ -102,6 +102,7 @@ export function Header({
       </div>
 
       <nav className="language-tabs" aria-label="Choose language">
+        <span className="language-tabs-title">Languages</span>
         {languages.map((language) => (
           <button
             className="tab-button"

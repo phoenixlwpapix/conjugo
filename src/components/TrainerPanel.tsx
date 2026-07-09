@@ -101,7 +101,6 @@ export function TrainerPanel({
             Question {Math.min(attempts.length + 1, sessionTarget)}
           </span>
           <h1>{getLocalizedTitle(prompt.language.id)}</h1>
-          <p className="scope-note">6 person forms</p>
         </div>
 
         <button

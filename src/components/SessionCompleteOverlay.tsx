@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import confetti from 'canvas-confetti';
 import { Target, Trophy, AlertCircle, RotateCcw, Home, X } from 'lucide-react';
 import { useFocusTrap } from '../lib/focusTrap';
 
@@ -13,15 +14,6 @@ type SessionCompleteOverlayProps = {
 };
 
 const confettiColors = ['#174f43', '#1f65c7', '#f2b13d', '#c74735', '#0f766e'];
-const confettiPieces = Array.from({ length: 44 }, (_, index) => ({
-  id: index,
-  color: confettiColors[index % confettiColors.length],
-  delay: `${(index % 11) * 58}ms`,
-  duration: `${980 + (index % 7) * 90}ms`,
-  left: `${6 + ((index * 19) % 88)}%`,
-  size: `${7 + (index % 4) * 2}px`,
-  spin: `${(index % 2 === 0 ? 1 : -1) * (160 + index * 13)}deg`,
-}));
 
 export function SessionCompleteOverlay({
   mode,
@@ -33,6 +25,10 @@ export function SessionCompleteOverlay({
   onReturnHome,
 }: SessionCompleteOverlayProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const confettiCanvasRef = useRef<HTMLCanvasElement>(null);
+  const missedCount = totalCount - correctCount;
+  const isPerfect = mode === 'perfect';
+  const titleId = isPerfect ? 'celebration-title' : 'completion-title';
   useFocusTrap(true, dialogRef);
 
   useEffect(() => {
@@ -45,9 +41,50 @@ export function SessionCompleteOverlay({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onDismiss]);
 
-  const missedCount = totalCount - correctCount;
-  const isPerfect = mode === 'perfect';
-  const titleId = isPerfect ? 'celebration-title' : 'completion-title';
+  useEffect(() => {
+    if (
+      !isPerfect ||
+      !confettiCanvasRef.current ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      return;
+    }
+
+    const burst = confetti.create(confettiCanvasRef.current, {
+      resize: true,
+      useWorker: true,
+    });
+    const endTime = Date.now() + 2_000;
+    let frameId = 0;
+
+    const fire = () => {
+      burst({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.8 },
+        colors: confettiColors,
+      });
+      burst({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.8 },
+        colors: confettiColors,
+      });
+
+      if (Date.now() < endTime) {
+        frameId = window.requestAnimationFrame(fire);
+      }
+    };
+
+    fire();
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      burst.reset();
+    };
+  }, [isPerfect]);
 
   return (
     <section
@@ -58,23 +95,7 @@ export function SessionCompleteOverlay({
       <div className="celebration-backdrop" onClick={onDismiss} />
 
       {isPerfect && (
-        <div className="confetti-field" aria-hidden="true">
-          {confettiPieces.map((piece) => (
-            <span
-              key={piece.id}
-              style={
-                {
-                  '--confetti-color': piece.color,
-                  '--confetti-delay': piece.delay,
-                  '--confetti-duration': piece.duration,
-                  '--confetti-left': piece.left,
-                  '--confetti-size': piece.size,
-                  '--confetti-spin': piece.spin,
-                } as React.CSSProperties
-              }
-            />
-          ))}
-        </div>
+        <canvas ref={confettiCanvasRef} className="confetti-field" aria-hidden="true" />
       )}
 
       <div

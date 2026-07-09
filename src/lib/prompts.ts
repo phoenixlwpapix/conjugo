@@ -18,13 +18,27 @@ export const getPracticeTenses = (practiceTense: PracticeTenseId, languageId?: L
   return practiceTense === 'mixed' ? tenses.map((tense) => tense.id) : [practiceTense];
 };
 
+const getPronounLabelOptions = (label: string) => {
+  const suffixMatch = /^(.+?)([aeio]s?)\/([aeio]s?)$/.exec(label);
+  if (suffixMatch) {
+    const [, base, firstSuffix, secondSuffix] = suffixMatch;
+    return [`${base}${firstSuffix}`, `${base}${secondSuffix}`];
+  }
+
+  return label.split('/');
+};
+
+const choosePronounLabel = (label: string) => {
+  const options = getPronounLabelOptions(label);
+  return options[Math.floor(Math.random() * options.length)];
+};
+
 export const createPromptPool = (language: Language, practiceTense: PracticeTenseId): Prompt[] =>
   language.verbs.flatMap((verb) =>
     getPracticeTenses(practiceTense, language.id).flatMap((tense) =>
       pronouns.map((pronoun) => {
         const fullLabel = language.pronounLabels[pronoun];
-        const parts = fullLabel.split('/');
-        const selectedPronounLabel = parts[Math.floor(Math.random() * parts.length)];
+        const selectedPronounLabel = choosePronounLabel(fullLabel);
         return {
           language,
           verb,
@@ -82,8 +96,7 @@ export const getFallbackPrompt = (language: Language, practiceTense: PracticeTen
 
   const pronoun = pronouns[0];
   const fullLabel = language.pronounLabels[pronoun];
-  const parts = fullLabel.split('/');
-  const selectedPronounLabel = parts[Math.floor(Math.random() * parts.length)];
+  const selectedPronounLabel = choosePronounLabel(fullLabel);
 
   return {
     language,

@@ -3,9 +3,12 @@ import type { StyleVars } from '../../lib/style';
 
 type RingMeterProps = {
   progressPercent: number;
+  label?: string;
+  className?: string;
+  ariaLabel?: string;
 };
 
-export function RingMeter({ progressPercent }: RingMeterProps) {
+export function RingMeter({ progressPercent, label, className, ariaLabel }: RingMeterProps) {
   const [animatedPercent, setAnimatedPercent] = useState(0);
 
   useEffect(() => {
@@ -27,8 +30,19 @@ export function RingMeter({ progressPercent }: RingMeterProps) {
   }, [progressPercent]);
 
   return (
-    <div className="ring-meter" style={{ '--progress': `${animatedPercent}%` } as StyleVars}>
-      <span>{Math.round(animatedPercent)}%</span>
+    <div
+      className={['ring-meter', className].filter(Boolean).join(' ')}
+      aria-label={ariaLabel}
+      style={{ '--progress': `${animatedPercent}%` } as StyleVars}
+    >
+      {label ? (
+        <div className="ring-meter-content">
+          <strong>{Math.round(animatedPercent)}%</strong>
+          <span>{label}</span>
+        </div>
+      ) : (
+        <span>{Math.round(animatedPercent)}%</span>
+      )}
     </div>
   );
 }

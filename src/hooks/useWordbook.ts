@@ -10,7 +10,12 @@ export const useWordbook = (activeLanguage: Language) => {
   useEffect(() => {
     setSelectedVerbInfinitive(activeLanguage.verbs[0]?.infinitive ?? '');
     setWordbookQuery('');
-  }, [activeLanguage]);
+    if (activeLanguage.id === 'english' && (bookTense === 'imperfect' || bookTense === 'conditional')) {
+      setBookTense('present');
+    }
+    // Only reset selection when language changes; bookTense intentionally omitted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeLanguage.id]);
 
   const filteredVerbs = useMemo(() => {
     const normalizedQuery = wordbookQuery.trim().toLowerCase();

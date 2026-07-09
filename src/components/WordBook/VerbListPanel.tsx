@@ -39,11 +39,13 @@ export function VerbListPanel({
         />
       </label>
 
+      <p className="scope-note wordbook-scope">Shows all 6 standard person forms.</p>
+
       <div className="verb-list" aria-label={`${activeLanguage.name} verbs`}>
         {filteredVerbs.length === 0 ? (
           <p className="empty-state">No verbs match this search.</p>
         ) : (
-          filteredVerbs.map(({ verb, index }) => (
+          filteredVerbs.map(({ verb }, displayIndex) => (
             <button
               className="verb-list-item"
               data-active={selectedVerbInfinitive === verb.infinitive}
@@ -51,7 +53,7 @@ export function VerbListPanel({
               onClick={() => onSelectVerb(verb.infinitive)}
               type="button"
             >
-              <span className="verb-list-number">{String(index + 1).padStart(2, '0')}</span>
+              <span className="verb-list-number">{String(displayIndex + 1).padStart(2, '0')}</span>
               <strong>{verb.infinitive}</strong>
               <span>{verb.translation}</span>
             </button>

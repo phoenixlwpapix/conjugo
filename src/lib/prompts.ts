@@ -1,13 +1,20 @@
-import { concreteTenses, pronouns, type Language, type PracticeTenseId, type TenseId } from '../data/verbs';
+import { concreteTenses, pronouns, type Language, type LanguageId, type PracticeTenseId, type TenseId } from '../data/verbs';
 import type { Prompt, ReviewTarget } from '../types';
 
 export const sessionTarget = 20;
 export const autoAdvanceDelayMs = 1200;
+export const timerSeconds = 8;
+
+export const clampEnglishTense = (languageId: LanguageId, tense: PracticeTenseId): PracticeTenseId => {
+  if (languageId === 'english' && (tense === 'imperfect' || tense === 'conditional')) {
+    return 'present';
+  }
+  return tense;
+};
 
 export const getPracticeTenses = (practiceTense: PracticeTenseId, languageId?: Language['id']): TenseId[] => {
-  const tenses = languageId === 'english'
-    ? concreteTenses.filter((t) => t.id !== 'imperfect' && t.id !== 'conditional')
-    : concreteTenses;
+  const tenses =
+    languageId === 'english' ? concreteTenses.filter((tense) => tense.id !== 'imperfect' && tense.id !== 'conditional') : concreteTenses;
   return practiceTense === 'mixed' ? tenses.map((tense) => tense.id) : [practiceTense];
 };
 
@@ -111,10 +118,11 @@ export const getChoices = (prompt: Prompt, seed: number, choiceCount = 4) => {
     .filter((value, index, values) => value !== correctAnswer && values.indexOf(value) === index)
     .sort((first, second) => stableScore(first, seed) - stableScore(second, seed))
     .slice(0, choiceCount - 1);
-  
-  const languageTenses = prompt.language.id === 'english'
-    ? concreteTenses.filter((t) => t.id !== 'imperfect' && t.id !== 'conditional')
-    : concreteTenses;
+
+  const languageTenses =
+    prompt.language.id === 'english'
+      ? concreteTenses.filter((tense) => tense.id !== 'imperfect' && tense.id !== 'conditional')
+      : concreteTenses;
 
   const fallbackDistractors = languageTenses
     .flatMap((tense) => pronouns.map((pronoun) => prompt.verb.forms[tense.id][pronoun]))

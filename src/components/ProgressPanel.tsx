@@ -1,7 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BarChart3, BookOpenText, Flame, Target, Trophy, X } from 'lucide-react';
-import { type Attempt, type CumulativeStats } from '../hooks/usePractice';
-import { concreteTenses, pronouns, type Language, type TenseId } from '../data/verbs';
+import { pronouns, type Language } from '../data/verbs';
+import { useFocusTrap } from '../lib/focusTrap';
+import { getAnswer, getPronounLabel, getTenseLabel } from '../lib/prompts';
+import { getAccuracy } from '../lib/scoring';
+import type { Attempt, PracticeStats } from '../types';
+import { RingMeter } from './ui/RingMeter';
 
 interface ProgressPanelProps {
   activeLanguage: Language;
@@ -11,40 +15,9 @@ interface ProgressPanelProps {
   accuracy: number;
   streak: number;
   recentMisses: Attempt[];
-  cumulativeStats: CumulativeStats;
+  cumulativeStats: PracticeStats;
+  sessionTarget: number;
   onReviewModalChange: (isOpen: boolean) => void;
-}
-
-const getPronounLabel = (prompt: Attempt['prompt']) => prompt.selectedPronounLabel || prompt.language.pronounLabels[prompt.pronoun];
-const getTenseLabel = (tense: TenseId) => concreteTenses.find((item) => item.id === tense)?.label ?? tense;
-const getAnswer = (prompt: Attempt['prompt']) => prompt.verb.forms[prompt.tense][prompt.pronoun];
-
-// Custom animated ring meter using requestAnimationFrame lerp
-function RingMeter({ percent }: { percent: number }) {
-  const [animatedPercent, setAnimatedPercent] = useState(0);
-
-  useEffect(() => {
-    let animationFrameId: number;
-    const animate = () => {
-      setAnimatedPercent((prev) => {
-        const diff = percent - prev;
-        if (Math.abs(diff) < 0.2) {
-          return percent;
-        }
-        const next = prev + diff * 0.15; // smooth interpolation speed
-        animationFrameId = requestAnimationFrame(animate);
-        return next;
-      });
-    };
-    animate();
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [percent]);
-
-  return (
-    <div className="ring-meter" style={{ '--progress': `${animatedPercent}%` } as React.CSSProperties}>
-      <span>{Math.round(animatedPercent)}%</span>
-    </div>
-  );
 }
 
 export function ProgressPanel({
@@ -56,17 +29,19 @@ export function ProgressPanel({
   streak,
   recentMisses,
   cumulativeStats,
+  sessionTarget,
   onReviewModalChange,
 }: ProgressPanelProps) {
   const [activeMiss, setActiveMiss] = useState<Attempt | null>(null);
-  const allTimeAccuracy = cumulativeStats.totalAttempts === 0 
-    ? 0 
-    : Math.round((cumulativeStats.totalCorrect / cumulativeStats.totalAttempts) * 100);
+  const modalRef = useRef<HTMLElement>(null);
+  useFocusTrap(Boolean(activeMiss), modalRef);
+
+  const allTimeAccuracy = getAccuracy(cumulativeStats.totalCorrect, cumulativeStats.totalAnswered);
   const activeMissTenseLabel = activeMiss ? getTenseLabel(activeMiss.prompt.tense) : '';
+  const remaining = Math.max(sessionTarget - progress, 0);
 
   useEffect(() => {
     onReviewModalChange(Boolean(activeMiss));
-
     return () => onReviewModalChange(false);
   }, [activeMiss, onReviewModalChange]);
 
@@ -90,14 +65,10 @@ export function ProgressPanel({
       <section className="progress-card">
         <div className="panel-title">
           <BarChart3 size={18} aria-hidden="true" />
-          <h2>Today's Session</h2>
+          <h2>This set</h2>
         </div>
-        <RingMeter percent={progressPercent} />
-        <p>
-          {20 - progress > 0
-            ? `${20 - progress} more to complete this set`
-            : 'Set complete. Reset or keep going.'}
-        </p>
+        <RingMeter progressPercent={progressPercent} />
+        <p>{remaining > 0 ? `${remaining} more to complete this set` : 'Set complete. Reset or keep going.'}</p>
       </section>
 
       <section className="score-grid">
@@ -124,7 +95,7 @@ export function ProgressPanel({
         </div>
       </section>
 
-      <section className="progress-card" style={{ paddingBottom: '12px' }}>
+      <section className="progress-card alltime-card">
         <div className="panel-title-row">
           <div className="panel-title">
             <Trophy size={18} aria-hidden="true" />
@@ -132,12 +103,12 @@ export function ProgressPanel({
           </div>
           <span className="language-stat-tag">{activeLanguage.name}</span>
         </div>
-        <div className="score-grid" style={{ margin: '14px -16px -16px', borderRadius: '0 0 8px 8px', boxShadow: 'none', border: 'none', borderTop: '1px solid var(--subtle-border)' }}>
+        <div className="score-grid alltime-score-grid">
           <div>
             <span>Total Drills</span>
             <strong>
               <Target size={18} aria-hidden="true" />
-              {cumulativeStats.totalAttempts}
+              {cumulativeStats.totalAnswered}
             </strong>
           </div>
           <div>
@@ -151,7 +122,7 @@ export function ProgressPanel({
             <span>Max Streak</span>
             <strong>
               <Flame size={18} aria-hidden="true" />
-              {cumulativeStats.maxStreak}
+              {cumulativeStats.bestStreak}
             </strong>
           </div>
         </div>
@@ -163,9 +134,7 @@ export function ProgressPanel({
           <h2>Review (Recent Misses)</h2>
         </div>
         {recentMisses.length === 0 ? (
-          <p className="empty-state" style={{ marginTop: '12px' }}>
-            Wrong choices will land here. Click a card to inspect this tense.
-          </p>
+          <p className="empty-state review-empty">Wrong choices will land here. Click a card to inspect this tense.</p>
         ) : (
           <div className="miss-list">
             {recentMisses.map((attempt, index) => {
@@ -179,15 +148,6 @@ export function ProgressPanel({
                   className="miss-item clickable-miss-item"
                   key={`${infinitive}-${attempt.answer}-${index}`}
                   onClick={() => setActiveMiss(attempt)}
-                  style={{
-                    border: 'none',
-                    textAlign: 'left',
-                    width: '100%',
-                    cursor: 'pointer',
-                    display: 'grid',
-                    gap: '4px',
-                    transition: 'transform 150ms ease, background 150ms ease'
-                  }}
                   type="button"
                   title="View this tense"
                 >
@@ -212,6 +172,7 @@ export function ProgressPanel({
           }}
         >
           <section
+            ref={modalRef}
             aria-labelledby="miss-modal-title"
             aria-modal="true"
             className="miss-modal"

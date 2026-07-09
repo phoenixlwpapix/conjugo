@@ -1,13 +1,17 @@
-import { CSSProperties, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState, type CSSProperties } from 'react';
 import { usePractice } from './hooks/usePractice';
 import { Header } from './components/Header';
 import { SessionBar } from './components/SessionBar';
 import { TrainerPanel } from './components/TrainerPanel';
 import { ProgressPanel } from './components/ProgressPanel';
-import { WordBookPanel } from './components/WordBookPanel';
-import { CelebrationOverlay } from './components/CelebrationOverlay';
-import { CompletionOverlay } from './components/CompletionOverlay';
+import { WordBook } from './components/WordBook/WordBook';
+import { SessionCompleteOverlay } from './components/SessionCompleteOverlay';
+import { isEditableElement } from './lib/focusTrap';
 import { isThemeId, themeStorageKey, type ThemeId } from './data/themes';
+
+const StatsDashboard = lazy(() =>
+  import('./components/StatsDashboard').then((module) => ({ default: module.StatsDashboard })),
+);
 
 export default function App() {
   const [themeId, setThemeId] = useState<ThemeId>(() => {
@@ -32,16 +36,20 @@ export default function App() {
     setActiveView,
     bookTense,
     setBookTense,
-    selectedVerbIndex,
-    setSelectedVerbIndex,
     wordbookQuery,
     setWordbookQuery,
+    selectedVerb,
+    selectedVerbInfinitive,
+    setSelectedVerbInfinitive,
+    filteredVerbs,
     selectedAnswer,
+    timedOut,
     attempts,
     streak,
     showCelebration,
     showCompletion,
     stats,
+    storedMisses,
     activeLanguage,
     prompt,
     choices,
@@ -60,8 +68,13 @@ export default function App() {
     dismissCompletion,
     timeLeft,
     timerEnabled,
+    timerPaused,
     setTimerPaused,
     toggleTimer,
+    todayStats,
+    todayAccuracy,
+    trend,
+    sessionTarget,
   } = usePractice();
 
   useEffect(() => {
@@ -74,27 +87,24 @@ export default function App() {
     }
   }, [themeId]);
 
-  // Keyboard Shortcuts Support
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Skip if typing in an input
-      if (
-        document.activeElement?.tagName === 'INPUT' ||
-        document.activeElement?.tagName === 'TEXTAREA'
-      ) {
+      if (isEditableElement(event.target) || event.defaultPrevented) {
+        return;
+      }
+
+      if (activeView !== 'practice' || showCelebration || showCompletion || timerPaused) {
         return;
       }
 
       const key = event.key.toLowerCase();
 
-      // Reset shortcut
       if (key === 'r') {
         event.preventDefault();
         resetSession();
         return;
       }
 
-      // Next / Reset when answered
       if (isAnswered) {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
@@ -107,8 +117,7 @@ export default function App() {
         return;
       }
 
-      // Choice selection (1-4 or A-D)
-      if (!isAnswered && !isSessionComplete) {
+      if (!isSessionComplete) {
         if (key === '1' || key === 'a') {
           event.preventDefault();
           if (choices[0]) selectChoice(choices[0]);
@@ -126,17 +135,19 @@ export default function App() {
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
-    isAnswered,
-    isSessionComplete,
+    activeView,
     choices,
+    isAnswered,
     isCorrect,
-    selectChoice,
-    resetSession,
+    isSessionComplete,
     moveNext,
+    resetSession,
+    selectChoice,
+    showCelebration,
+    showCompletion,
+    timerPaused,
   ]);
 
   const sessionCorrectCount = attempts.filter((attempt) => attempt.correct).length;
@@ -154,24 +165,26 @@ export default function App() {
       style={{ '--language-accent': themeId === 'dark' ? activeLanguage.darkAccent : activeLanguage.accent } as CSSProperties}
     >
       {showCelebration && (
-        <CelebrationOverlay
+        <SessionCompleteOverlay
+          mode="perfect"
           accuracy={accuracy}
           correctCount={sessionCorrectCount}
-          dismissCelebration={dismissCelebration}
-          resetSession={resetSession}
-          returnHome={returnHome}
           totalCount={attempts.length}
+          onDismiss={dismissCelebration}
+          onNewSet={resetSession}
+          onReturnHome={returnHome}
         />
       )}
 
       {showCompletion && (
-        <CompletionOverlay
+        <SessionCompleteOverlay
+          mode="complete"
           accuracy={accuracy}
           correctCount={sessionCorrectCount}
-          dismissCompletion={dismissCompletion}
-          resetSession={resetSession}
-          returnHome={returnHome}
           totalCount={attempts.length}
+          onDismiss={dismissCompletion}
+          onNewSet={resetSession}
+          onReturnHome={returnHome}
         />
       )}
 
@@ -185,7 +198,7 @@ export default function App() {
       />
 
       <div className="app-content">
-        {activeView === 'practice' ? (
+        {activeView === 'practice' && (
           <>
             <SessionBar
               languageId={languageId}
@@ -201,6 +214,7 @@ export default function App() {
                 practiceTense={practiceTense}
                 choices={choices}
                 selectedAnswer={selectedAnswer}
+                timedOut={timedOut}
                 correctAnswer={correctAnswer}
                 isAnswered={isAnswered}
                 isCorrect={isCorrect}
@@ -212,6 +226,7 @@ export default function App() {
                 timeLeft={timeLeft}
                 timerEnabled={timerEnabled}
                 toggleTimer={toggleTimer}
+                sessionTarget={sessionTarget}
               />
 
               <ProgressPanel
@@ -223,19 +238,43 @@ export default function App() {
                 streak={streak}
                 recentMisses={recentMisses}
                 cumulativeStats={stats}
+                sessionTarget={sessionTarget}
                 onReviewModalChange={setTimerPaused}
               />
             </section>
           </>
-        ) : (
-          <WordBookPanel
+        )}
+
+        {activeView === 'stats' && (
+          <Suspense
+            fallback={
+              <section className="stats-loading-card" aria-busy="true" aria-label="Loading stats">
+                Loading performance dashboard…
+              </section>
+            }
+          >
+            <StatsDashboard
+              bestStreak={stats.bestStreak}
+              storedMisses={storedMisses}
+              stats={stats}
+              todayAccuracy={todayAccuracy}
+              todayStats={todayStats}
+              trend={trend}
+            />
+          </Suspense>
+        )}
+
+        {activeView === 'wordbook' && selectedVerb && (
+          <WordBook
             activeLanguage={activeLanguage}
-            selectedVerbIndex={selectedVerbIndex}
-            setSelectedVerbIndex={setSelectedVerbIndex}
-            wordbookQuery={wordbookQuery}
-            setWordbookQuery={setWordbookQuery}
             bookTense={bookTense}
-            setBookTense={setBookTense}
+            filteredVerbs={filteredVerbs}
+            onQueryChange={setWordbookQuery}
+            onSelectVerb={setSelectedVerbInfinitive}
+            onTenseChange={setBookTense}
+            query={wordbookQuery}
+            selectedVerb={selectedVerb}
+            selectedVerbInfinitive={selectedVerbInfinitive}
           />
         )}
       </div>

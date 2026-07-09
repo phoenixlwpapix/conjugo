@@ -1,8 +1,8 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { BookOpenText, Menu, Moon, Sun, Target, X } from 'lucide-react';
+import { BarChart3, BookOpenText, Menu, Moon, Sun, Target, X } from 'lucide-react';
 import { languages, type LanguageId } from '../data/verbs';
 import { type ThemeId } from '../data/themes';
-import { type AppView } from '../hooks/usePractice';
+import type { AppView } from '../types';
 
 interface HeaderProps {
   languageId: LanguageId;
@@ -12,6 +12,12 @@ interface HeaderProps {
   themeId: ThemeId;
   setThemeId: (themeId: ThemeId) => void;
 }
+
+const viewLabels: Record<AppView, string> = {
+  practice: 'Practice',
+  stats: 'Stats',
+  wordbook: 'Word Book',
+};
 
 export function Header({
   languageId,
@@ -23,7 +29,6 @@ export function Header({
 }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const activeLanguage = languages.find((language) => language.id === languageId) ?? languages[0];
-  const activeViewLabel = activeView === 'practice' ? 'Practice' : 'Word Book';
 
   useEffect(() => {
     if (!isMenuOpen) {
@@ -78,6 +83,15 @@ export function Header({
         </button>
         <button
           className="view-button"
+          data-active={activeView === 'stats'}
+          onClick={() => setActiveView('stats')}
+          type="button"
+        >
+          <BarChart3 size={16} aria-hidden="true" />
+          Stats
+        </button>
+        <button
+          className="view-button"
           data-active={activeView === 'wordbook'}
           onClick={() => setActiveView('wordbook')}
           type="button"
@@ -105,7 +119,7 @@ export function Header({
       <div className="language-select-wrapper">
         <select
           value={languageId}
-          onChange={(e) => switchLanguage(e.target.value as LanguageId)}
+          onChange={(event) => switchLanguage(event.target.value as LanguageId)}
           aria-label="Choose language"
           className="language-select"
         >
@@ -128,7 +142,7 @@ export function Header({
 
       <div className="mobile-status" aria-label="Current selection">
         <strong>{activeLanguage.name}</strong>
-        <span>{activeViewLabel}</span>
+        <span>{viewLabels[activeView]}</span>
       </div>
 
       <button
@@ -145,10 +159,14 @@ export function Header({
       <div className="mobile-menu-panel" data-open={isMenuOpen} id="mobile-navigation">
         <div className="mobile-menu-section">
           <span>Workspace</span>
-          <div className="mobile-view-grid">
+          <div className="mobile-view-grid mobile-view-grid-3">
             <button className="view-button" data-active={activeView === 'practice'} onClick={() => chooseView('practice')} type="button">
               <Target size={16} aria-hidden="true" />
               Practice
+            </button>
+            <button className="view-button" data-active={activeView === 'stats'} onClick={() => chooseView('stats')} type="button">
+              <BarChart3 size={16} aria-hidden="true" />
+              Stats
             </button>
             <button className="view-button" data-active={activeView === 'wordbook'} onClick={() => chooseView('wordbook')} type="button">
               <BookOpenText size={16} aria-hidden="true" />
@@ -176,8 +194,8 @@ export function Header({
         </div>
 
         <div className="mobile-menu-section">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ color: 'var(--muted)', fontSize: '0.74rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Theme</span>
+          <div className="mobile-theme-row">
+            <span className="mobile-theme-label">Theme</span>
             <button
               className="theme-toggle"
               onClick={toggleTheme}

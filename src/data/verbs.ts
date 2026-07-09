@@ -1,7 +1,7 @@
 export type LanguageId = 'english' | 'french' | 'spanish' | 'italian';
 export type TenseId = 'present' | 'past' | 'imperfect' | 'future' | 'conditional';
 export type PracticeTenseId = TenseId | 'mixed';
-export type Pronoun = 'I' | 'you' | 'he/she' | 'we' | 'they';
+export type Pronoun = 'I' | 'you' | 'he/she' | 'we' | 'you plural' | 'they';
 
 export type VerbEntry = {
   infinitive: string;
@@ -34,7 +34,7 @@ export const tenseOptions: Array<{ id: PracticeTenseId; label: string }> = [
   { id: 'mixed', label: 'Mixed' },
 ];
 
-export const pronouns: Pronoun[] = ['I', 'you', 'he/she', 'we', 'they'];
+export const pronouns: Pronoun[] = ['I', 'you', 'he/she', 'we', 'you plural', 'they'];
 
 const verb = (infinitive: string, translation: string, forms: Forms): VerbEntry => ({
   infinitive,
@@ -44,11 +44,11 @@ const verb = (infinitive: string, translation: string, forms: Forms): VerbEntry 
 
 const englishVerb = (base: string, translation: string, presentThird: string, past: string) =>
   verb(`to ${base}`, translation, {
-    present: { I: base, you: base, 'he/she': presentThird, we: base, they: base },
-    past: { I: past, you: past, 'he/she': past, we: past, they: past },
-    imperfect: { I: past, you: past, 'he/she': past, we: past, they: past },
-    future: { I: `will ${base}`, you: `will ${base}`, 'he/she': `will ${base}`, we: `will ${base}`, they: `will ${base}` },
-    conditional: { I: `would ${base}`, you: `would ${base}`, 'he/she': `would ${base}`, we: `would ${base}`, they: `would ${base}` },
+    present: { I: base, you: base, 'he/she': presentThird, we: base, 'you plural': base, they: base },
+    past: { I: past, you: past, 'he/she': past, we: past, 'you plural': past, they: past },
+    imperfect: { I: past, you: past, 'he/she': past, we: past, 'you plural': past, they: past },
+    future: { I: `will ${base}`, you: `will ${base}`, 'he/she': `will ${base}`, we: `will ${base}`, 'you plural': `will ${base}`, they: `will ${base}` },
+    conditional: { I: `would ${base}`, you: `would ${base}`, 'he/she': `would ${base}`, we: `would ${base}`, 'you plural': `would ${base}`, they: `would ${base}` },
   });
 
 const frenchImperfect = (stem: string) => ({
@@ -56,6 +56,7 @@ const frenchImperfect = (stem: string) => ({
   you: `${stem}ais`,
   'he/she': `${stem}ait`,
   we: `${stem}ions`,
+  'you plural': `${stem}iez`,
   they: `${stem}aient`,
 });
 
@@ -66,6 +67,7 @@ const spanishArImperfect = (stem: string) => ({
   you: `${stem}abas`,
   'he/she': `${stem}aba`,
   we: `${stem}ábamos`,
+  'you plural': `${stem}abais`,
   they: `${stem}aban`,
 });
 
@@ -74,6 +76,7 @@ const spanishErIrImperfect = (stem: string) => ({
   you: `${stem}ías`,
   'he/she': `${stem}ía`,
   we: `${stem}íamos`,
+  'you plural': `${stem}íais`,
   they: `${stem}ían`,
 });
 
@@ -84,6 +87,7 @@ const italianAreImperfect = (stem: string) => ({
   you: `${stem}avi`,
   'he/she': `${stem}ava`,
   we: `${stem}avamo`,
+  'you plural': `${stem}avate`,
   they: `${stem}avano`,
 });
 
@@ -92,6 +96,7 @@ const italianEreImperfect = (stem: string) => ({
   you: `${stem}evi`,
   'he/she': `${stem}eva`,
   we: `${stem}evamo`,
+  'you plural': `${stem}evate`,
   they: `${stem}evano`,
 });
 
@@ -100,6 +105,7 @@ const italianIreImperfect = (stem: string) => ({
   you: `${stem}ivi`,
   'he/she': `${stem}iva`,
   we: `${stem}ivamo`,
+  'you plural': `${stem}ivate`,
   they: `${stem}ivano`,
 });
 
@@ -108,6 +114,7 @@ const italianConditional = (stem: string) => ({
   you: `${stem}esti`,
   'he/she': `${stem}ebbe`,
   we: `${stem}emmo`,
+  'you plural': `${stem}este`,
   they: `${stem}ebbero`,
 });
 
@@ -116,6 +123,7 @@ const frenchFuture = (stem: string) => ({
   you: `${stem}as`,
   'he/she': `${stem}a`,
   we: `${stem}ons`,
+  'you plural': `${stem}ez`,
   they: `${stem}ont`,
 });
 
@@ -124,6 +132,7 @@ const frenchCompound = (participle: string) => ({
   you: `as ${participle}`,
   'he/she': `a ${participle}`,
   we: `avons ${participle}`,
+  'you plural': `avez ${participle}`,
   they: `ont ${participle}`,
 });
 
@@ -131,7 +140,7 @@ const frenchErVerb = (infinitive: string, translation: string) => {
   const stem = infinitive.slice(0, -2);
 
   return verb(infinitive, translation, {
-    present: { I: `${stem}e`, you: `${stem}es`, 'he/she': `${stem}e`, we: `${stem}ons`, they: `${stem}ent` },
+    present: { I: `${stem}e`, you: `${stem}es`, 'he/she': `${stem}e`, we: `${stem}ons`, 'you plural': `${stem}ez`, they: `${stem}ent` },
     past: frenchCompound(`${stem}é`),
     imperfect: frenchImperfect(stem),
     future: frenchFuture(infinitive),
@@ -143,7 +152,7 @@ const frenchIrVerb = (infinitive: string, translation: string) => {
   const stem = infinitive.slice(0, -2);
 
   return verb(infinitive, translation, {
-    present: { I: `${stem}is`, you: `${stem}is`, 'he/she': `${stem}it`, we: `${stem}issons`, they: `${stem}issent` },
+    present: { I: `${stem}is`, you: `${stem}is`, 'he/she': `${stem}it`, we: `${stem}issons`, 'you plural': `${stem}issez`, they: `${stem}issent` },
     past: frenchCompound(`${stem}i`),
     imperfect: frenchImperfect(`${stem}iss`),
     future: frenchFuture(infinitive),
@@ -156,7 +165,7 @@ const frenchReVerb = (infinitive: string, translation: string) => {
   const futureStem = infinitive.slice(0, -1);
 
   return verb(infinitive, translation, {
-    present: { I: `${stem}s`, you: `${stem}s`, 'he/she': stem, we: `${stem}ons`, they: `${stem}ent` },
+    present: { I: `${stem}s`, you: `${stem}s`, 'he/she': stem, we: `${stem}ons`, 'you plural': `${stem}ez`, they: `${stem}ent` },
     past: frenchCompound(`${stem}u`),
     imperfect: frenchImperfect(stem),
     future: frenchFuture(futureStem),
@@ -169,6 +178,7 @@ const spanishFuture = (stem: string) => ({
   you: `${stem}ás`,
   'he/she': `${stem}á`,
   we: `${stem}emos`,
+  'you plural': `${stem}éis`,
   they: `${stem}án`,
 });
 
@@ -176,8 +186,8 @@ const spanishArVerb = (infinitive: string, translation: string) => {
   const stem = infinitive.slice(0, -2);
 
   return verb(infinitive, translation, {
-    present: { I: `${stem}o`, you: `${stem}as`, 'he/she': `${stem}a`, we: `${stem}amos`, they: `${stem}an` },
-    past: { I: `${stem}é`, you: `${stem}aste`, 'he/she': `${stem}ó`, we: `${stem}amos`, they: `${stem}aron` },
+    present: { I: `${stem}o`, you: `${stem}as`, 'he/she': `${stem}a`, we: `${stem}amos`, 'you plural': `${stem}áis`, they: `${stem}an` },
+    past: { I: `${stem}é`, you: `${stem}aste`, 'he/she': `${stem}ó`, we: `${stem}amos`, 'you plural': `${stem}asteis`, they: `${stem}aron` },
     imperfect: spanishArImperfect(stem),
     future: spanishFuture(infinitive),
     conditional: spanishConditional(infinitive),
@@ -188,8 +198,8 @@ const spanishErVerb = (infinitive: string, translation: string) => {
   const stem = infinitive.slice(0, -2);
 
   return verb(infinitive, translation, {
-    present: { I: `${stem}o`, you: `${stem}es`, 'he/she': `${stem}e`, we: `${stem}emos`, they: `${stem}en` },
-    past: { I: `${stem}í`, you: `${stem}iste`, 'he/she': `${stem}ió`, we: `${stem}imos`, they: `${stem}ieron` },
+    present: { I: `${stem}o`, you: `${stem}es`, 'he/she': `${stem}e`, we: `${stem}emos`, 'you plural': `${stem}éis`, they: `${stem}en` },
+    past: { I: `${stem}í`, you: `${stem}iste`, 'he/she': `${stem}ió`, we: `${stem}imos`, 'you plural': `${stem}isteis`, they: `${stem}ieron` },
     imperfect: spanishErIrImperfect(stem),
     future: spanishFuture(infinitive),
     conditional: spanishConditional(infinitive),
@@ -200,8 +210,8 @@ const spanishIrVerb = (infinitive: string, translation: string) => {
   const stem = infinitive.slice(0, -2);
 
   return verb(infinitive, translation, {
-    present: { I: `${stem}o`, you: `${stem}es`, 'he/she': `${stem}e`, we: `${stem}imos`, they: `${stem}en` },
-    past: { I: `${stem}í`, you: `${stem}iste`, 'he/she': `${stem}ió`, we: `${stem}imos`, they: `${stem}ieron` },
+    present: { I: `${stem}o`, you: `${stem}es`, 'he/she': `${stem}e`, we: `${stem}imos`, 'you plural': `${stem}ís`, they: `${stem}en` },
+    past: { I: `${stem}í`, you: `${stem}iste`, 'he/she': `${stem}ió`, we: `${stem}imos`, 'you plural': `${stem}isteis`, they: `${stem}ieron` },
     imperfect: spanishErIrImperfect(stem),
     future: spanishFuture(infinitive),
     conditional: spanishConditional(infinitive),
@@ -213,6 +223,7 @@ const italianFuture = (stem: string) => ({
   you: `${stem}ai`,
   'he/she': `${stem}à`,
   we: `${stem}emo`,
+  'you plural': `${stem}ete`,
   they: `${stem}anno`,
 });
 
@@ -221,6 +232,7 @@ const italianCompound = (participle: string) => ({
   you: `hai ${participle}`,
   'he/she': `ha ${participle}`,
   we: `abbiamo ${participle}`,
+  'you plural': `avete ${participle}`,
   they: `hanno ${participle}`,
 });
 
@@ -228,7 +240,7 @@ const italianAreVerb = (infinitive: string, translation: string) => {
   const stem = infinitive.slice(0, -3);
 
   return verb(infinitive, translation, {
-    present: { I: `${stem}o`, you: `${stem}i`, 'he/she': `${stem}a`, we: `${stem}iamo`, they: `${stem}ano` },
+    present: { I: `${stem}o`, you: `${stem}i`, 'he/she': `${stem}a`, we: `${stem}iamo`, 'you plural': `${stem}ate`, they: `${stem}ano` },
     past: italianCompound(`${stem}ato`),
     imperfect: italianAreImperfect(stem),
     future: italianFuture(`${stem}er`),
@@ -240,7 +252,7 @@ const italianEreVerb = (infinitive: string, translation: string) => {
   const stem = infinitive.slice(0, -3);
 
   return verb(infinitive, translation, {
-    present: { I: `${stem}o`, you: `${stem}i`, 'he/she': `${stem}e`, we: `${stem}iamo`, they: `${stem}ono` },
+    present: { I: `${stem}o`, you: `${stem}i`, 'he/she': `${stem}e`, we: `${stem}iamo`, 'you plural': `${stem}ete`, they: `${stem}ono` },
     past: italianCompound(`${stem}uto`),
     imperfect: italianEreImperfect(stem),
     future: italianFuture(infinitive.slice(0, -1)),
@@ -252,7 +264,7 @@ const italianIreVerb = (infinitive: string, translation: string) => {
   const stem = infinitive.slice(0, -3);
 
   return verb(infinitive, translation, {
-    present: { I: `${stem}o`, you: `${stem}i`, 'he/she': `${stem}e`, we: `${stem}iamo`, they: `${stem}ono` },
+    present: { I: `${stem}o`, you: `${stem}i`, 'he/she': `${stem}e`, we: `${stem}iamo`, 'you plural': `${stem}ite`, they: `${stem}ono` },
     past: italianCompound(`${stem}ito`),
     imperfect: italianIreImperfect(stem),
     future: italianFuture(infinitive.slice(0, -1)),
@@ -264,7 +276,7 @@ const italianIscVerb = (infinitive: string, translation: string) => {
   const stem = infinitive.slice(0, -3);
 
   return verb(infinitive, translation, {
-    present: { I: `${stem}isco`, you: `${stem}isci`, 'he/she': `${stem}isce`, we: `${stem}iamo`, they: `${stem}iscono` },
+    present: { I: `${stem}isco`, you: `${stem}isci`, 'he/she': `${stem}isce`, we: `${stem}iamo`, 'you plural': `${stem}ite`, they: `${stem}iscono` },
     past: italianCompound(`${stem}ito`),
     imperfect: italianIreImperfect(stem),
     future: italianFuture(infinitive.slice(0, -1)),
@@ -274,11 +286,11 @@ const italianIscVerb = (infinitive: string, translation: string) => {
 
 const englishVerbs: VerbEntry[] = [
   verb('to be', '是 / 存在', {
-    present: { I: 'am', you: 'are', 'he/she': 'is', we: 'are', they: 'are' },
-    past: { I: 'was', you: 'were', 'he/she': 'was', we: 'were', they: 'were' },
-    imperfect: { I: 'was', you: 'were', 'he/she': 'was', we: 'were', they: 'were' },
-    future: { I: 'will be', you: 'will be', 'he/she': 'will be', we: 'will be', they: 'will be' },
-    conditional: { I: 'would be', you: 'would be', 'he/she': 'would be', we: 'would be', they: 'would be' },
+    present: { I: 'am', you: 'are', 'he/she': 'is', we: 'are', 'you plural': 'are', they: 'are' },
+    past: { I: 'was', you: 'were', 'he/she': 'was', we: 'were', 'you plural': 'were', they: 'were' },
+    imperfect: { I: 'was', you: 'were', 'he/she': 'was', we: 'were', 'you plural': 'were', they: 'were' },
+    future: { I: 'will be', you: 'will be', 'he/she': 'will be', we: 'will be', 'you plural': 'will be', they: 'will be' },
+    conditional: { I: 'would be', you: 'would be', 'he/she': 'would be', we: 'would be', 'you plural': 'would be', they: 'would be' },
   }),
   englishVerb('have', '有', 'has', 'had'),
   englishVerb('go', '去', 'goes', 'went'),
@@ -333,98 +345,98 @@ const englishVerbs: VerbEntry[] = [
 
 const frenchVerbs: VerbEntry[] = [
   verb('être', '是 / 存在', {
-    present: { I: 'suis', you: 'es', 'he/she': 'est', we: 'sommes', they: 'sont' },
-    past: { I: 'ai été', you: 'as été', 'he/she': 'a été', we: 'avons été', they: 'ont été' },
+    present: { I: 'suis', you: 'es', 'he/she': 'est', we: 'sommes', 'you plural': 'êtes', they: 'sont' },
+    past: { I: 'ai été', you: 'as été', 'he/she': 'a été', we: 'avons été', 'you plural': 'avez été', they: 'ont été' },
     imperfect: frenchImperfect('ét'),
-    future: { I: 'serai', you: 'seras', 'he/she': 'sera', we: 'serons', they: 'seront' },
+    future: { I: 'serai', you: 'seras', 'he/she': 'sera', we: 'serons', 'you plural': 'serez', they: 'seront' },
     conditional: frenchConditional('ser'),
   }),
   verb('avoir', '有', {
-    present: { I: 'ai', you: 'as', 'he/she': 'a', we: 'avons', they: 'ont' },
-    past: { I: 'ai eu', you: 'as eu', 'he/she': 'a eu', we: 'avons eu', they: 'ont eu' },
+    present: { I: 'ai', you: 'as', 'he/she': 'a', we: 'avons', 'you plural': 'avez', they: 'ont' },
+    past: { I: 'ai eu', you: 'as eu', 'he/she': 'a eu', we: 'avons eu', 'you plural': 'avez eu', they: 'ont eu' },
     imperfect: frenchImperfect('av'),
-    future: { I: 'aurai', you: 'auras', 'he/she': 'aura', we: 'aurons', they: 'auront' },
+    future: { I: 'aurai', you: 'auras', 'he/she': 'aura', we: 'aurons', 'you plural': 'aurez', they: 'auront' },
     conditional: frenchConditional('aur'),
   }),
   verb('aller', '去', {
-    present: { I: 'vais', you: 'vas', 'he/she': 'va', we: 'allons', they: 'vont' },
-    past: { I: 'suis allé', you: 'es allé', 'he/she': 'est allé', we: 'sommes allés', they: 'sont allés' },
+    present: { I: 'vais', you: 'vas', 'he/she': 'va', we: 'allons', 'you plural': 'allez', they: 'vont' },
+    past: { I: 'suis allé', you: 'es allé', 'he/she': 'est allé', we: 'sommes allés', 'you plural': 'êtes allés', they: 'sont allés' },
     imperfect: frenchImperfect('all'),
-    future: { I: 'irai', you: 'iras', 'he/she': 'ira', we: 'irons', they: 'iront' },
+    future: { I: 'irai', you: 'iras', 'he/she': 'ira', we: 'irons', 'you plural': 'irez', they: 'iront' },
     conditional: frenchConditional('ir'),
   }),
   verb('faire', '做 / 制作', {
-    present: { I: 'fais', you: 'fais', 'he/she': 'fait', we: 'faisons', they: 'font' },
+    present: { I: 'fais', you: 'fais', 'he/she': 'fait', we: 'faisons', 'you plural': 'faites', they: 'font' },
     past: frenchCompound('fait'),
     imperfect: frenchImperfect('fais'),
     future: frenchFuture('fer'),
     conditional: frenchConditional('fer'),
   }),
   verb('dire', '说', {
-    present: { I: 'dis', you: 'dis', 'he/she': 'dit', we: 'disons', they: 'disent' },
+    present: { I: 'dis', you: 'dis', 'he/she': 'dit', we: 'disons', 'you plural': 'dites', they: 'disent' },
     past: frenchCompound('dit'),
     imperfect: frenchImperfect('dis'),
     future: frenchFuture('dir'),
     conditional: frenchConditional('dir'),
   }),
   verb('pouvoir', '能够', {
-    present: { I: 'peux', you: 'peux', 'he/she': 'peut', we: 'pouvons', they: 'peuvent' },
+    present: { I: 'peux', you: 'peux', 'he/she': 'peut', we: 'pouvons', 'you plural': 'pouvez', they: 'peuvent' },
     past: frenchCompound('pu'),
     imperfect: frenchImperfect('pouv'),
     future: frenchFuture('pourr'),
     conditional: frenchConditional('pourr'),
   }),
   verb('vouloir', '想要', {
-    present: { I: 'veux', you: 'veux', 'he/she': 'veut', we: 'voulons', they: 'veulent' },
+    present: { I: 'veux', you: 'veux', 'he/she': 'veut', we: 'voulons', 'you plural': 'voulez', they: 'veulent' },
     past: frenchCompound('voulu'),
     imperfect: frenchImperfect('voul'),
     future: frenchFuture('voudr'),
     conditional: frenchConditional('voudr'),
   }),
   verb('savoir', '知道', {
-    present: { I: 'sais', you: 'sais', 'he/she': 'sait', we: 'savons', they: 'savent' },
+    present: { I: 'sais', you: 'sais', 'he/she': 'sait', we: 'savons', 'you plural': 'savez', they: 'savent' },
     past: frenchCompound('su'),
     imperfect: frenchImperfect('sav'),
     future: frenchFuture('saur'),
     conditional: frenchConditional('saur'),
   }),
   verb('voir', '看见', {
-    present: { I: 'vois', you: 'vois', 'he/she': 'voit', we: 'voyons', they: 'voient' },
+    present: { I: 'vois', you: 'vois', 'he/she': 'voit', we: 'voyons', 'you plural': 'voyez', they: 'voient' },
     past: frenchCompound('vu'),
     imperfect: frenchImperfect('voy'),
     future: frenchFuture('verr'),
     conditional: frenchConditional('verr'),
   }),
   verb('prendre', '拿 / 乘坐', {
-    present: { I: 'prends', you: 'prends', 'he/she': 'prend', we: 'prenons', they: 'prennent' },
+    present: { I: 'prends', you: 'prends', 'he/she': 'prend', we: 'prenons', 'you plural': 'prenez', they: 'prennent' },
     past: frenchCompound('pris'),
     imperfect: frenchImperfect('pren'),
     future: frenchFuture('prendr'),
     conditional: frenchConditional('prendr'),
   }),
   verb('mettre', '放置 / 穿上', {
-    present: { I: 'mets', you: 'mets', 'he/she': 'met', we: 'mettons', they: 'mettent' },
+    present: { I: 'mets', you: 'mets', 'he/she': 'met', we: 'mettons', 'you plural': 'mettez', they: 'mettent' },
     past: frenchCompound('mis'),
     imperfect: frenchImperfect('mett'),
     future: frenchFuture('mettr'),
     conditional: frenchConditional('mettr'),
   }),
   verb('devoir', '必须 / 应该', {
-    present: { I: 'dois', you: 'dois', 'he/she': 'doit', we: 'devons', they: 'doivent' },
+    present: { I: 'dois', you: 'dois', 'he/she': 'doit', we: 'devons', 'you plural': 'devez', they: 'doivent' },
     past: frenchCompound('dû'),
     imperfect: frenchImperfect('dev'),
     future: frenchFuture('devr'),
     conditional: frenchConditional('devr'),
   }),
   verb('lire', '读', {
-    present: { I: 'lis', you: 'lis', 'he/she': 'lit', we: 'lisons', they: 'lisent' },
+    present: { I: 'lis', you: 'lis', 'he/she': 'lit', we: 'lisons', 'you plural': 'lisez', they: 'lisent' },
     past: frenchCompound('lu'),
     imperfect: frenchImperfect('lis'),
     future: frenchFuture('lir'),
     conditional: frenchConditional('lir'),
   }),
   verb('écrire', '写', {
-    present: { I: 'écris', you: 'écris', 'he/she': 'écrit', we: 'écrivons', they: 'écrivent' },
+    present: { I: 'écris', you: 'écris', 'he/she': 'écrit', we: 'écrivons', 'you plural': 'écrivez', they: 'écrivent' },
     past: frenchCompound('écrit'),
     imperfect: frenchImperfect('écriv'),
     future: frenchFuture('écrir'),
@@ -470,99 +482,99 @@ const frenchVerbs: VerbEntry[] = [
 
 const spanishVerbs: VerbEntry[] = [
   verb('ser', '是 / 本质', {
-    present: { I: 'soy', you: 'eres', 'he/she': 'es', we: 'somos', they: 'son' },
-    past: { I: 'fui', you: 'fuiste', 'he/she': 'fue', we: 'fuimos', they: 'fueron' },
-    imperfect: { I: 'era', you: 'eras', 'he/she': 'era', we: 'éramos', they: 'eran' },
-    future: { I: 'seré', you: 'serás', 'he/she': 'será', we: 'seremos', they: 'serán' },
+    present: { I: 'soy', you: 'eres', 'he/she': 'es', we: 'somos', 'you plural': 'sois', they: 'son' },
+    past: { I: 'fui', you: 'fuiste', 'he/she': 'fue', we: 'fuimos', 'you plural': 'fuisteis', they: 'fueron' },
+    imperfect: { I: 'era', you: 'eras', 'he/she': 'era', we: 'éramos', 'you plural': 'erais', they: 'eran' },
+    future: { I: 'seré', you: 'serás', 'he/she': 'será', we: 'seremos', 'you plural': 'seréis', they: 'serán' },
     conditional: spanishConditional('ser'),
   }),
   verb('tener', '有', {
-    present: { I: 'tengo', you: 'tienes', 'he/she': 'tiene', we: 'tenemos', they: 'tienen' },
-    past: { I: 'tuve', you: 'tuviste', 'he/she': 'tuvo', we: 'tuvimos', they: 'tuvieron' },
+    present: { I: 'tengo', you: 'tienes', 'he/she': 'tiene', we: 'tenemos', 'you plural': 'tenéis', they: 'tienen' },
+    past: { I: 'tuve', you: 'tuviste', 'he/she': 'tuvo', we: 'tuvimos', 'you plural': 'tuvisteis', they: 'tuvieron' },
     imperfect: spanishErIrImperfect('ten'),
-    future: { I: 'tendré', you: 'tendrás', 'he/she': 'tendrá', we: 'tendremos', they: 'tendrán' },
+    future: { I: 'tendré', you: 'tendrás', 'he/she': 'tendrá', we: 'tendremos', 'you plural': 'tendréis', they: 'tendrán' },
     conditional: spanishConditional('tendr'),
   }),
   verb('ir', '去', {
-    present: { I: 'voy', you: 'vas', 'he/she': 'va', we: 'vamos', they: 'van' },
-    past: { I: 'fui', you: 'fuiste', 'he/she': 'fue', we: 'fuimos', they: 'fueron' },
-    imperfect: { I: 'iba', you: 'ibas', 'he/she': 'iba', we: 'íbamos', they: 'iban' },
-    future: { I: 'iré', you: 'irás', 'he/she': 'irá', we: 'iremos', they: 'irán' },
+    present: { I: 'voy', you: 'vas', 'he/she': 'va', we: 'vamos', 'you plural': 'vais', they: 'van' },
+    past: { I: 'fui', you: 'fuiste', 'he/she': 'fue', we: 'fuimos', 'you plural': 'fuisteis', they: 'fueron' },
+    imperfect: { I: 'iba', you: 'ibas', 'he/she': 'iba', we: 'íbamos', 'you plural': 'ibais', they: 'iban' },
+    future: { I: 'iré', you: 'irás', 'he/she': 'irá', we: 'iremos', 'you plural': 'iréis', they: 'irán' },
     conditional: spanishConditional('ir'),
   }),
   verb('estar', '是 / 处于', {
-    present: { I: 'estoy', you: 'estás', 'he/she': 'está', we: 'estamos', they: 'están' },
-    past: { I: 'estuve', you: 'estuviste', 'he/she': 'estuvo', we: 'estuvimos', they: 'estuvieron' },
+    present: { I: 'estoy', you: 'estás', 'he/she': 'está', we: 'estamos', 'you plural': 'estáis', they: 'están' },
+    past: { I: 'estuve', you: 'estuviste', 'he/she': 'estuvo', we: 'estuvimos', 'you plural': 'estuvisteis', they: 'estuvieron' },
     imperfect: spanishArImperfect('est'),
     future: spanishFuture('estar'),
     conditional: spanishConditional('estar'),
   }),
   verb('hacer', '做 / 制作', {
-    present: { I: 'hago', you: 'haces', 'he/she': 'hace', we: 'hacemos', they: 'hacen' },
-    past: { I: 'hice', you: 'hiciste', 'he/she': 'hizo', we: 'hicimos', they: 'hicieron' },
+    present: { I: 'hago', you: 'haces', 'he/she': 'hace', we: 'hacemos', 'you plural': 'hacéis', they: 'hacen' },
+    past: { I: 'hice', you: 'hiciste', 'he/she': 'hizo', we: 'hicimos', 'you plural': 'hicisteis', they: 'hicieron' },
     imperfect: spanishErIrImperfect('hac'),
     future: spanishFuture('har'),
     conditional: spanishConditional('har'),
   }),
   verb('decir', '说', {
-    present: { I: 'digo', you: 'dices', 'he/she': 'dice', we: 'decimos', they: 'dicen' },
-    past: { I: 'dije', you: 'dijiste', 'he/she': 'dijo', we: 'dijimos', they: 'dijeron' },
+    present: { I: 'digo', you: 'dices', 'he/she': 'dice', we: 'decimos', 'you plural': 'decís', they: 'dicen' },
+    past: { I: 'dije', you: 'dijiste', 'he/she': 'dijo', we: 'dijimos', 'you plural': 'dijisteis', they: 'dijeron' },
     imperfect: spanishErIrImperfect('dec'),
     future: spanishFuture('dir'),
     conditional: spanishConditional('dir'),
   }),
   verb('poder', '能够', {
-    present: { I: 'puedo', you: 'puedes', 'he/she': 'puede', we: 'podemos', they: 'pueden' },
-    past: { I: 'pude', you: 'pudiste', 'he/she': 'pudo', we: 'pudimos', they: 'pudieron' },
+    present: { I: 'puedo', you: 'puedes', 'he/she': 'puede', we: 'podemos', 'you plural': 'podéis', they: 'pueden' },
+    past: { I: 'pude', you: 'pudiste', 'he/she': 'pudo', we: 'pudimos', 'you plural': 'pudisteis', they: 'pudieron' },
     imperfect: spanishErIrImperfect('pod'),
     future: spanishFuture('podr'),
     conditional: spanishConditional('podr'),
   }),
   verb('querer', '想要 / 爱', {
-    present: { I: 'quiero', you: 'quieres', 'he/she': 'quiere', we: 'queremos', they: 'quieren' },
-    past: { I: 'quise', you: 'quisiste', 'he/she': 'quiso', we: 'quisimos', they: 'quisieron' },
+    present: { I: 'quiero', you: 'quieres', 'he/she': 'quiere', we: 'queremos', 'you plural': 'queréis', they: 'quieren' },
+    past: { I: 'quise', you: 'quisiste', 'he/she': 'quiso', we: 'quisimos', 'you plural': 'quisisteis', they: 'quisieron' },
     imperfect: spanishErIrImperfect('quer'),
     future: spanishFuture('querr'),
     conditional: spanishConditional('querr'),
   }),
   verb('saber', '知道', {
-    present: { I: 'sé', you: 'sabes', 'he/she': 'sabe', we: 'sabemos', they: 'saben' },
-    past: { I: 'supe', you: 'supiste', 'he/she': 'supo', we: 'supimos', they: 'supieron' },
+    present: { I: 'sé', you: 'sabes', 'he/she': 'sabe', we: 'sabemos', 'you plural': 'sabéis', they: 'saben' },
+    past: { I: 'supe', you: 'supiste', 'he/she': 'supo', we: 'supimos', 'you plural': 'supisteis', they: 'supieron' },
     imperfect: spanishErIrImperfect('sab'),
     future: spanishFuture('sabr'),
     conditional: spanishConditional('sabr'),
   }),
   verb('ver', '看见', {
-    present: { I: 'veo', you: 'ves', 'he/she': 've', we: 'vemos', they: 'ven' },
-    past: { I: 'vi', you: 'viste', 'he/she': 'vio', we: 'vimos', they: 'vieron' },
+    present: { I: 'veo', you: 'ves', 'he/she': 've', we: 'vemos', 'you plural': 'veis', they: 'ven' },
+    past: { I: 'vi', you: 'viste', 'he/she': 'vio', we: 'vimos', 'you plural': 'visteis', they: 'vieron' },
     imperfect: spanishErIrImperfect('ve'),
     future: spanishFuture('ver'),
     conditional: spanishConditional('ver'),
   }),
   verb('venir', '来', {
-    present: { I: 'vengo', you: 'vienes', 'he/she': 'viene', we: 'venimos', they: 'vienen' },
-    past: { I: 'vine', you: 'viniste', 'he/she': 'vino', we: 'vinimos', they: 'vinieron' },
+    present: { I: 'vengo', you: 'vienes', 'he/she': 'viene', we: 'venimos', 'you plural': 'venís', they: 'vienen' },
+    past: { I: 'vine', you: 'viniste', 'he/she': 'vino', we: 'vinimos', 'you plural': 'vinisteis', they: 'vinieron' },
     imperfect: spanishErIrImperfect('ven'),
     future: spanishFuture('vendr'),
     conditional: spanishConditional('vendr'),
   }),
   verb('poner', '放置', {
-    present: { I: 'pongo', you: 'pones', 'he/she': 'pone', we: 'ponemos', they: 'ponen' },
-    past: { I: 'puse', you: 'pusiste', 'he/she': 'puso', we: 'pusimos', they: 'pusieron' },
+    present: { I: 'pongo', you: 'pones', 'he/she': 'pone', we: 'ponemos', 'you plural': 'ponéis', they: 'ponen' },
+    past: { I: 'puse', you: 'pusiste', 'he/she': 'puso', we: 'pusimos', 'you plural': 'pusisteis', they: 'pusieron' },
     imperfect: spanishErIrImperfect('pon'),
     future: spanishFuture('pondr'),
     conditional: spanishConditional('pondr'),
   }),
   verb('salir', '出去 / 离开', {
-    present: { I: 'salgo', you: 'sales', 'he/she': 'sale', we: 'salimos', they: 'salen' },
-    past: { I: 'salí', you: 'saliste', 'he/she': 'salió', we: 'salimos', they: 'salieron' },
+    present: { I: 'salgo', you: 'sales', 'he/she': 'sale', we: 'salimos', 'you plural': 'salís', they: 'salen' },
+    past: { I: 'salí', you: 'saliste', 'he/she': 'salió', we: 'salimos', 'you plural': 'salisteis', they: 'salieron' },
     imperfect: spanishErIrImperfect('sal'),
     future: spanishFuture('saldr'),
     conditional: spanishConditional('saldr'),
   }),
   verb('dar', '给', {
-    present: { I: 'doy', you: 'das', 'he/she': 'da', we: 'damos', they: 'dan' },
-    past: { I: 'di', you: 'diste', 'he/she': 'dio', we: 'dimos', they: 'dieron' },
+    present: { I: 'doy', you: 'das', 'he/she': 'da', we: 'damos', 'you plural': 'dais', they: 'dan' },
+    past: { I: 'di', you: 'diste', 'he/she': 'dio', we: 'dimos', 'you plural': 'disteis', they: 'dieron' },
     imperfect: spanishArImperfect('d'),
     future: spanishFuture('dar'),
     conditional: spanishConditional('dar'),
@@ -607,105 +619,105 @@ const spanishVerbs: VerbEntry[] = [
 
 const italianVerbs: VerbEntry[] = [
   verb('essere', '是 / 存在', {
-    present: { I: 'sono', you: 'sei', 'he/she': 'è', we: 'siamo', they: 'sono' },
-    past: { I: 'sono stato', you: 'sei stato', 'he/she': 'è stato', we: 'siamo stati', they: 'sono stati' },
-    imperfect: { I: 'ero', you: 'eri', 'he/she': 'era', we: 'eravamo', they: 'erano' },
-    future: { I: 'sarò', you: 'sarai', 'he/she': 'sarà', we: 'saremo', they: 'saranno' },
+    present: { I: 'sono', you: 'sei', 'he/she': 'è', we: 'siamo', 'you plural': 'siete', they: 'sono' },
+    past: { I: 'sono stato', you: 'sei stato', 'he/she': 'è stato', we: 'siamo stati', 'you plural': 'siete stati', they: 'sono stati' },
+    imperfect: { I: 'ero', you: 'eri', 'he/she': 'era', we: 'eravamo', 'you plural': 'eravate', they: 'erano' },
+    future: { I: 'sarò', you: 'sarai', 'he/she': 'sarà', we: 'saremo', 'you plural': 'sarete', they: 'saranno' },
     conditional: italianConditional('sar'),
   }),
   verb('avere', '有', {
-    present: { I: 'ho', you: 'hai', 'he/she': 'ha', we: 'abbiamo', they: 'hanno' },
-    past: { I: 'ho avuto', you: 'hai avuto', 'he/she': 'ha avuto', we: 'abbiamo avuto', they: 'hanno avuto' },
+    present: { I: 'ho', you: 'hai', 'he/she': 'ha', we: 'abbiamo', 'you plural': 'avete', they: 'hanno' },
+    past: { I: 'ho avuto', you: 'hai avuto', 'he/she': 'ha avuto', we: 'abbiamo avuto', 'you plural': 'avete avuto', they: 'hanno avuto' },
     imperfect: italianEreImperfect('av'),
-    future: { I: 'avrò', you: 'avrai', 'he/she': 'avrà', we: 'avremo', they: 'avranno' },
+    future: { I: 'avrò', you: 'avrai', 'he/she': 'avrà', we: 'avremo', 'you plural': 'avrete', they: 'avranno' },
     conditional: italianConditional('avr'),
   }),
   verb('andare', '去', {
-    present: { I: 'vado', you: 'vai', 'he/she': 'va', we: 'andiamo', they: 'vanno' },
-    past: { I: 'sono andato', you: 'sei andato', 'he/she': 'è andato', we: 'siamo andati', they: 'sono andati' },
+    present: { I: 'vado', you: 'vai', 'he/she': 'va', we: 'andiamo', 'you plural': 'andate', they: 'vanno' },
+    past: { I: 'sono andato', you: 'sei andato', 'he/she': 'è andato', we: 'siamo andati', 'you plural': 'siete andati', they: 'sono andati' },
     imperfect: italianAreImperfect('and'),
-    future: { I: 'andrò', you: 'andrai', 'he/she': 'andrà', we: 'andremo', they: 'andranno' },
+    future: { I: 'andrò', you: 'andrai', 'he/she': 'andrà', we: 'andremo', 'you plural': 'andrete', they: 'andranno' },
     conditional: italianConditional('andr'),
   }),
   verb('fare', '做 / 制作', {
-    present: { I: 'faccio', you: 'fai', 'he/she': 'fa', we: 'facciamo', they: 'fanno' },
+    present: { I: 'faccio', you: 'fai', 'he/she': 'fa', we: 'facciamo', 'you plural': 'fate', they: 'fanno' },
     past: italianCompound('fatto'),
     imperfect: italianEreImperfect('fac'),
     future: italianFuture('far'),
     conditional: italianConditional('far'),
   }),
   verb('dire', '说', {
-    present: { I: 'dico', you: 'dici', 'he/she': 'dice', we: 'diciamo', they: 'dicono' },
+    present: { I: 'dico', you: 'dici', 'he/she': 'dice', we: 'diciamo', 'you plural': 'dite', they: 'dicono' },
     past: italianCompound('detto'),
     imperfect: italianEreImperfect('dic'),
     future: italianFuture('dir'),
     conditional: italianConditional('dir'),
   }),
   verb('potere', '能够', {
-    present: { I: 'posso', you: 'puoi', 'he/she': 'può', we: 'possiamo', they: 'possono' },
+    present: { I: 'posso', you: 'puoi', 'he/she': 'può', we: 'possiamo', 'you plural': 'potete', they: 'possono' },
     past: italianCompound('potuto'),
     imperfect: italianEreImperfect('pot'),
     future: italianFuture('potr'),
     conditional: italianConditional('potr'),
   }),
   verb('volere', '想要', {
-    present: { I: 'voglio', you: 'vuoi', 'he/she': 'vuole', we: 'vogliamo', they: 'vogliono' },
+    present: { I: 'voglio', you: 'vuoi', 'he/she': 'vuole', we: 'vogliamo', 'you plural': 'volete', they: 'vogliono' },
     past: italianCompound('voluto'),
     imperfect: italianEreImperfect('vol'),
     future: italianFuture('vorr'),
     conditional: italianConditional('vorr'),
   }),
   verb('sapere', '知道', {
-    present: { I: 'so', you: 'sai', 'he/she': 'sa', we: 'sappiamo', they: 'sanno' },
+    present: { I: 'so', you: 'sai', 'he/she': 'sa', we: 'sappiamo', 'you plural': 'sapete', they: 'sanno' },
     past: italianCompound('saputo'),
     imperfect: italianEreImperfect('sap'),
     future: italianFuture('sapr'),
     conditional: italianConditional('sapr'),
   }),
   verb('vedere', '看见', {
-    present: { I: 'vedo', you: 'vedi', 'he/she': 'vede', we: 'vediamo', they: 'vedono' },
+    present: { I: 'vedo', you: 'vedi', 'he/she': 'vede', we: 'vediamo', 'you plural': 'vedete', they: 'vedono' },
     past: italianCompound('visto'),
     imperfect: italianEreImperfect('ved'),
     future: italianFuture('vedr'),
     conditional: italianConditional('vedr'),
   }),
   verb('venire', '来', {
-    present: { I: 'vengo', you: 'vieni', 'he/she': 'viene', we: 'veniamo', they: 'vengono' },
-    past: { I: 'sono venuto', you: 'sei venuto', 'he/she': 'è venuto', we: 'siamo venuti', they: 'sono venuti' },
+    present: { I: 'vengo', you: 'vieni', 'he/she': 'viene', we: 'veniamo', 'you plural': 'venite', they: 'vengono' },
+    past: { I: 'sono venuto', you: 'sei venuto', 'he/she': 'è venuto', we: 'siamo venuti', 'you plural': 'siete venuti', they: 'sono venuti' },
     imperfect: italianIreImperfect('ven'),
     future: italianFuture('verr'),
     conditional: italianConditional('verr'),
   }),
   verb('prendere', '拿 / 乘坐', {
-    present: { I: 'prendo', you: 'prendi', 'he/she': 'prende', we: 'prendiamo', they: 'prendono' },
+    present: { I: 'prendo', you: 'prendi', 'he/she': 'prende', we: 'prendiamo', 'you plural': 'prendete', they: 'prendono' },
     past: italianCompound('preso'),
     imperfect: italianEreImperfect('prend'),
     future: italianFuture('prender'),
     conditional: italianConditional('prender'),
   }),
   verb('mettere', '放置 / 穿上', {
-    present: { I: 'metto', you: 'metti', 'he/she': 'mette', we: 'mettiamo', they: 'mettono' },
+    present: { I: 'metto', you: 'metti', 'he/she': 'mette', we: 'mettiamo', 'you plural': 'mettete', they: 'mettono' },
     past: italianCompound('messo'),
     imperfect: italianEreImperfect('mett'),
     future: italianFuture('metter'),
     conditional: italianConditional('metter'),
   }),
   verb('dovere', '必须 / 应该', {
-    present: { I: 'devo', you: 'devi', 'he/she': 'deve', we: 'dobbiamo', they: 'devono' },
+    present: { I: 'devo', you: 'devi', 'he/she': 'deve', we: 'dobbiamo', 'you plural': 'dovete', they: 'devono' },
     past: italianCompound('dovuto'),
     imperfect: italianEreImperfect('dov'),
     future: italianFuture('dovr'),
     conditional: italianConditional('dovr'),
   }),
   verb('leggere', '读', {
-    present: { I: 'leggo', you: 'leggi', 'he/she': 'legge', we: 'leggiamo', they: 'leggono' },
+    present: { I: 'leggo', you: 'leggi', 'he/she': 'legge', we: 'leggiamo', 'you plural': 'leggete', they: 'leggono' },
     past: italianCompound('letto'),
     imperfect: italianEreImperfect('legg'),
     future: italianFuture('legger'),
     conditional: italianConditional('legger'),
   }),
   verb('scrivere', '写', {
-    present: { I: 'scrivo', you: 'scrivi', 'he/she': 'scrive', we: 'scriviamo', they: 'scrivono' },
+    present: { I: 'scrivo', you: 'scrivi', 'he/she': 'scrive', we: 'scriviamo', 'you plural': 'scrivete', they: 'scrivono' },
     past: italianCompound('scritto'),
     imperfect: italianEreImperfect('scriv'),
     future: italianFuture('scriver'),
@@ -755,7 +767,7 @@ export const languages: Language[] = [
     nativeName: 'English',
     accent: '#2563eb',
     darkAccent: '#6d9ff5',
-    pronounLabels: { I: 'I', you: 'you', 'he/she': 'he/she', we: 'we', they: 'they' },
+    pronounLabels: { I: 'I', you: 'you', 'he/she': 'he/she', we: 'we', 'you plural': 'you (plural)', they: 'they' },
     verbs: englishVerbs,
   },
   {
@@ -764,7 +776,7 @@ export const languages: Language[] = [
     nativeName: 'Français',
     accent: '#0f766e',
     darkAccent: '#5ec4b8',
-    pronounLabels: { I: 'je', you: 'tu', 'he/she': 'il/elle', we: 'nous', they: 'ils/elles' },
+    pronounLabels: { I: 'je', you: 'tu', 'he/she': 'il/elle', we: 'nous', 'you plural': 'vous', they: 'ils/elles' },
     verbs: frenchVerbs,
   },
   {
@@ -773,7 +785,7 @@ export const languages: Language[] = [
     nativeName: 'Español',
     accent: '#d97706',
     darkAccent: '#f5a623',
-    pronounLabels: { I: 'yo', you: 'tú', 'he/she': 'él/ella', we: 'nosotros', they: 'ellos/ellas' },
+    pronounLabels: { I: 'yo', you: 'tú', 'he/she': 'él/ella', we: 'nosotros', 'you plural': 'vosotros/as', they: 'ellos/ellas' },
     verbs: spanishVerbs,
   },
   {
@@ -782,7 +794,7 @@ export const languages: Language[] = [
     nativeName: 'Italiano',
     accent: '#be123c',
     darkAccent: '#f06680',
-    pronounLabels: { I: 'io', you: 'tu', 'he/she': 'lui/lei', we: 'noi', they: 'loro' },
+    pronounLabels: { I: 'io', you: 'tu', 'he/she': 'lui/lei', we: 'noi', 'you plural': 'voi', they: 'loro' },
     verbs: italianVerbs,
   },
 ];

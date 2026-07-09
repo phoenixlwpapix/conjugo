@@ -2,7 +2,13 @@ import type { PracticeStats } from '../types';
 
 export const getAccuracy = (correct: number, total: number) => (total === 0 ? 0 : Math.round((correct / total) * 100));
 
-export const getTodayKey = () => new Date().toISOString().slice(0, 10);
+/** Local calendar day key (YYYY-MM-DD), avoids UTC midnight off-by-one. */
+export const getTodayKey = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 export const emptyStats = (): PracticeStats => ({
   totalAnswered: 0,
@@ -20,9 +26,8 @@ export const getDailyStats = (stats: PracticeStats, dayKey = getTodayKey()) =>
 
 export const getSevenDayTrend = (stats: PracticeStats, today = new Date()) =>
   Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(today);
-    date.setDate(today.getDate() - (6 - index));
-    const key = date.toISOString().slice(0, 10);
+    const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (6 - index));
+    const key = getTodayKey(date);
     const daily = getDailyStats(stats, key);
 
     return {
@@ -32,3 +37,27 @@ export const getSevenDayTrend = (stats: PracticeStats, today = new Date()) =>
       answered: daily.answered,
     };
   });
+
+export const recordAnswer = (
+  current: PracticeStats,
+  choiceIsCorrect: boolean,
+  nextStreak: number,
+  sessionJustCompleted: boolean,
+  dayKey = getTodayKey(),
+): PracticeStats => {
+  const today = getDailyStats(current, dayKey);
+
+  return {
+    totalAnswered: current.totalAnswered + 1,
+    totalCorrect: current.totalCorrect + (choiceIsCorrect ? 1 : 0),
+    bestStreak: Math.max(current.bestStreak, nextStreak),
+    days: {
+      ...current.days,
+      [dayKey]: {
+        answered: today.answered + 1,
+        correct: today.correct + (choiceIsCorrect ? 1 : 0),
+        sessions: today.sessions + (sessionJustCompleted ? 1 : 0),
+      },
+    },
+  };
+};

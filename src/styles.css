@@ -939,6 +939,54 @@ button {
   text-transform: uppercase;
 }
 
+/* Prompt Card Typography & Layout */
+.prompt-display {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-top: 4px;
+}
+
+.prompt-pronoun {
+  font-family: 'Lora', serif;
+  font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+  font-weight: 900;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.prompt-divider {
+  font-family: 'Lora', serif;
+  font-size: clamp(1.8rem, 4.5vw, 3rem);
+  font-weight: 300;
+  color: var(--muted);
+  opacity: 0.5;
+  line-height: 1;
+}
+
+.prompt-verb-block {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.prompt-infinitive {
+  font-family: 'Lora', serif;
+  font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+  font-weight: 900;
+  color: var(--language-accent, var(--green));
+  line-height: 1;
+}
+
+.prompt-translation {
+  font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+  color: var(--muted);
+  font-style: normal;
+  font-weight: 800;
+}
+
 .prompt-main h2 {
   margin: 0;
   color: var(--ink);

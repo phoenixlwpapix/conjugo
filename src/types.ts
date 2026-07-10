@@ -1,4 +1,4 @@
-import type { Language, LanguageId, Pronoun as VerbPronoun, TenseId, VerbEntry } from './data/verbs';
+import type { Language, LanguageId, TenseId, VerbEntry } from './data/verbs';
 
 export type Pronoun = 'I' | 'you' | 'he/she' | 'we' | 'you plural' | 'they';
 

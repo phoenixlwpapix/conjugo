@@ -107,23 +107,11 @@ describe('prompts', () => {
     });
 
     it('should generate prompts with the "you plural" pronoun', () => {
-      const session = createSessionPrompts(spanish, 'present');
-      const youPluralPrompts = session.filter((p) => p.pronoun === 'you plural');
-      // It's random, but over 20 items in a pool of verbs there should usually be at least one,
-      // or we can test the pool directly. Let's create a pool of all prompts.
-      const pool = spanish.verbs.flatMap((v) =>
-        ['present' as const].flatMap((t) =>
-          ['you plural' as const].map((p) => ({
-            language: spanish,
-            verb: v,
-            tense: t,
-            pronoun: p,
-          }))
-        )
-      );
-      expect(pool.length).toBeGreaterThan(0);
-      const first = pool[0];
-      const answer = getAnswer(first);
+      const pool = createPromptPool(spanish, 'present');
+      const first = pool.find((prompt) => prompt.pronoun === 'you plural');
+
+      expect(first).toBeDefined();
+      const answer = getAnswer(first!);
       expect(answer).toBeDefined();
       expect(typeof answer).toBe('string');
       expect(answer.length).toBeGreaterThan(0);

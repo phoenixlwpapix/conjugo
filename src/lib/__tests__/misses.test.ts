@@ -3,7 +3,6 @@ import { languages } from '../../data/verbs';
 import {
   upsertMiss,
   clearMasteredMiss,
-  getMissKey,
 } from '../misses';
 import type { Prompt, StoredMiss } from '../../types';
 

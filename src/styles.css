@@ -1998,6 +1998,7 @@ button {
   width: 100%;
   min-width: 560px;
   border-collapse: collapse;
+  font-family: 'Manrope', sans-serif;
   font-size: 0.9rem;
 }
 
@@ -2031,12 +2032,14 @@ button {
 }
 
 .stats-review-verb {
-  font-weight: 900;
+  font-family: 'Lora', serif;
+  font-weight: 700;
 }
 
 .stats-review-answer {
   color: var(--language-accent, var(--green));
-  font-weight: 900;
+  font-family: 'Lora', serif;
+  font-weight: 700;
 }
 
 .tab-button:hover,

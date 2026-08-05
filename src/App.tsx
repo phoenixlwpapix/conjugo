@@ -201,7 +201,7 @@ export default function App() {
         {activeView === 'practice' && (
           <>
             <SessionBar
-              languageId={languageId}
+              language={activeLanguage}
               practiceTense={practiceTense}
               switchTense={switchTense}
               resetSession={resetSession}

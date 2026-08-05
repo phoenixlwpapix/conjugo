@@ -1,18 +1,21 @@
 import { RotateCcw } from 'lucide-react';
-import { tenseOptions, type PracticeTenseId, type LanguageId } from '../data/verbs';
+import { concreteTenses, type PracticeTenseId, type Language } from '../data/verbs';
 import { SegmentedControl } from './ui/SegmentedControl';
 
 interface SessionBarProps {
-  languageId: LanguageId;
+  language: Language;
   practiceTense: PracticeTenseId;
   switchTense: (tense: PracticeTenseId) => void;
   resetSession: () => void;
 }
 
-export function SessionBar({ languageId, practiceTense, switchTense, resetSession }: SessionBarProps) {
-  const options = tenseOptions.filter(
-    (item) => (item.id !== 'imperfect' && item.id !== 'conditional') || languageId !== 'english',
-  );
+export function SessionBar({ language, practiceTense, switchTense, resetSession }: SessionBarProps) {
+  const options: Array<{ id: PracticeTenseId; label: string }> = [
+    ...concreteTenses
+      .filter((item) => (item.id !== 'imperfect' && item.id !== 'conditional') || language.id !== 'english')
+      .map((item) => ({ id: item.id, label: language.tenseLabels[item.id] })),
+    { id: 'mixed', label: language.tenseLabels.mixed },
+  ];
 
   return (
     <section className="session-bar" aria-label="Practice controls">

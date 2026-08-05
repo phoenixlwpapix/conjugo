@@ -30,7 +30,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 
 - Four languages: English, French, Spanish, Italian.
 - Three focused tenses plus a mixed tense mode: present, past, future, mixed.
-- 50 verbs per language, combining high-frequency irregular verbs with regular conjugation families.
+- 100 verbs per language, combining high-frequency irregular verbs with regular conjugation families.
 - Each practice session randomly samples 20 prompts from the current language and tense range.
 - New sessions reserve roughly 30% of prompts for recent missed items when matching review prompts are available.
 - Verb and conjugation datasets live in `src/data/verbs.ts` instead of the main app component.

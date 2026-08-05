@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, Flame, RotateCcw, Target, Trophy, type LucideIcon } from 'lucide-react';
+import { BarChart3, CalendarDays, Flame, Layers, Target, Trophy, type LucideIcon } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { languages } from '../data/verbs';
 import { getAccuracy } from '../lib/scoring';
@@ -43,15 +43,25 @@ export function StatsDashboard({ bestStreak, storedMisses, stats, todayAccuracy,
   const overallAccuracy = getAccuracy(stats.totalCorrect, stats.totalAnswered);
   const activeDays = Object.values(stats.days).filter((day) => day.answered > 0).length;
   const completedSets = Object.values(stats.days).reduce((total, day) => total + day.sessions, 0);
-  const recentMisses = storedMisses.slice(0, 6);
+  const recentMisses = storedMisses.slice(0, 12);
   const chartData = toChartData(trend);
   const bestTrendAccuracy = trend.reduce((best, item) => (item.answered > 0 ? Math.max(best, item.accuracy) : best), 0);
   const totalWeekAnswers = trend.reduce((total, item) => total + item.answered, 0);
+  const todayGrade =
+    todayStats.answered === 0
+      ? ''
+      : todayAccuracy >= 90
+        ? 'Excellent'
+        : todayAccuracy >= 75
+          ? 'Great'
+          : todayAccuracy >= 60
+            ? 'Getting there'
+            : 'Keep at it';
   const kpis: KpiItem[] = [
     { icon: Target, label: 'Total answered', value: stats.totalAnswered.toString() },
     { icon: Trophy, label: 'Total correct', value: stats.totalCorrect.toString() },
     { icon: Flame, label: 'Best streak', value: bestStreak.toString() },
-    { icon: RotateCcw, label: 'Review load', value: storedMisses.length.toString() },
+    { icon: Layers, label: 'Sets completed', value: completedSets.toString() },
   ];
 
   return (
@@ -153,8 +163,7 @@ export function StatsDashboard({ bestStreak, storedMisses, stats, todayAccuracy,
           </div>
         </section>
 
-        <div className="stats-side-stack">
-          <section className="stats-today-card">
+        <section className="stats-today-card">
             <div className="panel-title">
               <CalendarDays size={18} aria-hidden="true" />
               <div>
@@ -165,7 +174,17 @@ export function StatsDashboard({ bestStreak, storedMisses, stats, todayAccuracy,
             <div className="stats-today-meter">
               <strong>{todayAccuracy}%</strong>
               <span>today accuracy</span>
-              <em>{todayStats.correct}/{todayStats.answered} correct</em>
+              {todayGrade && <b className="stats-today-grade">{todayGrade}</b>}
+            </div>
+            <div className="stats-today-compare">
+              <div>
+                <span>Today</span>
+                <strong>{todayAccuracy}%</strong>
+              </div>
+              <div>
+                <span>Overall</span>
+                <strong>{overallAccuracy}%</strong>
+              </div>
             </div>
             <div className="stats-today-breakdown">
               <div>
@@ -175,6 +194,10 @@ export function StatsDashboard({ bestStreak, storedMisses, stats, todayAccuracy,
               <div>
                 <span>Answered</span>
                 <strong>{todayStats.answered}</strong>
+              </div>
+              <div>
+                <span>Missed</span>
+                <strong>{Math.max(0, todayStats.answered - todayStats.correct)}</strong>
               </div>
             </div>
           </section>
@@ -190,27 +213,39 @@ export function StatsDashboard({ bestStreak, storedMisses, stats, todayAccuracy,
             {recentMisses.length === 0 ? (
               <p className="empty-state">No saved misses yet. Your future review load will appear here.</p>
             ) : (
-              <div className="stats-review-list">
-                {recentMisses.map((miss) => {
-                  const lang = languages.find((l) => l.id === miss.languageId);
-                  const verb = lang?.verbs.find((v) => v.infinitive === miss.verbInfinitive);
-                  const correctAnswer = verb ? verb.forms[miss.tense][miss.pronoun] : '';
-                  const displayAnswer = miss.answer || correctAnswer;
+              <div className="stats-review-table-wrap">
+                <table className="stats-review-table">
+                  <thead>
+                    <tr>
+                      <th>Language</th>
+                      <th>Tense</th>
+                      <th>Pronoun</th>
+                      <th>Verb</th>
+                      <th>Answer</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentMisses.map((miss) => {
+                      const lang = languages.find((l) => l.id === miss.languageId);
+                      const verb = lang?.verbs.find((v) => v.infinitive === miss.verbInfinitive);
+                      const correctAnswer = verb ? verb.forms[miss.tense][miss.pronoun] : '';
+                      const displayAnswer = miss.answer || correctAnswer;
 
-                  return (
-                    <div key={`${miss.languageId}-${miss.verbInfinitive}-${miss.tense}-${miss.pronoun}`}>
-                      <span>
-                        {miss.languageId} · {miss.tense} · {miss.pronoun}
-                      </span>
-                      <strong>{miss.verbInfinitive}</strong>
-                      <em>{displayAnswer}</em>
-                    </div>
-                  );
-                })}
+                      return (
+                        <tr key={`${miss.languageId}-${miss.verbInfinitive}-${miss.tense}-${miss.pronoun}`}>
+                          <td>{lang?.nativeName ?? miss.languageId}</td>
+                          <td>{lang?.tenseLabels[miss.tense] ?? miss.tense}</td>
+                          <td>{lang?.pronounLabels[miss.pronoun] ?? miss.pronoun}</td>
+                          <td className="stats-review-verb">{miss.verbInfinitive}</td>
+                          <td className="stats-review-answer">{displayAnswer}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </section>
-        </div>
       </div>
     </section>
   );

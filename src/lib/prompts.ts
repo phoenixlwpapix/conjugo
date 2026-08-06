@@ -87,6 +87,15 @@ export const createSessionPrompts = (
   return shufflePrompts([...reviewPrompts, ...freshPrompts]).slice(0, sessionTarget);
 };
 
+export const createMissSessionPrompts = (language: Language, reviewTargets: ReviewTarget[]): Prompt[] => {
+  const promptPool = createPromptPool(language, 'mixed');
+  const reviewPrompts = shufflePrompts(reviewTargets)
+    .map((target) => promptPool.find((prompt) => matchesReviewTarget(prompt, target)))
+    .filter((prompt): prompt is Prompt => Boolean(prompt));
+
+  return reviewPrompts.slice(0, sessionTarget);
+};
+
 export const getFallbackPrompt = (language: Language, practiceTense: PracticeTenseId): Prompt => {
   const firstVerb = language.verbs[0];
 

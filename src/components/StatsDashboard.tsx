@@ -19,6 +19,7 @@ type StatsDashboardProps = {
   todayAccuracy: number;
   todayStats: DailyStats;
   trend: TrendPoint[];
+  onStartMissPractice: () => void;
 };
 
 type KpiItem = {
@@ -39,7 +40,15 @@ const toChartData = (trend: TrendPoint[]): ChartPoint[] =>
 
 const formatPercentTick = (value: number) => `${value}%`;
 
-export function StatsDashboard({ bestStreak, storedMisses, stats, todayAccuracy, todayStats, trend }: StatsDashboardProps) {
+export function StatsDashboard({
+  bestStreak,
+  storedMisses,
+  stats,
+  todayAccuracy,
+  todayStats,
+  trend,
+  onStartMissPractice,
+}: StatsDashboardProps) {
   const overallAccuracy = getAccuracy(stats.totalCorrect, stats.totalAnswered);
   const activeDays = Object.values(stats.days).filter((day) => day.answered > 0).length;
   const completedSets = Object.values(stats.days).reduce((total, day) => total + day.sessions, 0);
@@ -203,12 +212,22 @@ export function StatsDashboard({ bestStreak, storedMisses, stats, todayAccuracy,
           </section>
 
           <section className="stats-review-card">
-            <div className="panel-title">
-              <Target size={18} aria-hidden="true" />
-              <div>
-                <h2>Review load</h2>
-                <span>{storedMisses.length} saved misses</span>
+            <div className="stats-card-head">
+              <div className="panel-title">
+                <Target size={18} aria-hidden="true" />
+                <div>
+                  <h2>Review load</h2>
+                  <span>{storedMisses.length} saved misses</span>
+                </div>
               </div>
+              <button
+                className="stats-review-start-button"
+                disabled={storedMisses.length === 0}
+                onClick={onStartMissPractice}
+                type="button"
+              >
+                Practice misses
+              </button>
             </div>
             {recentMisses.length === 0 ? (
               <p className="empty-state">No saved misses yet. Your future review load will appear here.</p>

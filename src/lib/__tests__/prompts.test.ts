@@ -4,6 +4,7 @@ import {
   clampEnglishTense,
   createPromptPool,
   getChoices,
+  createMissSessionPrompts,
   createSessionPrompts,
   getAnswer,
   getPronounLabel,
@@ -124,6 +125,57 @@ describe('prompts', () => {
 
       expect(prompt).toBeDefined();
       expect(getPronounLabel(prompt!)).toBe('vosotras');
+    });
+  });
+
+  describe('createMissSessionPrompts', () => {
+    it('should return an empty session when there are no review targets', () => {
+      const session = createMissSessionPrompts(spanish, []);
+      expect(session).toHaveLength(0);
+    });
+
+    it('should build a session solely from review targets without padding', () => {
+      const reviewTargets = [
+        { verbInfinitive: spanish.verbs[0].infinitive, tense: 'present' as const, pronoun: 'I' as const },
+        { verbInfinitive: spanish.verbs[1].infinitive, tense: 'past' as const, pronoun: 'you' as const },
+        { verbInfinitive: spanish.verbs[2].infinitive, tense: 'future' as const, pronoun: 'they' as const },
+      ];
+
+      const session = createMissSessionPrompts(spanish, reviewTargets);
+      expect(session).toHaveLength(reviewTargets.length);
+
+      for (const prompt of session) {
+        const matched = reviewTargets.some(
+          (target) =>
+            target.verbInfinitive === prompt.verb.infinitive &&
+            target.tense === prompt.tense &&
+            target.pronoun === prompt.pronoun,
+        );
+        expect(matched).toBe(true);
+      }
+    });
+
+    it('should cap the session at the normal session target', () => {
+      const reviewTargets = Array.from({ length: 30 }, (_, index) => ({
+        verbInfinitive: spanish.verbs[index % spanish.verbs.length].infinitive,
+        tense: (['present', 'past', 'future', 'imperfect', 'conditional'] as const)[index % 5],
+        pronoun: 'I' as const,
+      }));
+
+      const session = createMissSessionPrompts(spanish, reviewTargets);
+      expect(session.length).toBeLessThanOrEqual(20);
+      expect(session.length).toBeGreaterThan(0);
+    });
+
+    it('should skip review targets that do not exist in the language', () => {
+      const reviewTargets = [
+        { verbInfinitive: 'nonexistent', tense: 'present' as const, pronoun: 'I' as const },
+        { verbInfinitive: spanish.verbs[0].infinitive, tense: 'present' as const, pronoun: 'I' as const },
+      ];
+
+      const session = createMissSessionPrompts(spanish, reviewTargets);
+      expect(session.length).toBeGreaterThan(0);
+      expect(session.every((prompt) => prompt.verb.infinitive === spanish.verbs[0].infinitive)).toBe(true);
     });
   });
 });

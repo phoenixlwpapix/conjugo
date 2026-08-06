@@ -64,6 +64,7 @@ export default function App() {
     selectChoice,
     resetSession,
     moveNext,
+    startMissReview,
     dismissCelebration,
     dismissCompletion,
     timeLeft,
@@ -260,6 +261,7 @@ export default function App() {
               todayAccuracy={todayAccuracy}
               todayStats={todayStats}
               trend={trend}
+              onStartMissPractice={startMissReview}
             />
           </Suspense>
         )}

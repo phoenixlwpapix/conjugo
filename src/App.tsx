@@ -38,6 +38,8 @@ export default function App() {
     setBookTense,
     wordbookQuery,
     setWordbookQuery,
+    wordbookSort,
+    setWordbookSort,
     selectedVerb,
     selectedVerbInfinitive,
     setSelectedVerbInfinitive,
@@ -272,9 +274,11 @@ export default function App() {
             bookTense={bookTense}
             filteredVerbs={filteredVerbs}
             onQueryChange={setWordbookQuery}
+            onSortChange={setWordbookSort}
             onSelectVerb={setSelectedVerbInfinitive}
             onTenseChange={setBookTense}
             query={wordbookQuery}
+            sort={wordbookSort}
             selectedVerb={selectedVerb}
             selectedVerbInfinitive={selectedVerbInfinitive}
           />

@@ -9,6 +9,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Mobile-first header with a hamburger menu for language and workspace switching.
 - Top-right Word Book workspace for browsing every verb in the current language.
 - Compact Word Book layout with an independently scrolling verb list and sticky conjugation reference.
+- Word Book verbs can be browsed in their curated current order or alphabetically, without display numbering.
 - Interactive conjugation reference: search verbs, choose a verb, switch tense, and inspect every pronoun form.
 - Card-based multiple-choice drills with instant feedback and one-tap next-question flow.
 - Correct answers auto-advance after a short pause; wrong answers keep the correction visible.

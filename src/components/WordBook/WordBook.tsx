@@ -1,17 +1,20 @@
 import type { Language, TenseId, VerbEntry } from '../../data/verbs';
+import type { WordbookSort } from '../../hooks/useWordbook';
 import { ConjugationPanel } from './ConjugationPanel';
 import { VerbListPanel } from './VerbListPanel';
 
 type WordBookProps = {
   activeLanguage: Language;
   bookTense: TenseId;
-  filteredVerbs: Array<{ index: number; verb: VerbEntry }>;
+  filteredVerbs: VerbEntry[];
   onQueryChange: (query: string) => void;
   onSelectVerb: (infinitive: string) => void;
+  onSortChange: (sort: WordbookSort) => void;
   onTenseChange: (tense: TenseId) => void;
   query: string;
   selectedVerb: VerbEntry;
   selectedVerbInfinitive: string;
+  sort: WordbookSort;
 };
 
 export function WordBook({
@@ -20,10 +23,12 @@ export function WordBook({
   filteredVerbs,
   onQueryChange,
   onSelectVerb,
+  onSortChange,
   onTenseChange,
   query,
   selectedVerb,
   selectedVerbInfinitive,
+  sort,
 }: WordBookProps) {
   return (
     <section className="wordbook-layout" aria-label={`${activeLanguage.name} verb book`}>
@@ -32,8 +37,10 @@ export function WordBook({
         filteredVerbs={filteredVerbs}
         onQueryChange={onQueryChange}
         onSelectVerb={onSelectVerb}
+        onSortChange={onSortChange}
         query={query}
         selectedVerbInfinitive={selectedVerbInfinitive}
+        sort={sort}
       />
       <ConjugationPanel
         activeLanguage={activeLanguage}

@@ -770,6 +770,47 @@ button {
   color: color-mix(in srgb, var(--muted) 74%, var(--mix-base));
 }
 
+.wordbook-sort {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--control);
+}
+
+.wordbook-sort button {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.wordbook-sort button:hover {
+  color: var(--ink);
+}
+
+.wordbook-sort button[data-active='true'] {
+  border-color: color-mix(in srgb, var(--language-accent, var(--green)) 32%, var(--panel-border));
+  color: var(--ink);
+  background: var(--button-surface);
+}
+
+.wordbook-sort button[data-active='true'] svg {
+  color: var(--language-accent, var(--green));
+}
+
 .verb-list {
   display: grid;
   align-content: start;
@@ -783,8 +824,8 @@ button {
 
 .verb-list-item {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
-  gap: 2px 12px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3px;
   align-items: center;
   min-height: 56px;
   padding: 10px 12px;
@@ -809,25 +850,6 @@ button {
   display: block;
 }
 
-.verb-list-number {
-  grid-row: 1 / 3;
-  align-self: center;
-  width: 32px;
-  height: 32px;
-  display: grid;
-  place-items: center;
-  border-radius: 6px;
-  color: var(--muted);
-  background: var(--control);
-  font-size: 0.74rem;
-  font-weight: 900;
-}
-
-.verb-list-item[data-active='true'] .verb-list-number {
-  color: var(--on-accent);
-  background: var(--language-accent, var(--green));
-}
-
 .verb-list-item strong {
   min-width: 0;
   overflow: hidden;
@@ -837,7 +859,7 @@ button {
   white-space: nowrap;
 }
 
-.verb-list-item > span:not(.verb-list-number) {
+.verb-list-item > span {
   min-width: 0;
   overflow: hidden;
   color: var(--muted);

@@ -366,6 +366,8 @@ export function usePractice() {
     setBookTense: wordbook.setBookTense,
     wordbookQuery: wordbook.wordbookQuery,
     setWordbookQuery: wordbook.setWordbookQuery,
+    wordbookSort: wordbook.wordbookSort,
+    setWordbookSort: wordbook.setWordbookSort,
     selectedVerb: wordbook.selectedVerb,
     selectedVerbInfinitive: wordbook.selectedVerbInfinitive,
     setSelectedVerbInfinitive: wordbook.setSelectedVerbInfinitive,

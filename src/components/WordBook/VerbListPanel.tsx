@@ -1,13 +1,16 @@
-import { Search } from 'lucide-react';
+import { ArrowDownAZ, List, Search } from 'lucide-react';
 import type { Language, VerbEntry } from '../../data/verbs';
+import type { WordbookSort } from '../../hooks/useWordbook';
 
 type VerbListPanelProps = {
   activeLanguage: Language;
-  filteredVerbs: Array<{ index: number; verb: VerbEntry }>;
+  filteredVerbs: VerbEntry[];
   onQueryChange: (query: string) => void;
   onSelectVerb: (infinitive: string) => void;
+  onSortChange: (sort: WordbookSort) => void;
   query: string;
   selectedVerbInfinitive: string;
+  sort: WordbookSort;
 };
 
 export function VerbListPanel({
@@ -15,8 +18,10 @@ export function VerbListPanel({
   filteredVerbs,
   onQueryChange,
   onSelectVerb,
+  onSortChange,
   query,
   selectedVerbInfinitive,
+  sort,
 }: VerbListPanelProps) {
   return (
     <aside className="verb-list-panel">
@@ -39,13 +44,32 @@ export function VerbListPanel({
         />
       </label>
 
-      <p className="scope-note wordbook-scope">Shows all 6 standard person forms.</p>
+      <div className="wordbook-sort" aria-label="Verb order" role="group">
+        <button
+          aria-pressed={sort === 'current'}
+          data-active={sort === 'current'}
+          onClick={() => onSortChange('current')}
+          type="button"
+        >
+          <List size={15} aria-hidden="true" />
+          Current
+        </button>
+        <button
+          aria-pressed={sort === 'alphabetical'}
+          data-active={sort === 'alphabetical'}
+          onClick={() => onSortChange('alphabetical')}
+          type="button"
+        >
+          <ArrowDownAZ size={15} aria-hidden="true" />
+          A–Z
+        </button>
+      </div>
 
       <div className="verb-list" aria-label={`${activeLanguage.name} verbs`}>
         {filteredVerbs.length === 0 ? (
           <p className="empty-state">No verbs match this search.</p>
         ) : (
-          filteredVerbs.map(({ verb }, displayIndex) => (
+          filteredVerbs.map((verb) => (
             <button
               className="verb-list-item"
               data-active={selectedVerbInfinitive === verb.infinitive}
@@ -53,7 +77,6 @@ export function VerbListPanel({
               onClick={() => onSelectVerb(verb.infinitive)}
               type="button"
             >
-              <span className="verb-list-number">{String(displayIndex + 1).padStart(2, '0')}</span>
               <strong>{verb.infinitive}</strong>
               <span>{verb.translation}</span>
             </button>

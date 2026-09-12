@@ -77,6 +77,8 @@ export function TrainerPanel({
   const pronounLabel = getPronounLabel(prompt);
   const tenseLabel = getTenseLabel(prompt.tense);
   const showAlertStyle = !isAnswered && timeLeft <= 3;
+  const promptTextLength = Array.from(`${pronounLabel}${prompt.verb.infinitive}`).length;
+  const promptDensity = promptTextLength >= 23 ? 'condensed' : promptTextLength >= 18 ? 'compact' : 'regular';
 
   const size = 40;
   const strokeWidth = 3;
@@ -177,7 +179,7 @@ export function TrainerPanel({
             </div>
           </div>
 
-          <div className="prompt-display">
+          <div className="prompt-display" data-density={promptDensity}>
             <span className="prompt-pronoun">{pronounLabel}</span>
             <span className="prompt-divider" aria-hidden="true">
               /

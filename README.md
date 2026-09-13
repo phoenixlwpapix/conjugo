@@ -20,7 +20,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Answer choices are generated from the current verb's conjugation family, prioritizing the same tense and other pronouns.
 - Answer card positions are shuffled per prompt so the correct conjugation does not stay tied to a predictable slot.
 - Session metrics for target progress, attempts, accuracy, and current streak.
-- Review queue that surfaces recent missed prompts with the correct answer, opens an in-place conjugation modal that pauses the timer, and feeds missed prompts back into future sessions.
+- Missed prompts are retained for the Stats workspace and automatically fed back into future practice sessions.
 - Local persistence for selected language, active workspace, tense, missed prompts, and language-specific cumulative practice stats.
 - Keyboard shortcuts for faster drills: A/B/C/D answer choices, Enter/Space for next missed question, and R reset.
 - Dedicated Stats workspace with cumulative answer counts, completed sets, best streak, review load, and a Recharts-powered seven-day accuracy bar chart.
@@ -46,9 +46,8 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Auto-advance on correct answers and confetti for a perfect set.
 - Non-perfect completed sets now open a completion summary modal instead of ending silently.
 - Completion stats persist in localStorage across browser sessions and are tracked separately for each language.
-- The practice side panel stays focused on current-session metrics and review prompts.
+- The practice side panel stays focused on current-session and all-time metrics, with its height aligned to the trainer card on desktop.
 - The All-time Progress card now shows only the active language and includes a language tag for quick confirmation.
-- Clicking a recent miss now opens a practice-page modal with every person form for that verb in the missed tense, pauses the countdown, and supports close button, Escape, and outside-click dismissal.
 - The Stats workspace uses a tighter dashboard layout with consistent KPI typography, today’s performance, review load, and a responsive Recharts accuracy bar chart.
 - The Stats workspace is lazy-loaded so chart dependencies do not inflate the initial practice bundle.
 - The prompt card no longer repeats the same build information in a side rail, giving the question more room.

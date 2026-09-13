@@ -61,7 +61,6 @@ export default function App() {
     accuracy,
     progress,
     progressPercent,
-    recentMisses,
     isSessionComplete,
     selectChoice,
     resetSession,
@@ -71,8 +70,6 @@ export default function App() {
     dismissCompletion,
     timeLeft,
     timerEnabled,
-    timerPaused,
-    setTimerPaused,
     toggleTimer,
     todayStats,
     todayAccuracy,
@@ -96,7 +93,7 @@ export default function App() {
         return;
       }
 
-      if (activeView !== 'practice' || showCelebration || showCompletion || timerPaused) {
+      if (activeView !== 'practice' || showCelebration || showCompletion) {
         return;
       }
 
@@ -150,7 +147,6 @@ export default function App() {
     selectChoice,
     showCelebration,
     showCompletion,
-    timerPaused,
   ]);
 
   const sessionCorrectCount = attempts.filter((attempt) => attempt.correct).length;
@@ -239,10 +235,8 @@ export default function App() {
                 attempts={attempts}
                 accuracy={accuracy}
                 streak={streak}
-                recentMisses={recentMisses}
                 cumulativeStats={stats}
                 sessionTarget={sessionTarget}
-                onReviewModalChange={setTimerPaused}
               />
             </section>
           </>

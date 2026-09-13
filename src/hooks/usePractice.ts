@@ -52,7 +52,6 @@ export function usePractice() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
   const [timeLeft, setTimeLeft] = useState(timerSeconds);
-  const [timerPaused, setTimerPaused] = useState(false);
   const [timerEnabled, setTimerEnabled] = useState(readTimerEnabled);
 
   const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -79,7 +78,6 @@ export function usePractice() {
   const accuracy = getAccuracy(correctCount, attempts.length);
   const progress = Math.min(attempts.length, sessionLength);
   const progressPercent = sessionLength === 0 ? 0 : Math.round((progress / sessionLength) * 100);
-  const recentMisses = attempts.filter((attempt) => !attempt.correct).slice(0, 4);
   const isSessionComplete = attempts.length >= sessionLength;
   const todayStats = getDailyStats(stats);
   const todayAccuracy = getAccuracy(todayStats.correct, todayStats.answered);
@@ -286,7 +284,6 @@ export function usePractice() {
   useEffect(() => {
     if (
       !timerEnabled ||
-      timerPaused ||
       isAnswered ||
       isSessionComplete ||
       showCelebration ||
@@ -316,7 +313,6 @@ export function usePractice() {
     showCelebration,
     showCompletion,
     timerEnabled,
-    timerPaused,
   ]);
 
   useEffect(
@@ -391,7 +387,6 @@ export function usePractice() {
     accuracy,
     progress,
     progressPercent,
-    recentMisses,
     isSessionComplete,
     selectChoice,
     resetSession,
@@ -401,8 +396,6 @@ export function usePractice() {
     dismissCompletion,
     timeLeft,
     timerEnabled,
-    timerPaused,
-    setTimerPaused,
     toggleTimer,
     todayStats,
     todayAccuracy,

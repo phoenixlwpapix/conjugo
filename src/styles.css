@@ -396,8 +396,7 @@ button {
 .stats-review-card,
 .stats-loading-card,
 .progress-card,
-.score-grid,
-.review-card {
+.score-grid {
   border: 1px solid var(--panel-border);
   border-radius: 8px;
   background: var(--panel);
@@ -672,7 +671,7 @@ button {
   grid-template-columns: minmax(0, 1fr) 310px;
   gap: 14px;
   margin-top: 14px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .wordbook-layout {
@@ -1371,12 +1370,22 @@ button {
 
 .progress-panel {
   display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
   gap: 12px;
+  height: 100%;
 }
 
-.progress-card,
-.review-card {
+.progress-card {
   padding: 16px;
+}
+
+.session-progress-card {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.session-progress-card .ring-meter {
+  align-self: center;
 }
 
 .panel-title {
@@ -1489,136 +1498,6 @@ button {
   box-shadow: none;
   border: none;
   border-top: 1px solid var(--subtle-border);
-}
-
-.miss-list {
-  display: grid;
-  gap: 8px;
-  margin-top: 14px;
-}
-
-.miss-item {
-  display: grid;
-  gap: 4px;
-  width: 100%;
-  padding: 11px;
-  border: 0;
-  border-radius: 8px;
-  color: inherit;
-  background: var(--control);
-  text-align: left;
-}
-
-.miss-item:hover {
-  background: color-mix(in srgb, var(--language-accent, var(--green)) 10%, var(--control));
-}
-
-.miss-item span {
-  color: var(--muted);
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.miss-item strong {
-  color: var(--ink);
-}
-
-.miss-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  display: grid;
-  place-items: center;
-  padding: 18px;
-  background: color-mix(in srgb, #111 42%, transparent);
-  backdrop-filter: blur(8px);
-}
-
-.miss-modal {
-  width: min(460px, 100%);
-  max-height: min(680px, calc(100vh - 36px));
-  overflow: auto;
-  padding: 18px;
-  border: 1px solid var(--panel-border);
-  border-radius: 8px;
-  background: var(--paper-strong);
-  box-shadow: var(--shadow);
-}
-
-.miss-modal-head {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.miss-modal-head h2 {
-  margin: 4px 0 2px;
-  color: var(--ink);
-  font-family: Lora, serif;
-  font-size: 1.85rem;
-  line-height: 1.05;
-}
-
-.miss-modal-head p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.92rem;
-  font-weight: 800;
-}
-
-.modal-close-button {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  color: var(--ink);
-  background: var(--control);
-}
-
-.modal-close-button:hover {
-  background: color-mix(in srgb, var(--language-accent, var(--green)) 10%, var(--control));
-}
-
-.miss-conjugation-list {
-  display: grid;
-  gap: 8px;
-  margin-top: 18px;
-}
-
-.miss-conjugation-row {
-  display: grid;
-  grid-template-columns: minmax(90px, 0.75fr) minmax(0, 1fr);
-  gap: 12px;
-  align-items: center;
-  min-height: 54px;
-  padding: 11px 12px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: var(--control);
-}
-
-.miss-conjugation-row[data-current='true'] {
-  border-color: color-mix(in srgb, var(--language-accent, var(--green)) 36%, var(--subtle-border));
-  background: color-mix(in srgb, var(--language-accent, var(--green)) 10%, var(--mix-base));
-}
-
-.miss-conjugation-row span {
-  min-width: 0;
-  color: var(--muted);
-  font-size: 0.86rem;
-  font-weight: 900;
-}
-
-.miss-conjugation-row strong {
-  min-width: 0;
-  color: var(--ink);
-  font-size: 1.05rem;
-  font-weight: 900;
-  overflow-wrap: anywhere;
 }
 
 .stats-dashboard {
@@ -2118,10 +1997,12 @@ button {
 
   .progress-panel {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+    height: auto;
   }
 
-  .review-card {
-    grid-column: 1 / -1;
+  .session-progress-card {
+    grid-row: 1 / span 2;
   }
 }
 
@@ -2194,10 +2075,6 @@ button {
     grid-template-columns: 1fr 1fr;
   }
 
-  .review-card {
-    grid-column: 1 / -1;
-  }
-
   .stats-kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2248,8 +2125,7 @@ button {
   .stats-trend-card,
   .stats-today-card,
   .stats-review-card,
-  .progress-card,
-  .review-card {
+  .progress-card {
     padding: 12px;
   }
 
@@ -2432,6 +2308,10 @@ button {
   .score-grid,
   .stats-kpi-grid {
     grid-template-columns: 1fr;
+  }
+
+  .session-progress-card {
+    grid-row: auto;
   }
 
   .score-grid {
@@ -2634,16 +2514,6 @@ button {
   .celebration-backdrop {
     animation-duration: 1ms;
   }
-}
-
-.clickable-miss-item {
-  cursor: pointer;
-  transition: transform 150ms ease, background-color 150ms ease;
-}
-
-.clickable-miss-item:hover {
-  background: var(--control) !important;
-  transform: translateY(-1px);
 }
 
 .scope-note {

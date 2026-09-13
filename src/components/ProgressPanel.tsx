@@ -1,4 +1,4 @@
-import { BarChart3, Flame, Target, Trophy } from 'lucide-react';
+import { BarChart3, Clock3, Flame, Target, Trophy } from 'lucide-react';
 import { type Language } from '../data/verbs';
 import { getAccuracy } from '../lib/scoring';
 import type { Attempt, PracticeStats } from '../types';
@@ -13,7 +13,18 @@ interface ProgressPanelProps {
   streak: number;
   cumulativeStats: PracticeStats;
   sessionTarget: number;
+  sessionElapsedSeconds: number;
 }
+
+const formatElapsedTime = (totalSeconds: number) => {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const paddedMinutes = minutes.toString().padStart(2, '0');
+  const paddedSeconds = seconds.toString().padStart(2, '0');
+
+  return hours > 0 ? `${hours}:${paddedMinutes}:${paddedSeconds}` : `${paddedMinutes}:${paddedSeconds}`;
+};
 
 export function ProgressPanel({
   activeLanguage,
@@ -24,9 +35,11 @@ export function ProgressPanel({
   streak,
   cumulativeStats,
   sessionTarget,
+  sessionElapsedSeconds,
 }: ProgressPanelProps) {
   const allTimeAccuracy = getAccuracy(cumulativeStats.totalCorrect, cumulativeStats.totalAnswered);
   const remaining = Math.max(sessionTarget - progress, 0);
+  const elapsedTime = formatElapsedTime(sessionElapsedSeconds);
 
   return (
     <aside className="progress-panel" aria-label="Practice progress">
@@ -36,6 +49,11 @@ export function ProgressPanel({
           <h2>This set</h2>
         </div>
         <RingMeter progressPercent={progressPercent} />
+        <div className="session-elapsed" aria-label={`Training time ${elapsedTime}`}>
+          <Clock3 size={16} aria-hidden="true" />
+          <span>Training time</span>
+          <strong>{elapsedTime}</strong>
+        </div>
         <p>{remaining > 0 ? `${remaining} more to complete this set` : 'Set complete. Reset or keep going.'}</p>
       </section>
 

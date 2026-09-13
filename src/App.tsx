@@ -69,6 +69,7 @@ export default function App() {
     dismissCelebration,
     dismissCompletion,
     timeLeft,
+    sessionElapsedSeconds,
     timerEnabled,
     toggleTimer,
     todayStats,
@@ -237,6 +238,7 @@ export default function App() {
                 streak={streak}
                 cumulativeStats={stats}
                 sessionTarget={sessionTarget}
+                sessionElapsedSeconds={sessionElapsedSeconds}
               />
             </section>
           </>

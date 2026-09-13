@@ -52,6 +52,7 @@ export function usePractice() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
   const [timeLeft, setTimeLeft] = useState(timerSeconds);
+  const [sessionElapsedSeconds, setSessionElapsedSeconds] = useState(0);
   const [timerEnabled, setTimerEnabled] = useState(readTimerEnabled);
 
   const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -143,6 +144,7 @@ export function usePractice() {
       setSelectedAnswer(null);
       setTimedOut(false);
       setTimeLeft(timerSeconds);
+      setSessionElapsedSeconds(0);
     },
     [activeLanguage, clearAutoAdvance, practiceTense],
   );
@@ -164,6 +166,7 @@ export function usePractice() {
     setSelectedAnswer(null);
     setTimedOut(false);
     setTimeLeft(timerSeconds);
+    setSessionElapsedSeconds(0);
     setActiveViewState('practice');
   }, [activeLanguage, clearAutoAdvance]);
 
@@ -282,6 +285,18 @@ export function usePractice() {
   }, [promptIndex, isAnswered, isSessionComplete]);
 
   useEffect(() => {
+    if (activeView !== 'practice' || isSessionComplete || showCelebration || showCompletion) {
+      return undefined;
+    }
+
+    const interval = setInterval(() => {
+      setSessionElapsedSeconds((current) => current + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [activeView, isSessionComplete, showCelebration, showCompletion]);
+
+  useEffect(() => {
     if (
       !timerEnabled ||
       isAnswered ||
@@ -395,6 +410,7 @@ export function usePractice() {
     dismissCelebration,
     dismissCompletion,
     timeLeft,
+    sessionElapsedSeconds,
     timerEnabled,
     toggleTimer,
     todayStats,

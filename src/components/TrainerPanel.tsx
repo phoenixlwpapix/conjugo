@@ -247,6 +247,7 @@ export function TrainerPanel({
         ) : (
           <div>
             <strong>Choose one answer card.</strong>
+            <span>Use A–D or 1–4 on your keyboard.</span>
           </div>
         )}
       </div>

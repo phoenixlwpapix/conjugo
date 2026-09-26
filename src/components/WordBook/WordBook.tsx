@@ -1,3 +1,4 @@
+import type { TranslationLanguage } from '../../data/translations';
 import type { Language, TenseId, VerbEntry } from '../../data/verbs';
 import type { WordbookSort } from '../../hooks/useWordbook';
 import { ConjugationPanel } from './ConjugationPanel';
@@ -15,6 +16,7 @@ type WordBookProps = {
   selectedVerb: VerbEntry;
   selectedVerbInfinitive: string;
   sort: WordbookSort;
+  translationLanguage: TranslationLanguage;
 };
 
 export function WordBook({
@@ -29,6 +31,7 @@ export function WordBook({
   selectedVerb,
   selectedVerbInfinitive,
   sort,
+  translationLanguage,
 }: WordBookProps) {
   return (
     <section className="wordbook-layout" aria-label={`${activeLanguage.name} verb book`}>
@@ -41,12 +44,14 @@ export function WordBook({
         query={query}
         selectedVerbInfinitive={selectedVerbInfinitive}
         sort={sort}
+        translationLanguage={translationLanguage}
       />
       <ConjugationPanel
         activeLanguage={activeLanguage}
         bookTense={bookTense}
         onTenseChange={onTenseChange}
         selectedVerb={selectedVerb}
+        translationLanguage={translationLanguage}
       />
     </section>
   );

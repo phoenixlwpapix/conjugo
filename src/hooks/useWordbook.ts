@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { Language, TenseId } from '../data/verbs';
+import { getVerbSearchText } from '../data/translations';
+import { isTenseAvailable, type Language, type TenseId } from '../data/verbs';
 import type { Prompt } from '../types';
 
 export type WordbookSort = 'current' | 'alphabetical';
@@ -13,7 +14,7 @@ export const useWordbook = (activeLanguage: Language) => {
   useEffect(() => {
     setSelectedVerbInfinitive(activeLanguage.verbs[0]?.infinitive ?? '');
     setWordbookQuery('');
-    if (activeLanguage.id === 'english' && (bookTense === 'imperfect' || bookTense === 'conditional')) {
+    if (!isTenseAvailable(activeLanguage.id, bookTense)) {
       setBookTense('present');
     }
     // Only reset selection when language changes; bookTense intentionally omitted.
@@ -28,7 +29,7 @@ export const useWordbook = (activeLanguage: Language) => {
         return true;
       }
 
-      return `${verb.infinitive} ${verb.translation}`.toLowerCase().includes(normalizedQuery);
+      return getVerbSearchText(activeLanguage, verb).includes(normalizedQuery);
     });
 
     if (wordbookSort === 'alphabetical') {

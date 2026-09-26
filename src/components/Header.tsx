@@ -3,8 +3,9 @@ import { BarChart3, BookOpenText, Menu, Moon, Sun, Target, X } from 'lucide-reac
 import { languages, type LanguageId } from '../data/verbs';
 import { type ThemeId } from '../data/themes';
 import type { AppView } from '../types';
+import { PreferencesPanel, type PreferencesPanelProps } from './PreferencesPanel';
 
-interface HeaderProps {
+interface HeaderProps extends Omit<PreferencesPanelProps, 'languageId'> {
   languageId: LanguageId;
   switchLanguage: (id: LanguageId) => void;
   activeView: AppView;
@@ -26,6 +27,7 @@ export function Header({
   setActiveView,
   themeId,
   setThemeId,
+  ...preferences
 }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const activeLanguage = languages.find((language) => language.id === languageId) ?? languages[0];
@@ -64,7 +66,7 @@ export function Header({
   return (
     <header className="app-topbar">
       <div className="brand-lockup">
-        <img src="/conjugo-logo.png" alt="" aria-hidden="true" />
+        <img src="/conjugo-logo.webp" alt="" aria-hidden="true" width="46" height="46" />
         <div>
           <strong>ConjuGO</strong>
           <span>Verb trainer</span>
@@ -132,6 +134,8 @@ export function Header({
         </select>
       </div>
 
+      <PreferencesPanel languageId={languageId} {...preferences} />
+
       <button
         className="theme-toggle"
         onClick={toggleTheme}
@@ -192,6 +196,10 @@ export function Header({
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="mobile-menu-section">
+          <PreferencesPanel languageId={languageId} {...preferences} />
         </div>
 
         <div className="mobile-menu-section">

@@ -1,4 +1,5 @@
 import { ArrowDownAZ, List, Search } from 'lucide-react';
+import { getVerbTranslation, type TranslationLanguage } from '../../data/translations';
 import type { Language, VerbEntry } from '../../data/verbs';
 import type { WordbookSort } from '../../hooks/useWordbook';
 
@@ -11,6 +12,7 @@ type VerbListPanelProps = {
   query: string;
   selectedVerbInfinitive: string;
   sort: WordbookSort;
+  translationLanguage: TranslationLanguage;
 };
 
 export function VerbListPanel({
@@ -22,6 +24,7 @@ export function VerbListPanel({
   query,
   selectedVerbInfinitive,
   sort,
+  translationLanguage,
 }: VerbListPanelProps) {
   return (
     <aside className="verb-list-panel">
@@ -78,7 +81,7 @@ export function VerbListPanel({
               type="button"
             >
               <strong>{verb.infinitive}</strong>
-              <span>{verb.translation}</span>
+              <span>{getVerbTranslation(activeLanguage, verb, translationLanguage)}</span>
             </button>
           ))
         )}

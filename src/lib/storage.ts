@@ -1,5 +1,7 @@
 import { languages, type LanguageId, type PracticeTenseId, type Pronoun, type TenseId } from '../data/verbs';
-import type { AppView, PracticeStats, PracticeStatsByLanguage, StoredMiss } from '../types';
+import { isTranslationLanguage, type TranslationLanguage } from '../data/translations';
+import type { AnswerTally, AppView, PracticeStats, PracticeStatsByLanguage, ReviewBox, StoredMiss } from '../types';
+import { capMissesPerLanguage } from './misses';
 import { emptyStats } from './scoring';
 
 const storageKeys = {
@@ -9,6 +11,8 @@ const storageKeys = {
   misses: 'conjugo.misses',
   statsByLanguage: 'conjugo.statsByLanguage',
   timerEnabled: 'conjugo.timerEnabled',
+  translationLanguage: 'conjugo.translationLanguage',
+  includeVosotros: 'conjugo.includeVosotros',
 } as const;
 
 /** Legacy keys from the pre-refactor live path. */
@@ -23,9 +27,9 @@ const legacyKeys = {
 } as const;
 
 const languageIds = languages.map((language) => language.id);
-const practiceTenses: PracticeTenseId[] = ['present', 'past', 'imperfect', 'future', 'conditional', 'mixed'];
+const practiceTenses: PracticeTenseId[] = ['present', 'past', 'imperfect', 'future', 'conditional', 'subjunctive', 'mixed'];
 const appViews: AppView[] = ['practice', 'stats', 'wordbook'];
-const tenseIds: TenseId[] = ['present', 'past', 'imperfect', 'future', 'conditional'];
+const tenseIds: TenseId[] = ['present', 'past', 'imperfect', 'future', 'conditional', 'subjunctive'];
 const pronounIds: Pronoun[] = ['I', 'you', 'he/she', 'we', 'you plural', 'they'];
 
 const canUseStorage = () => typeof window !== 'undefined' && 'localStorage' in window;
@@ -84,7 +88,29 @@ const isTenseId = (value: unknown): value is TenseId => typeof value === 'string
 
 const isPronoun = (value: unknown): value is Pronoun => typeof value === 'string' && pronounIds.includes(value as Pronoun);
 
-const isPracticeStats = (value: unknown): value is PracticeStats => {
+const isReviewBox = (value: unknown): value is ReviewBox => value === 1 || value === 2 || value === 3;
+
+const isAnswerTally = (value: unknown): value is AnswerTally => {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const tally = value as Record<string, unknown>;
+  return typeof tally.answered === 'number' && typeof tally.correct === 'number';
+};
+
+/** Drops malformed entries so a corrupted tally can't break the Stats view. */
+const readTallies = (value: unknown): Record<string, AnswerTally> => {
+  if (!value || typeof value !== 'object') {
+    return {};
+  }
+
+  return Object.fromEntries(Object.entries(value).filter(([, tally]) => isAnswerTally(tally)));
+};
+
+type StoredPracticeStats = Omit<PracticeStats, 'byTense' | 'byVerb'> & Partial<Pick<PracticeStats, 'byTense' | 'byVerb'>>;
+
+const isPracticeStats = (value: unknown): value is StoredPracticeStats => {
   if (!value || typeof value !== 'object') {
     return false;
   }
@@ -112,15 +138,22 @@ const isLegacyCumulative = (value: unknown): value is { totalAttempts: number; t
 
 const migrateLegacyStats = (value: unknown): PracticeStats | null => {
   if (isPracticeStats(value)) {
-    return value;
+    // Stats saved before per-tense / per-verb tracking have no tallies yet.
+    return {
+      ...value,
+      byTense: Object.fromEntries(
+        Object.entries(readTallies(value.byTense)).filter(([tense]) => isTenseId(tense)),
+      ) as PracticeStats['byTense'],
+      byVerb: readTallies(value.byVerb),
+    };
   }
 
   if (isLegacyCumulative(value)) {
     return {
+      ...emptyStats(),
       totalAnswered: value.totalAttempts,
       totalCorrect: value.totalCorrect,
       bestStreak: value.maxStreak,
-      days: {},
     };
   }
 
@@ -139,7 +172,9 @@ const isStoredMiss = (value: unknown): value is StoredMiss => {
     isTenseId(miss.tense) &&
     isPronoun(miss.pronoun) &&
     typeof miss.answer === 'string' &&
-    typeof miss.missedAt === 'number'
+    typeof miss.missedAt === 'number' &&
+    isReviewBox(miss.box) &&
+    typeof miss.dueAt === 'number'
   );
 };
 
@@ -157,13 +192,18 @@ const normalizeMiss = (value: unknown): StoredMiss | null => {
     return null;
   }
 
+  const missedAt = typeof miss.missedAt === 'number' ? miss.missedAt : Date.now();
+
+  // Misses saved before spaced repetition start in box 1 and are due right away.
   return {
     languageId: miss.languageId,
     verbInfinitive: miss.verbInfinitive,
     tense: miss.tense,
     pronoun: miss.pronoun,
     answer: typeof miss.answer === 'string' ? miss.answer : '',
-    missedAt: typeof miss.missedAt === 'number' ? miss.missedAt : Date.now(),
+    missedAt,
+    box: isReviewBox(miss.box) ? miss.box : 1,
+    dueAt: typeof miss.dueAt === 'number' ? miss.dueAt : missedAt,
   };
 };
 
@@ -215,26 +255,44 @@ export const readTimerEnabled = (): boolean => {
     return legacy !== 'false';
   }
 
-  return true;
+  return false;
 };
 
 export const writeTimerEnabled = (enabled: boolean) => {
   safeSet(storageKeys.timerEnabled, String(enabled));
 };
 
+export const readTranslationLanguage = (): TranslationLanguage => {
+  const stored = safeGet(storageKeys.translationLanguage);
+  return isTranslationLanguage(stored) ? stored : 'zh';
+};
+
+export const writeTranslationLanguage = (translationLanguage: TranslationLanguage) => {
+  safeSet(storageKeys.translationLanguage, translationLanguage);
+};
+
+export const readIncludeVosotros = (): boolean => safeGet(storageKeys.includeVosotros) !== 'false';
+
+export const writeIncludeVosotros = (include: boolean) => {
+  safeSet(storageKeys.includeVosotros, String(include));
+};
+
 export const readStoredMisses = (): StoredMiss[] => {
-  const primary = readJson<unknown[]>(storageKeys.misses, []);
-  const source = Array.isArray(primary) && primary.length > 0 ? primary : readJson<unknown[]>(legacyKeys.misses, []);
+  // An empty primary list is a real state (all misses cleared); only fall back when the key was never written.
+  const source =
+    safeGet(storageKeys.misses) !== null
+      ? readJson<unknown[]>(storageKeys.misses, [])
+      : readJson<unknown[]>(legacyKeys.misses, []);
 
   if (!Array.isArray(source)) {
     return [];
   }
 
-  return source.map(normalizeMiss).filter((miss): miss is StoredMiss => Boolean(miss)).slice(0, 24);
+  return capMissesPerLanguage(source.map(normalizeMiss).filter((miss): miss is StoredMiss => Boolean(miss)));
 };
 
 export const writeStoredMisses = (misses: StoredMiss[]) => {
-  writeJson(storageKeys.misses, misses.slice(0, 24));
+  writeJson(storageKeys.misses, capMissesPerLanguage(misses));
 };
 
 export const readPracticeStatsByLanguage = (): PracticeStatsByLanguage => {

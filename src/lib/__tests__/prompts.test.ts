@@ -6,8 +6,10 @@ import {
   getChoices,
   createMissSessionPrompts,
   createSessionPrompts,
+  createVerbSessionPrompts,
   getAnswer,
   getPronounLabel,
+  isGenderAgreeingForm,
 } from '../prompts';
 
 describe('prompts', () => {
@@ -176,6 +178,57 @@ describe('prompts', () => {
       const session = createMissSessionPrompts(spanish, reviewTargets);
       expect(session.length).toBeGreaterThan(0);
       expect(session.every((prompt) => prompt.verb.infinitive === spanish.verbs[0].infinitive)).toBe(true);
+    });
+  });
+  describe('gender agreement', () => {
+    it('detects être / essere past forms only', () => {
+      expect(isGenderAgreeingForm('french', 'past', 'est allé')).toBe(true);
+      expect(isGenderAgreeingForm('french', 'past', 'a eu')).toBe(false);
+      expect(isGenderAgreeingForm('italian', 'past', 'è andato')).toBe(true);
+      expect(isGenderAgreeingForm('italian', 'past', 'ha avuto')).toBe(false);
+      expect(isGenderAgreeingForm('french', 'present', 'est')).toBe(false);
+      expect(isGenderAgreeingForm('spanish', 'past', 'fue')).toBe(false);
+    });
+
+    it('never pairs a feminine pronoun with a masculine agreeing participle', () => {
+      const feminineLabels = new Set(['elle', 'elles', 'lei']);
+
+      for (const languageId of ['french', 'italian'] as const) {
+        const language = languages.find((l) => l.id === languageId)!;
+        for (let run = 0; run < 5; run += 1) {
+          const agreeing = createPromptPool(language, 'past').filter((prompt) =>
+            isGenderAgreeingForm(languageId, prompt.tense, getAnswer(prompt)),
+          );
+          expect(agreeing.length).toBeGreaterThan(0);
+          expect(agreeing.some((prompt) => feminineLabels.has(getPronounLabel(prompt)))).toBe(false);
+        }
+      }
+    });
+  });
+  describe('vosotros preference', () => {
+    const withoutVosotros = { ...spanish, excludedPronouns: ['you plural' as const] };
+
+    it('never prompts or offers vosotros forms when hidden', () => {
+      const pool = createPromptPool(withoutVosotros, 'mixed');
+      expect(pool.some((prompt) => prompt.pronoun === 'you plural')).toBe(false);
+
+      for (const prompt of pool.slice(0, 200)) {
+        const vosotrosForm = prompt.verb.forms[prompt.tense]['you plural'];
+        const choices = getChoices(prompt, 7);
+        expect(choices).toHaveLength(4);
+        if (vosotrosForm !== getAnswer(prompt)) {
+          expect(choices).not.toContain(vosotrosForm);
+        }
+      }
+    });
+  });
+
+  describe('createVerbSessionPrompts', () => {
+    it('only draws prompts from the requested verbs', () => {
+      const focus = [spanish.verbs[0].infinitive, spanish.verbs[1].infinitive];
+      const session = createVerbSessionPrompts(spanish, focus);
+      expect(session).toHaveLength(20);
+      expect(session.every((prompt) => focus.includes(prompt.verb.infinitive))).toBe(true);
     });
   });
 });

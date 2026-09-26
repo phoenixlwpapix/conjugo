@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState, type CSSProperties } from 'react';
 import { usePractice } from './hooks/usePractice';
+import { usePreferences } from './hooks/usePreferences';
 import { Header } from './components/Header';
 import { SessionBar } from './components/SessionBar';
 import { TrainerPanel } from './components/TrainerPanel';
@@ -26,6 +27,9 @@ export default function App() {
       return 'light';
     }
   });
+
+  const preferences = usePreferences();
+  const { translationLanguage } = preferences;
 
   const {
     languageId,
@@ -66,6 +70,9 @@ export default function App() {
     resetSession,
     moveNext,
     startMissReview,
+    startVerbDrill,
+    drillTense,
+    sessionKind,
     dismissCelebration,
     dismissCompletion,
     timeLeft,
@@ -76,7 +83,7 @@ export default function App() {
     todayAccuracy,
     trend,
     sessionTarget,
-  } = usePractice();
+  } = usePractice({ includeVosotros: preferences.includeVosotros });
 
   useEffect(() => {
     document.documentElement.dataset.theme = themeId;
@@ -195,6 +202,7 @@ export default function App() {
         setActiveView={setActiveView}
         themeId={themeId}
         setThemeId={setThemeId}
+        {...preferences}
       />
 
       <div className="app-content">
@@ -227,6 +235,8 @@ export default function App() {
                 timerEnabled={timerEnabled}
                 toggleTimer={toggleTimer}
                 sessionTarget={sessionTarget}
+                sessionKind={sessionKind}
+                translationLanguage={translationLanguage}
               />
 
               <ProgressPanel
@@ -253,13 +263,17 @@ export default function App() {
             }
           >
             <StatsDashboard
+              activeLanguage={activeLanguage}
               bestStreak={stats.bestStreak}
               storedMisses={storedMisses}
               stats={stats}
               todayAccuracy={todayAccuracy}
               todayStats={todayStats}
               trend={trend}
+              translationLanguage={translationLanguage}
               onStartMissPractice={startMissReview}
+              onDrillTense={drillTense}
+              onDrillVerbs={startVerbDrill}
             />
           </Suspense>
         )}
@@ -277,6 +291,7 @@ export default function App() {
             sort={wordbookSort}
             selectedVerb={selectedVerb}
             selectedVerbInfinitive={selectedVerbInfinitive}
+            translationLanguage={translationLanguage}
           />
         )}
       </div>

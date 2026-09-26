@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { TimerReset, Check, X, RotateCcw, ArrowRight } from 'lucide-react';
 import { getPronounLabel, getTenseLabel, timerSeconds } from '../lib/prompts';
-import type { Attempt, Prompt } from '../types';
+import type { Attempt, Prompt, SessionKind } from '../types';
 import type { PracticeTenseId } from '../data/verbs';
+import { getVerbTranslation, type TranslationLanguage } from '../data/translations';
 
 interface TrainerPanelProps {
   attempts: Attempt[];
@@ -23,13 +24,21 @@ interface TrainerPanelProps {
   timerEnabled: boolean;
   toggleTimer: () => void;
   sessionTarget: number;
+  sessionKind: SessionKind;
+  translationLanguage: TranslationLanguage;
 }
+
+const sessionKindTags: Partial<Record<SessionKind, string>> = {
+  review: 'Review misses',
+  verbs: 'Hardest verbs',
+};
 
 const getTenseColor = (tense: Prompt['tense']) => {
   if (tense === 'present') return 'var(--green)';
   if (tense === 'past') return 'var(--red)';
   if (tense === 'imperfect') return 'var(--purple)';
   if (tense === 'conditional') return 'var(--gold)';
+  if (tense === 'subjunctive') return 'var(--teal)';
   return 'var(--blue)';
 };
 
@@ -65,6 +74,8 @@ export function TrainerPanel({
   timerEnabled,
   toggleTimer,
   sessionTarget,
+  sessionKind,
+  translationLanguage,
 }: TrainerPanelProps) {
   const actionButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -76,6 +87,8 @@ export function TrainerPanel({
 
   const pronounLabel = getPronounLabel(prompt);
   const tenseLabel = getTenseLabel(prompt.tense);
+  const translation = getVerbTranslation(prompt.language, prompt.verb, translationLanguage);
+  const sessionTag = sessionKindTags[sessionKind] ?? (practiceTense === 'mixed' ? 'Mixed Mode' : null);
   const showAlertStyle = !isAnswered && timeLeft <= 3;
   const promptTextLength = Array.from(`${pronounLabel}${prompt.verb.infinitive}`).length;
   const promptDensity = promptTextLength >= 23 ? 'condensed' : promptTextLength >= 18 ? 'compact' : 'regular';
@@ -174,7 +187,7 @@ export function TrainerPanel({
               {tenseLabel}
             </span>
             <div className="prompt-meta-tags">
-              {practiceTense === 'mixed' && <span className="mixed-mode-tag">Mixed Mode</span>}
+              {sessionTag && <span className="mixed-mode-tag">{sessionTag}</span>}
               <span>{prompt.language.name}</span>
             </div>
           </div>
@@ -186,7 +199,7 @@ export function TrainerPanel({
             </span>
             <div className="prompt-verb-block">
               <strong className="prompt-infinitive">{prompt.verb.infinitive}</strong>
-              <em className="prompt-translation">{prompt.verb.translation}</em>
+              {translation && <em className="prompt-translation">{translation}</em>}
             </div>
           </div>
         </div>

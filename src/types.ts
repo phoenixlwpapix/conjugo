@@ -19,6 +19,9 @@ export type Attempt = {
   timedOut?: boolean;
 };
 
+/** Leitner box: 1 = just missed, 3 = one clean pass away from mastered. */
+export type ReviewBox = 1 | 2 | 3;
+
 export type StoredMiss = {
   languageId: LanguageId;
   verbInfinitive: string;
@@ -26,7 +29,12 @@ export type StoredMiss = {
   pronoun: Pronoun;
   answer: string;
   missedAt: number;
+  box: ReviewBox;
+  /** Timestamp from which a correct answer promotes the miss to the next box. */
+  dueAt: number;
 };
+
+export type SessionKind = 'standard' | 'review' | 'verbs';
 
 export type DailyStats = {
   answered: number;
@@ -34,11 +42,18 @@ export type DailyStats = {
   sessions: number;
 };
 
+export type AnswerTally = {
+  answered: number;
+  correct: number;
+};
+
 export type PracticeStats = {
   totalAnswered: number;
   totalCorrect: number;
   bestStreak: number;
   days: Record<string, DailyStats>;
+  byTense: Partial<Record<TenseId, AnswerTally>>;
+  byVerb: Record<string, AnswerTally>;
 };
 
 export type PracticeStatsByLanguage = Partial<Record<LanguageId, PracticeStats>>;

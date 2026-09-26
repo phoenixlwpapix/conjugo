@@ -15,7 +15,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Correct answers auto-advance after a short pause; wrong answers keep the correction visible.
 - Perfect 20/20 sessions trigger a confetti completion moment.
 - Completed 20-question sets with misses show a summary modal with new-set and return-home actions.
-- Mixed tense mode that rotates through present, past, and future prompts.
+- Mixed tense mode that rotates through every tense the active language supports.
 - Language-specific pronoun prompts instead of English-only pronouns.
 - Answer choices are generated from the current verb's conjugation family, prioritizing the same tense and other pronouns.
 - Answer card positions are shuffled per prompt so the correct conjugation does not stay tied to a predictable slot.
@@ -24,14 +24,14 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Missed prompts are retained for the Stats workspace and automatically fed back into future practice sessions.
 - Local persistence for selected language, active workspace, tense, missed prompts, and language-specific cumulative practice stats.
 - Keyboard shortcuts for faster drills: A/B/C/D answer choices, Enter/Space for next missed question, and R reset.
-- Dedicated Stats workspace with cumulative answer counts, completed sets, best streak, review load, and a Recharts-powered seven-day accuracy bar chart.
+- Dedicated Stats workspace with cumulative answer counts, completed sets, best streak, review load, weak spots, and a dependency-free seven-day accuracy bar chart.
 - Responsive layout: desktop sidebar navigation with a focused trainer area, adaptive tablet-width drill cards, compact mobile header, and single-column mobile flow.
 - Light and dark visual themes selectable from the navigation area.
 
 ## Current Features
 
 - Four languages: English, French, Spanish, Italian.
-- Three focused tenses plus a mixed tense mode: present, past, future, mixed.
+- Present, past, imperfect, future, conditional, and present subjunctive, plus a mixed mode. English drills present, past, and future only.
 - 100 verbs per language, combining high-frequency irregular verbs with regular conjugation families.
 - Each practice session randomly samples 20 prompts from the current language and tense range.
 - New sessions reserve roughly 30% of prompts for recent missed items when matching review prompts are available.
@@ -49,8 +49,8 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Completion stats persist in localStorage across browser sessions and are tracked separately for each language.
 - The practice side panel stays focused on current-session and all-time metrics, with its height aligned to the trainer card on desktop.
 - The All-time Progress card now shows only the active language and includes a language tag for quick confirmation.
-- The Stats workspace uses a tighter dashboard layout with consistent KPI typography, today’s performance, review load, and a responsive Recharts accuracy bar chart.
-- The Stats workspace is lazy-loaded so chart dependencies do not inflate the initial practice bundle.
+- The Stats workspace uses a tighter dashboard layout with consistent KPI typography, today’s performance, review load, and a responsive HTML/CSS accuracy bar chart (no charting library).
+- The Stats workspace is lazy-loaded so it does not inflate the initial practice bundle.
 - The prompt card no longer repeats the same build information in a side rail, giving the question more room.
 - Desktop navigation now uses a sticky left sidebar for brand, language, and workspace switching.
 - Mobile navigation now collapses language and workspace tabs behind a hamburger menu so the current drill stays visible first.
@@ -59,6 +59,14 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Mobile practice controls use a compact horizontal tense selector, with the pronoun prompt prioritized above metadata tags.
 - Modern responsive interface using React 19, TypeScript, Vite, and lucide-react icons.
 - Generated modern app logo applied to the app header and browser favicon.
+- The per-question countdown timer is off by default and can be toggled from the trainer card.
+- Gender-agreeing past forms (French être / Italian essere verbs) are prompted with the masculine pronoun so the expected participle is always correct.
+- Saved misses are capped per language, and clearing every miss no longer revives legacy stored misses.
+- Missed prompts use three Leitner boxes: a miss must be answered correctly on three separate days (today, then after 1 day, then after 3 days) before it is retired, and any wrong answer sends it back to box 1.
+- Answers are tallied per tense and per verb; the Stats Weak spots card shows accuracy by tense, flags the weakest tense, and lists the five hardest verbs with one-click tense and verb drills.
+- Preferences for translation language (Chinese or English glosses) and, for Spanish, hiding vosotros from prompts, answer choices, reviews, and the Word Book.
+- Present subjunctive for French, Spanish, and Italian, derived from each verb's indicative forms with explicit tables for truly irregular stems; prompts read "que tu…", "qu'il…", "che io…".
+- Installable, offline-capable PWA (vite-plugin-pwa) with precached assets and cached Google Fonts; the header logo is a 3 KB WebP.
 
 ## Scripts
 

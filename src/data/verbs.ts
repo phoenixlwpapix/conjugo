@@ -1,5 +1,7 @@
+import { englishSubjunctive, frenchSubjunctive, italianSubjunctive, spanishSubjunctive, withSubjunctive } from './subjunctive';
+
 export type LanguageId = 'english' | 'french' | 'spanish' | 'italian';
-export type TenseId = 'present' | 'past' | 'imperfect' | 'future' | 'conditional';
+export type TenseId = 'present' | 'past' | 'imperfect' | 'future' | 'conditional' | 'subjunctive';
 export type PracticeTenseId = TenseId | 'mixed';
 export type Pronoun = 'I' | 'you' | 'he/she' | 'we' | 'you plural' | 'they';
 
@@ -7,6 +9,13 @@ export type VerbEntry = {
   infinitive: string;
   translation: string;
   forms: Record<TenseId, Record<Pronoun, string>>;
+};
+
+/** A verb as authored below; the subjunctive is derived from these forms (see subjunctive.ts). */
+export type BaseVerbEntry = {
+  infinitive: string;
+  translation: string;
+  forms: Omit<VerbEntry['forms'], 'subjunctive'>;
 };
 
 export type Language = {
@@ -18,9 +27,11 @@ export type Language = {
   pronounLabels: Record<Pronoun, string>;
   tenseLabels: Record<PracticeTenseId, string>;
   verbs: VerbEntry[];
+  /** Pronouns hidden by learner preferences (e.g. Spanish vosotros). */
+  excludedPronouns?: Pronoun[];
 };
 
-type Forms = VerbEntry['forms'];
+type Forms = BaseVerbEntry['forms'];
 
 export const concreteTenses: Array<{ id: TenseId; label: string }> = [
   { id: 'present', label: 'Present' },
@@ -28,7 +39,17 @@ export const concreteTenses: Array<{ id: TenseId; label: string }> = [
   { id: 'imperfect', label: 'Imperfect' },
   { id: 'future', label: 'Future' },
   { id: 'conditional', label: 'Conditional' },
+  { id: 'subjunctive', label: 'Subjunctive' },
 ];
+
+/** English drills only cover the tenses it marks with distinct verb forms. */
+const englishTenses: TenseId[] = ['present', 'past', 'future'];
+
+export const isTenseAvailable = (languageId: LanguageId, tense: TenseId) =>
+  languageId !== 'english' || englishTenses.includes(tense);
+
+export const getLanguageTenses = (languageId: LanguageId) =>
+  concreteTenses.filter((tense) => isTenseAvailable(languageId, tense.id));
 
 export const tenseOptions: Array<{ id: PracticeTenseId; label: string }> = [
   ...concreteTenses,
@@ -37,7 +58,10 @@ export const tenseOptions: Array<{ id: PracticeTenseId; label: string }> = [
 
 export const pronouns: Pronoun[] = ['I', 'you', 'he/she', 'we', 'you plural', 'they'];
 
-const verb = (infinitive: string, translation: string, forms: Forms): VerbEntry => ({
+export const getLanguagePronouns = (language: Pick<Language, 'excludedPronouns'>): Pronoun[] =>
+  language.excludedPronouns?.length ? pronouns.filter((pronoun) => !language.excludedPronouns?.includes(pronoun)) : pronouns;
+
+const verb = (infinitive: string, translation: string, forms: Forms): BaseVerbEntry => ({
   infinitive,
   translation,
   forms,
@@ -290,7 +314,7 @@ const italianIscVerb = (infinitive: string, translation: string) => {
   });
 };
 
-const englishVerbs: VerbEntry[] = [
+const englishVerbs: BaseVerbEntry[] = [
   verb('to be', '是 / 存在', {
     present: { I: 'am', you: 'are', 'he/she': 'is', we: 'are', 'you plural': 'are', they: 'are' },
     past: { I: 'was', you: 'were', 'he/she': 'was', we: 'were', 'you plural': 'were', they: 'were' },
@@ -399,7 +423,7 @@ const englishVerbs: VerbEntry[] = [
   englishVerb('finish', '完成', 'finishes', 'finished'),
 ];
 
-const frenchVerbs: VerbEntry[] = [
+const frenchVerbs: BaseVerbEntry[] = [
   verb('être', '是 / 存在', {
     present: { I: 'suis', you: 'es', 'he/she': 'est', we: 'sommes', 'you plural': 'êtes', they: 'sont' },
     past: { I: 'ai été', you: 'as été', 'he/she': 'a été', we: 'avons été', 'you plural': 'avez été', they: 'ont été' },
@@ -719,7 +743,8 @@ const frenchVerbs: VerbEntry[] = [
   verb('commencer', '开始', {
     present: { I: 'commence', you: 'commences', 'he/she': 'commence', we: 'commençons', 'you plural': 'commencez', they: 'commencent' },
     past: frenchCompound('commencé'),
-    imperfect: frenchImperfect('commenç'),
+    // ç only before a/o: commençais, but commencions / commenciez.
+    imperfect: { ...frenchImperfect('commenç'), we: 'commencions', 'you plural': 'commenciez' },
     future: frenchFuture('commencer'),
     conditional: frenchConditional('commencer'),
   }),
@@ -832,7 +857,7 @@ const frenchVerbs: VerbEntry[] = [
   frenchErVerb('traverser', '穿过'),
 ];
 
-const spanishVerbs: VerbEntry[] = [
+const spanishVerbs: BaseVerbEntry[] = [
   verb('ser', '是 / 本质', {
     present: { I: 'soy', you: 'eres', 'he/she': 'es', we: 'somos', 'you plural': 'sois', they: 'son' },
     past: { I: 'fui', you: 'fuiste', 'he/she': 'fue', we: 'fuimos', 'you plural': 'fuisteis', they: 'fueron' },
@@ -1223,7 +1248,7 @@ const spanishVerbs: VerbEntry[] = [
   spanishArVerb('regalar', '赠送'),
 ];
 
-const italianVerbs: VerbEntry[] = [
+const italianVerbs: BaseVerbEntry[] = [
   verb('essere', '是 / 存在', {
     present: { I: 'sono', you: 'sei', 'he/she': 'è', we: 'siamo', 'you plural': 'siete', they: 'sono' },
     past: { I: 'sono stato', you: 'sei stato', 'he/she': 'è stato', we: 'siamo stati', 'you plural': 'siete stati', they: 'sono stati' },
@@ -1634,8 +1659,8 @@ export const languages: Language[] = [
     accent: '#2563eb',
     darkAccent: '#6d9ff5',
     pronounLabels: { I: 'I', you: 'you', 'he/she': 'he/she', we: 'we', 'you plural': 'you (plural)', they: 'they' },
-    tenseLabels: { present: 'Present', past: 'Past', imperfect: 'Imperfect', future: 'Future', conditional: 'Conditional', mixed: 'Mixed' },
-    verbs: englishVerbs,
+    tenseLabels: { present: 'Present', past: 'Past', imperfect: 'Imperfect', future: 'Future', conditional: 'Conditional', subjunctive: 'Subjunctive', mixed: 'Mixed' },
+    verbs: withSubjunctive(englishVerbs, englishSubjunctive),
   },
   {
     id: 'french',
@@ -1644,8 +1669,8 @@ export const languages: Language[] = [
     accent: '#0f766e',
     darkAccent: '#5ec4b8',
     pronounLabels: { I: 'je', you: 'tu', 'he/she': 'il/elle', we: 'nous', 'you plural': 'vous', they: 'ils/elles' },
-    tenseLabels: { present: 'Présent', past: 'Passé composé', imperfect: 'Imparfait', future: 'Futur', conditional: 'Conditionnel', mixed: 'Mixte' },
-    verbs: frenchVerbs,
+    tenseLabels: { present: 'Présent', past: 'Passé composé', imperfect: 'Imparfait', future: 'Futur', conditional: 'Conditionnel', subjunctive: 'Subjonctif', mixed: 'Mixte' },
+    verbs: withSubjunctive(frenchVerbs, frenchSubjunctive),
   },
   {
     id: 'spanish',
@@ -1654,8 +1679,8 @@ export const languages: Language[] = [
     accent: '#d97706',
     darkAccent: '#f5a623',
     pronounLabels: { I: 'yo', you: 'tú', 'he/she': 'él/ella', we: 'nosotros', 'you plural': 'vosotros/as', they: 'ellos/ellas' },
-    tenseLabels: { present: 'Presente', past: 'Pretérito', imperfect: 'Imperfecto', future: 'Futuro', conditional: 'Condicional', mixed: 'Mixto' },
-    verbs: spanishVerbs,
+    tenseLabels: { present: 'Presente', past: 'Pretérito', imperfect: 'Imperfecto', future: 'Futuro', conditional: 'Condicional', subjunctive: 'Subjuntivo', mixed: 'Mixto' },
+    verbs: withSubjunctive(spanishVerbs, spanishSubjunctive),
   },
   {
     id: 'italian',
@@ -1664,7 +1689,7 @@ export const languages: Language[] = [
     accent: '#be123c',
     darkAccent: '#f06680',
     pronounLabels: { I: 'io', you: 'tu', 'he/she': 'lui/lei', we: 'noi', 'you plural': 'voi', they: 'loro' },
-    tenseLabels: { present: 'Presente', past: 'Passato prossimo', imperfect: 'Imperfetto', future: 'Futuro', conditional: 'Condizionale', mixed: 'Misto' },
-    verbs: italianVerbs,
+    tenseLabels: { present: 'Presente', past: 'Passato prossimo', imperfect: 'Imperfetto', future: 'Futuro', conditional: 'Condizionale', subjunctive: 'Congiuntivo', mixed: 'Misto' },
+    verbs: withSubjunctive(italianVerbs, italianSubjunctive),
   },
 ];

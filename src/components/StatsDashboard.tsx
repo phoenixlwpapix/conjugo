@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, Crosshair, Flame, Layers, Target, Trophy, type LucideIcon } from 'lucide-react';
+import { BarChart3, CalendarDays, ClipboardList, Crosshair, Flame, Layers, Target, Trophy, type LucideIcon } from 'lucide-react';
 import { getVerbTranslation, type TranslationLanguage } from '../data/translations';
 import type { Language, TenseId } from '../data/verbs';
 import { getDaysUntilDue, isMissDue, reviewBoxCount } from '../lib/misses';
@@ -122,6 +122,8 @@ export function StatsDashboard({
     { icon: Flame, label: 'Best streak', value: bestStreak.toString() },
     { icon: Layers, label: 'Sets completed', value: completedSets.toString() },
   ];
+  const quiz = stats.quiz ?? { answered: 0, correct: 0, sessions: 0, byTense: {} };
+  const quizAccuracy = getAccuracy(quiz.correct, quiz.answered);
 
   return (
     <section className="stats-dashboard" aria-label="Performance dashboard">
@@ -155,6 +157,18 @@ export function StatsDashboard({
           </article>
         ))}
       </div>
+
+      <section className="stats-quiz-card" aria-label="Quiz performance">
+        <div className="panel-title">
+          <ClipboardList size={18} aria-hidden="true" />
+          <div><h2>Quiz results</h2><span>Quiz answers are included in the seven day accuracy chart and tense breakdown.</span></div>
+        </div>
+        <div className="stats-quiz-values">
+          <div><strong>{quiz.sessions}</strong><span>quizzes completed</span></div>
+          <div><strong>{quiz.correct}/{quiz.answered}</strong><span>correct answers</span></div>
+          <div><strong>{quiz.answered ? `${quizAccuracy}%` : '—'}</strong><span>quiz accuracy</span></div>
+        </div>
+      </section>
 
       <div className="stats-main-grid">
         <section className="stats-trend-card">

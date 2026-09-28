@@ -31,6 +31,8 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 ## Current Features
 
 - Four languages: English, French, Spanish, Italian.
+- Quiz mode below Practice offers 10 randomly selected contextual questions per round, with a choice of any available tense or a mixed set. Each tense has 20 authored situations across three difficulty levels; answer choices test the same subject across tenses and each answer explains the time or mood clue.
+- Quiz answers count toward the existing seven-day accuracy chart and tense breakdown, with separate quiz totals and accuracy on the Stats dashboard.
 - Present, past, imperfect, future, conditional, and present subjunctive, plus a mixed mode. English drills present, past, and future only.
 - 100 verbs per language, combining high-frequency irregular verbs with regular conjugation families.
 - Each practice session randomly samples 20 prompts from the current language and tense range.

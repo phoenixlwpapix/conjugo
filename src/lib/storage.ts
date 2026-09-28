@@ -28,7 +28,7 @@ const legacyKeys = {
 
 const languageIds = languages.map((language) => language.id);
 const practiceTenses: PracticeTenseId[] = ['present', 'past', 'imperfect', 'future', 'conditional', 'subjunctive', 'mixed'];
-const appViews: AppView[] = ['practice', 'stats', 'wordbook'];
+const appViews: AppView[] = ['practice', 'quiz', 'stats', 'wordbook'];
 const tenseIds: TenseId[] = ['present', 'past', 'imperfect', 'future', 'conditional', 'subjunctive'];
 const pronounIds: Pronoun[] = ['I', 'you', 'he/she', 'we', 'you plural', 'they'];
 
@@ -108,7 +108,7 @@ const readTallies = (value: unknown): Record<string, AnswerTally> => {
   return Object.fromEntries(Object.entries(value).filter(([, tally]) => isAnswerTally(tally)));
 };
 
-type StoredPracticeStats = Omit<PracticeStats, 'byTense' | 'byVerb'> & Partial<Pick<PracticeStats, 'byTense' | 'byVerb'>>;
+type StoredPracticeStats = Omit<PracticeStats, 'byTense' | 'byVerb' | 'quiz'> & Partial<Pick<PracticeStats, 'byTense' | 'byVerb' | 'quiz'>>;
 
 const isPracticeStats = (value: unknown): value is StoredPracticeStats => {
   if (!value || typeof value !== 'object') {
@@ -145,6 +145,7 @@ const migrateLegacyStats = (value: unknown): PracticeStats | null => {
         Object.entries(readTallies(value.byTense)).filter(([tense]) => isTenseId(tense)),
       ) as PracticeStats['byTense'],
       byVerb: readTallies(value.byVerb),
+      quiz: normalizeQuizStats(value.quiz),
     };
   }
 
@@ -158,6 +159,18 @@ const migrateLegacyStats = (value: unknown): PracticeStats | null => {
   }
 
   return null;
+};
+
+const normalizeQuizStats = (value: unknown): PracticeStats['quiz'] => {
+  const fallback = emptyStats().quiz;
+  if (!value || typeof value !== 'object') return fallback;
+  const quiz = value as Record<string, unknown>;
+  return {
+    answered: typeof quiz.answered === 'number' ? quiz.answered : 0,
+    correct: typeof quiz.correct === 'number' ? quiz.correct : 0,
+    sessions: typeof quiz.sessions === 'number' ? quiz.sessions : 0,
+    byTense: Object.fromEntries(Object.entries(readTallies(quiz.byTense)).filter(([tense]) => isTenseId(tense))) as PracticeStats['quiz']['byTense'],
+  };
 };
 
 const isStoredMiss = (value: unknown): value is StoredMiss => {

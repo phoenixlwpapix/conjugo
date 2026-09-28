@@ -2,7 +2,7 @@ import type { Language, LanguageId, TenseId, VerbEntry } from './data/verbs';
 
 export type Pronoun = 'I' | 'you' | 'he/she' | 'we' | 'you plural' | 'they';
 
-export type AppView = 'practice' | 'stats' | 'wordbook';
+export type AppView = 'practice' | 'quiz' | 'stats' | 'wordbook';
 
 export type Prompt = {
   language: Language;
@@ -54,6 +54,12 @@ export type PracticeStats = {
   days: Record<string, DailyStats>;
   byTense: Partial<Record<TenseId, AnswerTally>>;
   byVerb: Record<string, AnswerTally>;
+  quiz: {
+    answered: number;
+    correct: number;
+    sessions: number;
+    byTense: Partial<Record<TenseId, AnswerTally>>;
+  };
 };
 
 export type PracticeStatsByLanguage = Partial<Record<LanguageId, PracticeStats>>;

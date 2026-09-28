@@ -7,6 +7,7 @@ import { TrainerPanel } from './components/TrainerPanel';
 import { ProgressPanel } from './components/ProgressPanel';
 import { WordBook } from './components/WordBook/WordBook';
 import { SessionCompleteOverlay } from './components/SessionCompleteOverlay';
+import { QuizPanel } from './components/QuizPanel';
 import { isEditableElement } from './lib/focusTrap';
 import { isThemeId, themeStorageKey, type ThemeId } from './data/themes';
 
@@ -83,6 +84,7 @@ export default function App() {
     todayAccuracy,
     trend,
     sessionTarget,
+    recordQuizResult,
   } = usePractice({ includeVosotros: preferences.includeVosotros });
 
   useEffect(() => {
@@ -276,6 +278,10 @@ export default function App() {
               onDrillVerbs={startVerbDrill}
             />
           </Suspense>
+        )}
+
+        {activeView === 'quiz' && (
+          <QuizPanel key={languageId} language={activeLanguage} onAnswer={recordQuizResult} />
         )}
 
         {activeView === 'wordbook' && selectedVerb && (

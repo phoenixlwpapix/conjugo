@@ -20,7 +20,7 @@ import {
   getFallbackPrompt,
   timerSeconds,
 } from '../lib/prompts';
-import { emptyStats, getAccuracy, getDailyStats, getSevenDayTrend, recordAnswer, type RecordedAnswer } from '../lib/scoring';
+import { emptyStats, getAccuracy, getDailyStats, getSevenDayTrend, recordAnswer, recordQuizAnswer, type RecordedAnswer } from '../lib/scoring';
 import {
   readActiveView,
   readLanguageId,
@@ -206,6 +206,13 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
       [language]: recordAnswer(current[language] ?? emptyStats(), answer),
     }));
   }, []);
+
+  const recordQuizResult = useCallback((answer: RecordedAnswer) => {
+    setStatsByLanguage((current) => ({
+      ...current,
+      [languageId]: recordQuizAnswer(current[languageId] ?? emptyStats(), answer),
+    }));
+  }, [languageId]);
 
   const selectChoice = useCallback(
     (choice: string) => {
@@ -455,6 +462,7 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
     todayStats,
     todayAccuracy,
     trend,
+    recordQuizResult,
     sessionTarget: sessionLength,
   };
 }

@@ -18,6 +18,7 @@ export const emptyStats = (): PracticeStats => ({
   days: {},
   byTense: {},
   byVerb: {},
+  quiz: { answered: 0, correct: 0, sessions: 0, byTense: {} },
 });
 
 export const getDailyStats = (stats: PracticeStats, dayKey = getTodayKey()) =>
@@ -58,6 +59,7 @@ export const recordAnswer = (current: PracticeStats, answer: RecordedAnswer, day
   const today = getDailyStats(current, dayKey);
 
   return {
+    quiz: current.quiz ?? emptyStats().quiz,
     totalAnswered: current.totalAnswered + 1,
     totalCorrect: current.totalCorrect + (answer.correct ? 1 : 0),
     bestStreak: Math.max(current.bestStreak, answer.streak),
@@ -71,6 +73,20 @@ export const recordAnswer = (current: PracticeStats, answer: RecordedAnswer, day
     },
     byTense: { ...current.byTense, [answer.tense]: addToTally(current.byTense[answer.tense], answer.correct) },
     byVerb: { ...current.byVerb, [answer.verbInfinitive]: addToTally(current.byVerb[answer.verbInfinitive], answer.correct) },
+  };
+};
+
+export const recordQuizAnswer = (current: PracticeStats, answer: RecordedAnswer, dayKey = getTodayKey()): PracticeStats => {
+  const updated = recordAnswer(current, answer, dayKey);
+  const quiz = current.quiz ?? emptyStats().quiz;
+  return {
+    ...updated,
+    quiz: {
+      answered: quiz.answered + 1,
+      correct: quiz.correct + (answer.correct ? 1 : 0),
+      sessions: quiz.sessions + (answer.completedSet ? 1 : 0),
+      byTense: { ...quiz.byTense, [answer.tense]: addToTally(quiz.byTense[answer.tense], answer.correct) },
+    },
   };
 };
 

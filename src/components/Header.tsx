@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { BarChart3, BookOpenText, Menu, Moon, Sun, Target, X } from 'lucide-react';
+import { BarChart3, BookOpenText, ClipboardList, Menu, Moon, Sun, Target, X } from 'lucide-react';
 import { languages, type LanguageId } from '../data/verbs';
 import { type ThemeId } from '../data/themes';
 import type { AppView } from '../types';
@@ -16,6 +16,7 @@ interface HeaderProps extends Omit<PreferencesPanelProps, 'languageId'> {
 
 const viewLabels: Record<AppView, string> = {
   practice: 'Practice',
+  quiz: 'Quiz',
   stats: 'Stats',
   wordbook: 'Word Book',
 };
@@ -82,6 +83,10 @@ export function Header({
         >
           <Target size={16} aria-hidden="true" />
           Practice
+        </button>
+        <button className="view-button" data-active={activeView === 'quiz'} onClick={() => setActiveView('quiz')} type="button">
+          <ClipboardList size={16} aria-hidden="true" />
+          Quiz
         </button>
         <button
           className="view-button"
@@ -168,6 +173,10 @@ export function Header({
             <button className="view-button" data-active={activeView === 'practice'} onClick={() => chooseView('practice')} type="button">
               <Target size={16} aria-hidden="true" />
               Practice
+            </button>
+            <button className="view-button" data-active={activeView === 'quiz'} onClick={() => chooseView('quiz')} type="button">
+              <ClipboardList size={16} aria-hidden="true" />
+              Quiz
             </button>
             <button className="view-button" data-active={activeView === 'stats'} onClick={() => chooseView('stats')} type="button">
               <BarChart3 size={16} aria-hidden="true" />

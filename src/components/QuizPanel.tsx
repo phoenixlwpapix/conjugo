@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowRight, Check, ClipboardList, Flame, RotateCcw, Target, Trophy, X } from 'lucide-react';
+import { ArrowRight, Check, Flame, RotateCcw, Target, Trophy, X } from 'lucide-react';
 import { createQuizQuestions, type QuizQuestion } from '../data/quiz';
 import { getLanguageTenses, type Language, type PracticeTenseId } from '../data/verbs';
 import { getAccuracy, type RecordedAnswer } from '../lib/scoring';
@@ -56,12 +56,6 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
 
   return (
     <section className="quiz-page" aria-label="Quiz mode">
-      <div className="quiz-hero">
-        <span className="eyebrow"><ClipboardList size={16} aria-hidden="true" /> Conjugation quiz</span>
-        <h1>Quiz 测试</h1>
-        <p>读懂完整句子的语境，选出与主语和时态都吻合的动词形式。</p>
-      </div>
-
       <div className="quiz-layout">
         {questions.length === 0 ? (
           <div className="quiz-card">
@@ -113,7 +107,7 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
               </div>
               <p className="quiz-instruction">根据句子语境判断时态，并用括号中动词的正确形式补全句子</p>
               <h2 lang={language.id === 'spanish' ? 'es' : language.id === 'french' ? 'fr' : language.id === 'italian' ? 'it' : 'en'}>
-                {displaySentence[0]}<span className="quiz-blank">{selected === null ? '________' : question.answer}</span>{displaySentence[1]}
+                {displaySentence[0]}<span className="quiz-blank" data-empty={selected === null} aria-label={selected === null ? '待填写' : undefined}>{selected === null ? '\u00a0' : question.answer}</span>{displaySentence[1]}
               </h2>
               <p className="quiz-translation">{question.translation}</p>
             </div>

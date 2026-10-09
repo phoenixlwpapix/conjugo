@@ -1,7 +1,9 @@
+import { useI18n } from '../hooks/useI18n';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { BarChart3, BookOpenText, ClipboardList, Menu, Moon, Sun, Target, X } from 'lucide-react';
 import { languages, type LanguageId } from '../data/verbs';
 import { type ThemeId } from '../data/themes';
+import type { MessageKey } from '../lib/i18n';
 import type { AppView } from '../types';
 import { PreferencesPanel, type PreferencesPanelProps } from './PreferencesPanel';
 
@@ -14,11 +16,11 @@ interface HeaderProps extends Omit<PreferencesPanelProps, 'languageId'> {
   setThemeId: (themeId: ThemeId) => void;
 }
 
-const viewLabels: Record<AppView, string> = {
+const viewLabels: Record<AppView, MessageKey> = {
   practice: 'Practice',
   quiz: 'Quiz',
   stats: 'Stats',
-  wordbook: 'Word Book',
+  wordbook: 'Verb Book',
 };
 
 export function Header({
@@ -30,6 +32,7 @@ export function Header({
   setThemeId,
   ...preferences
 }: HeaderProps) {
+  const { t, languageName } = useI18n();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const activeLanguage = languages.find((language) => language.id === languageId) ?? languages[0];
 
@@ -70,11 +73,11 @@ export function Header({
         <img src="/conjugo-logo.webp" alt="" aria-hidden="true" width="46" height="46" />
         <div>
           <strong>ConjuGO</strong>
-          <span>Verb trainer</span>
+          <span>{t("Verb trainer")}</span>
         </div>
       </div>
 
-      <div className="view-switch" aria-label="Choose workspace">
+      <div className="view-switch" aria-label={t("Choose workspace")}>
         <button
           className="view-button"
           data-active={activeView === 'practice'}
@@ -82,11 +85,11 @@ export function Header({
           type="button"
         >
           <Target size={16} aria-hidden="true" />
-          Practice
+          {t("Practice")}
         </button>
         <button className="view-button" data-active={activeView === 'quiz'} onClick={() => setActiveView('quiz')} type="button">
           <ClipboardList size={16} aria-hidden="true" />
-          Quiz
+          {t("Quiz")}
         </button>
         <button
           className="view-button"
@@ -95,7 +98,7 @@ export function Header({
           type="button"
         >
           <BarChart3 size={16} aria-hidden="true" />
-          Stats
+          {t("Stats")}
         </button>
         <button
           className="view-button"
@@ -104,12 +107,12 @@ export function Header({
           type="button"
         >
           <BookOpenText size={16} aria-hidden="true" />
-          Word Book
+          {t('Verb Book')}
         </button>
       </div>
 
-      <nav className="language-tabs" aria-label="Choose language">
-        <span className="language-tabs-title">Languages</span>
+      <nav className="language-tabs" aria-label={t("Choose language")}>
+        <span className="language-tabs-title">{t("Languages")}</span>
         {languages.map((language) => (
           <button
             className="tab-button"
@@ -119,7 +122,7 @@ export function Header({
             style={{ '--accent': themeId === 'dark' ? language.darkAccent : language.accent } as CSSProperties}
             type="button"
           >
-            <span>{language.name}</span>
+            <span>{languageName(language.id)}</span>
           </button>
         ))}
       </nav>
@@ -128,12 +131,12 @@ export function Header({
         <select
           value={languageId}
           onChange={(event) => switchLanguage(event.target.value as LanguageId)}
-          aria-label="Choose language"
+          aria-label={t("Choose language")}
           className="language-select"
         >
           {languages.map((language) => (
             <option key={language.id} value={language.id}>
-              {language.name}
+              {languageName(language.id)}
             </option>
           ))}
         </select>
@@ -145,20 +148,20 @@ export function Header({
         className="theme-toggle"
         onClick={toggleTheme}
         type="button"
-        aria-label={themeId === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        aria-label={t(themeId === 'dark' ? 'Switch to light mode' : 'Switch to dark mode')}
       >
         <ThemeIcon size={18} aria-hidden="true" />
       </button>
 
-      <div className="mobile-status" aria-label="Current selection">
-        <strong>{activeLanguage.name}</strong>
-        <span>{viewLabels[activeView]}</span>
+      <div className="mobile-status" aria-label={t("Current selection")}>
+        <strong>{languageName(activeLanguage.id)}</strong>
+        <span>{t(viewLabels[activeView])}</span>
       </div>
 
       <button
         aria-controls="mobile-navigation"
         aria-expanded={isMenuOpen}
-        aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+        aria-label={t(isMenuOpen ? 'Close menu' : 'Open menu')}
         className="mobile-menu-button"
         onClick={() => setIsMenuOpen((current) => !current)}
         type="button"
@@ -168,29 +171,29 @@ export function Header({
 
       <div className="mobile-menu-panel" data-open={isMenuOpen} id="mobile-navigation">
         <div className="mobile-menu-section">
-          <span>Workspace</span>
+          <span>{t("Workspace")}</span>
           <div className="mobile-view-grid mobile-view-grid-3">
             <button className="view-button" data-active={activeView === 'practice'} onClick={() => chooseView('practice')} type="button">
               <Target size={16} aria-hidden="true" />
-              Practice
+              {t("Practice")}
             </button>
             <button className="view-button" data-active={activeView === 'quiz'} onClick={() => chooseView('quiz')} type="button">
               <ClipboardList size={16} aria-hidden="true" />
-              Quiz
+              {t("Quiz")}
             </button>
             <button className="view-button" data-active={activeView === 'stats'} onClick={() => chooseView('stats')} type="button">
               <BarChart3 size={16} aria-hidden="true" />
-              Stats
+              {t("Stats")}
             </button>
             <button className="view-button" data-active={activeView === 'wordbook'} onClick={() => chooseView('wordbook')} type="button">
               <BookOpenText size={16} aria-hidden="true" />
-              Word Book
+              {t('Verb Book')}
             </button>
           </div>
         </div>
 
         <div className="mobile-menu-section">
-          <span>Language</span>
+          <span>{t("Language")}</span>
           <div className="mobile-menu-grid">
             {languages.map((language) => (
               <button
@@ -201,7 +204,7 @@ export function Header({
                 style={{ '--accent': themeId === 'dark' ? language.darkAccent : language.accent } as CSSProperties}
                 type="button"
               >
-                {language.name}
+                {languageName(language.id)}
               </button>
             ))}
           </div>
@@ -213,12 +216,12 @@ export function Header({
 
         <div className="mobile-menu-section">
           <div className="mobile-theme-row">
-            <span className="mobile-theme-label">Theme</span>
+            <span className="mobile-theme-label">{t("Theme")}</span>
             <button
               className="theme-toggle"
               onClick={toggleTheme}
               type="button"
-              aria-label={themeId === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={t(themeId === 'dark' ? 'Switch to light mode' : 'Switch to dark mode')}
             >
               <ThemeIcon size={18} aria-hidden="true" />
             </button>

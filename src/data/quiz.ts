@@ -1,4 +1,6 @@
-import { getLanguageTenses, type Language, type LanguageId, type PracticeTenseId, type Pronoun, type TenseId, type VerbEntry } from './verbs';
+import { englishContextReasons, englishTenseReasons } from './quizEnglish';
+import { getLocalizedTenseName, type Locale } from '../lib/i18n';
+import { getLanguageTenses, languages, type Language, type LanguageId, type PracticeTenseId, type Pronoun, type TenseId, type VerbEntry } from './verbs';
 
 type Localized = Record<LanguageId, string>;
 type Context = { text: Localized; zh: string; reason: string };
@@ -6,10 +8,10 @@ type Context = { text: Localized; zh: string; reason: string };
 export type QuizQuestion = {
   id: string;
   tense: TenseId;
-  difficulty: '入门' | '进阶' | '挑战';
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
   sentence: string;
-  translation: string;
-  explanation: string;
+  translation: Record<Locale, string>;
+  explanation: Record<Locale, string>;
   pronoun: Pronoun;
   verb: VerbEntry;
   choices: string[];
@@ -213,10 +215,6 @@ const actions: Record<Meaning, { tail: Localized; zh: string }> = {
   sleep: { tail: { spanish: 'tranquilamente', french: 'paisiblement', italian: 'tranquillamente', english: 'peacefully' }, zh: '安稳地睡觉' },
 };
 
-const chineseTense: Record<TenseId, string> = {
-  present: '现在时', past: '过去时', imperfect: '未完成过去时', future: '将来时', conditional: '条件式', subjunctive: '虚拟式',
-};
-
 const tenseReason: Record<TenseId, string> = {
   present: '主句说的是现在仍成立的习惯或一般情况，因此用现在时；过去时只适合已结束的事件。',
   past: '动作发生在明确的过去时间，并作为一次完成的事件叙述；未完成过去时更偏向背景或旧日习惯。',
@@ -234,6 +232,55 @@ const shuffle = <Value,>(items: Value[]): Value[] => {
   }
   return result;
 };
+
+const englishLanguage = languages.find((language) => language.id === 'english');
+if (!englishLanguage) throw new Error('English verb data is missing');
+
+const objectiveSubjects: Record<Pronoun, string> = { I: 'me', you: 'you', 'he/she': '', we: 'us', 'you plural': 'you', they: 'them' };
+
+function englishQuizTranslation(languageId: LanguageId, tense: TenseId, index: number, meaning: Meaning, pronoun: Pronoun, context: string): string {
+  const verb = englishLanguage?.verbs.find((entry) => entry.infinitive === verbsByMeaning[meaning].english);
+  if (!verb) throw new Error(`Missing English quiz verb ${meaning}`);
+  const base = verb.infinitive.replace(/^to /, '');
+  const subject = pronoun === 'he/she' ? subjectText[languageId][pronoun] : subjectText.english[pronoun];
+  const tail = actions[meaning].tail.english;
+  if (tense === 'subjunctive') {
+    const present = verb.forms.present[pronoun];
+    const object = pronoun === 'he/she' ? subject : objectiveSubjects[pronoun];
+    const clauses = [
+      `I am glad that ${subject} ${present}`,
+      `I hope that ${subject} ${present}`,
+      `I doubt that ${subject} ${present}`,
+      `It is important that ${subject} ${base}`,
+      `It is possible that ${subject} ${present}`,
+      `I prefer that ${subject} ${base}`,
+      `I am surprised that ${subject} ${present}`,
+      `I insist that ${subject} ${base}`,
+      `I wish ${subject} would ${base}`,
+      `It is necessary that ${subject} ${base}`,
+      `I want ${object} to ${base}`,
+      `I am worried that ${subject} ${present}`,
+      `It is a pity that ${subject} ${present}`,
+      `I do not believe that ${subject} ${present}`,
+      `I recommend that ${subject} ${base}`,
+      `I fear that ${subject} ${present}`,
+      `It is better that ${subject} ${base}`,
+      `It is unlikely that ${subject} ${present}`,
+      `I need ${object} to ${base}`,
+      `I do not allow ${object} to ${base}`,
+    ];
+    return `${clauses[index]} ${tail}.`;
+  }
+  // English conveys imperfect background through past continuous or habitual "used to".
+  const continuousContexts = [3, 7, 11, 15, 19];
+  const progressive = base === 'see' ? 'seeing' : base.endsWith('e') ? `${base.slice(0, -1)}ing` : `${base}ing`;
+  const form = tense === 'imperfect'
+    ? continuousContexts.includes(index)
+      ? `${pronoun === 'he/she' || pronoun === 'I' ? 'was' : 'were'} ${progressive}`
+      : `used to ${base}`
+    : verb.forms[tense][pronoun];
+  return `${context}, ${subject} ${form} ${tail}.`;
+}
 
 export const createQuizBank = (language: Language, tense: TenseId): QuizQuestion[] => {
   const available = getLanguageTenses(language.id).map(({ id }) => id);
@@ -255,15 +302,21 @@ export const createQuizBank = (language: Language, tense: TenseId): QuizQuestion
       : prefix;
     const sentence = `${sentencePrefix} ____ ${actions[meaning].tail[language.id]}.`;
     const modality = tense === 'future' || tense === 'conditional' ? '会' : '';
-    const translation = `${seed.zh}${pronoun === 'he/she' ? chineseNames[language.id] : chineseSubjects[pronoun]}${modality}${actions[meaning].zh}。`;
-    const explanation = `${seed.reason}。${tenseReason[tense]}本题目标时态是${chineseTense[tense]}（${language.tenseLabels[tense]}）；主语“${subject}”对应 ${verb.infinitive} 的变位是“${answer}”。其余选项是同一人称在其他时态的形式。`;
+    const chineseTranslation = `${seed.zh}${pronoun === 'he/she' ? chineseNames[language.id] : chineseSubjects[pronoun]}${modality}${actions[meaning].zh}。`;
+    const chineseExplanation = `${seed.reason}。${tenseReason[tense]}本题目标时态是${getLocalizedTenseName(language, tense, 'zh')}（${language.tenseLabels[tense]}）；主语“${subject}”对应 ${verb.infinitive} 的变位是“${answer}”。其余选项是同一人称在其他时态的形式。`;
     return {
       id: `${tense}-${index}`,
       tense,
-      difficulty: index < 7 ? '入门' : index < 14 ? '进阶' : '挑战',
+      difficulty: index < 7 ? 'beginner' : index < 14 ? 'intermediate' : 'advanced',
       sentence,
-      translation,
-      explanation,
+      translation: {
+        zh: chineseTranslation,
+        en: englishQuizTranslation(language.id, tense, index, meaning, pronoun, seed.text.english),
+      },
+      explanation: {
+        zh: chineseExplanation,
+        en: `“${context}”: ${englishContextReasons[tense][index]} ${englishTenseReasons[tense]} The target is ${getLocalizedTenseName(language, tense, 'en')} (${language.tenseLabels[tense]}). With the subject “${subject}”, the form of ${verb.infinitive} is “${answer}”. The other options use the same person in other tenses.`,
+      },
       pronoun,
       verb,
       choices,

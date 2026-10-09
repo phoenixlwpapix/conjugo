@@ -1,3 +1,4 @@
+import { useI18n } from '../hooks/useI18n';
 import { translationLanguageOptions, type TranslationLanguage } from '../data/translations';
 import type { LanguageId } from '../data/verbs';
 
@@ -16,13 +17,14 @@ export function PreferencesPanel({
   includeVosotros,
   setIncludeVosotros,
 }: PreferencesPanelProps) {
+  const { t } = useI18n();
   return (
-    <section className="preferences-panel" aria-label="Preferences">
-      <span className="preferences-title">Preferences</span>
+    <section className="preferences-panel" aria-label={t("Preferences")}>
+      <span className="preferences-title">{t("Preferences")}</span>
 
       <div className="preference-row">
-        <span>Translations</span>
-        <div className="preference-toggle" role="group" aria-label="Translation language">
+        <span>{t('Interface language')}</span>
+        <div className="preference-toggle" role="group" aria-label={t('Interface language and translations')}>
           {translationLanguageOptions.map((option) => (
             <button
               aria-pressed={option.id === translationLanguage}
@@ -40,7 +42,7 @@ export function PreferencesPanel({
       {languageId === 'spanish' && (
         <label className="preference-row preference-switch">
           <span>
-            Include <i lang="es">vosotros</i>
+            {t('Include')} <i lang="es">vosotros</i>
           </span>
           <input
             checked={includeVosotros}

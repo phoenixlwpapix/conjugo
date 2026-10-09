@@ -1,3 +1,4 @@
+import { useI18n } from '../hooks/useI18n';
 import { useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { Target, Trophy, AlertCircle, RotateCcw, Home, X } from 'lucide-react';
@@ -24,6 +25,7 @@ export function SessionCompleteOverlay({
   onNewSet,
   onReturnHome,
 }: SessionCompleteOverlayProps) {
+  const { t } = useI18n();
   const dialogRef = useRef<HTMLDivElement>(null);
   const confettiCanvasRef = useRef<HTMLCanvasElement>(null);
   const missedCount = totalCount - correctCount;
@@ -89,7 +91,7 @@ export function SessionCompleteOverlay({
   return (
     <section
       className="celebration-layer"
-      aria-label={isPerfect ? 'Perfect set completed' : 'Set completed'}
+      aria-label={t(isPerfect ? 'Perfect set completed' : 'Set completed')}
       aria-live="polite"
     >
       <div className="celebration-backdrop" onClick={onDismiss} />
@@ -105,17 +107,17 @@ export function SessionCompleteOverlay({
         aria-modal="true"
         aria-labelledby={titleId}
       >
-        <button className="completion-close" onClick={onDismiss} type="button" aria-label="Dismiss completion summary">
+        <button className="completion-close" onClick={onDismiss} type="button" aria-label={t("Dismiss completion summary")}>
           <X size={18} aria-hidden="true" />
         </button>
 
         <div className="completion-inner">
           <div className="completion-header">
             <span className="eyebrow" data-tone={isPerfect ? 'gold' : 'accent'}>
-              {isPerfect ? 'Perfect set!' : 'Set completed'}
+              {t(isPerfect ? 'Perfect set!' : 'Set completed')}
             </span>
             <h2 id={titleId}>
-              {isPerfect ? `Flawless victory! Finished all ${totalCount}.` : 'Nice work finishing the set!'}
+              {isPerfect ? t('Flawless victory! Finished all {count}.', { count: totalCount }) : t('Nice work finishing the set!')}
             </h2>
           </div>
 
@@ -123,28 +125,28 @@ export function SessionCompleteOverlay({
             <div className="completion-stat-card">
               <Target size={22} aria-hidden="true" data-tone={isPerfect ? 'gold' : 'accent'} />
               <strong>{accuracy}%</strong>
-              <span>Accuracy</span>
+              <span>{t("Accuracy")}</span>
             </div>
             <div className="completion-stat-card">
               <Trophy size={22} aria-hidden="true" data-tone="gold" />
               <strong>{correctCount}</strong>
-              <span>Correct</span>
+              <span>{t("Correct")}</span>
             </div>
             <div className="completion-stat-card">
               <AlertCircle size={22} aria-hidden="true" data-tone={missedCount > 0 ? 'danger' : 'muted'} />
               <strong>{missedCount}</strong>
-              <span>Missed</span>
+              <span>{t("Missed")}</span>
             </div>
           </div>
 
           <div className="completion-actions">
             <button className="completion-primary" onClick={onNewSet} type="button">
               <RotateCcw size={17} aria-hidden="true" />
-              New set
+              {t("New set")}
             </button>
             <button className="completion-secondary" onClick={onReturnHome} type="button">
               <Home size={17} aria-hidden="true" />
-              Back to practice
+              {t("Back to practice")}
             </button>
           </div>
         </div>

@@ -277,7 +277,8 @@ export const writeTimerEnabled = (enabled: boolean) => {
 
 export const readTranslationLanguage = (): TranslationLanguage => {
   const stored = safeGet(storageKeys.translationLanguage);
-  return isTranslationLanguage(stored) ? stored : 'zh';
+  if (isTranslationLanguage(stored)) return stored;
+  return typeof navigator !== 'undefined' && navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en';
 };
 
 export const writeTranslationLanguage = (translationLanguage: TranslationLanguage) => {

@@ -1,3 +1,4 @@
+import { useI18n } from '../../hooks/useI18n';
 import type { TranslationLanguage } from '../../data/translations';
 import type { Language, TenseId, VerbEntry } from '../../data/verbs';
 import type { WordbookSort } from '../../hooks/useWordbook';
@@ -33,8 +34,9 @@ export function WordBook({
   sort,
   translationLanguage,
 }: WordBookProps) {
+  const { t, languageName } = useI18n();
   return (
-    <section className="wordbook-layout" aria-label={`${activeLanguage.name} verb book`}>
+    <section className="wordbook-layout" aria-label={t('{language} verb book', { language: languageName(activeLanguage.id) })}>
       <VerbListPanel
         activeLanguage={activeLanguage}
         filteredVerbs={filteredVerbs}

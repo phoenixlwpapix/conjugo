@@ -1,3 +1,5 @@
+import { getStudyLanguageTag } from '../../lib/i18n';
+import { useI18n } from '../../hooks/useI18n';
 import { ArrowDownAZ, List, Search } from 'lucide-react';
 import { getVerbTranslation, type TranslationLanguage } from '../../data/translations';
 import type { Language, VerbEntry } from '../../data/verbs';
@@ -26,28 +28,29 @@ export function VerbListPanel({
   sort,
   translationLanguage,
 }: VerbListPanelProps) {
+  const { t, languageName } = useI18n();
   return (
     <aside className="verb-list-panel">
       <div className="wordbook-heading">
         <div>
-          <span className="eyebrow">{activeLanguage.nativeName}</span>
-          <h1>Verb Book</h1>
+          <span className="eyebrow">{languageName(activeLanguage.id)}</span>
+          <h1>{t("Verb Book")}</h1>
         </div>
-        <span>{activeLanguage.verbs.length} verbs</span>
+        <span>{t('{count} verbs', { count: activeLanguage.verbs.length })}</span>
       </div>
 
       <label className="wordbook-search">
         <Search size={16} aria-hidden="true" />
         <input
-          aria-label="Search verbs"
+          aria-label={t("Search verbs")}
           onChange={(event) => onQueryChange(event.target.value)}
-          placeholder="Search verbs"
+          placeholder={t("Search verbs")}
           type="search"
           value={query}
         />
       </label>
 
-      <div className="wordbook-sort" aria-label="Verb order" role="group">
+      <div className="wordbook-sort" aria-label={t("Verb order")} role="group">
         <button
           aria-pressed={sort === 'current'}
           data-active={sort === 'current'}
@@ -55,7 +58,7 @@ export function VerbListPanel({
           type="button"
         >
           <List size={15} aria-hidden="true" />
-          Current
+          {t("Current")}
         </button>
         <button
           aria-pressed={sort === 'alphabetical'}
@@ -68,9 +71,9 @@ export function VerbListPanel({
         </button>
       </div>
 
-      <div className="verb-list" aria-label={`${activeLanguage.name} verbs`}>
+      <div className="verb-list" aria-label={t('{language} verbs', { language: languageName(activeLanguage.id) })}>
         {filteredVerbs.length === 0 ? (
-          <p className="empty-state">No verbs match this search.</p>
+          <p className="empty-state">{t("No verbs match this search.")}</p>
         ) : (
           filteredVerbs.map((verb) => (
             <button
@@ -80,7 +83,7 @@ export function VerbListPanel({
               onClick={() => onSelectVerb(verb.infinitive)}
               type="button"
             >
-              <strong>{verb.infinitive}</strong>
+              <strong lang={getStudyLanguageTag(activeLanguage.id)}>{verb.infinitive}</strong>
               <span>{getVerbTranslation(activeLanguage, verb, translationLanguage)}</span>
             </button>
           ))

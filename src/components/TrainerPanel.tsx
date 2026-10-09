@@ -1,6 +1,8 @@
+import { getStudyLanguageTag } from '../lib/i18n';
+import { useI18n } from '../hooks/useI18n';
 import { useEffect, useRef } from 'react';
 import { TimerReset, Check, X, RotateCcw, ArrowRight } from 'lucide-react';
-import { getPronounLabel, getTenseLabel, timerSeconds } from '../lib/prompts';
+import { getPronounLabel, timerSeconds } from '../lib/prompts';
 import type { Attempt, Prompt, SessionKind } from '../types';
 import type { PracticeTenseId } from '../data/verbs';
 import { getVerbTranslation, type TranslationLanguage } from '../data/translations';
@@ -28,11 +30,6 @@ interface TrainerPanelProps {
   translationLanguage: TranslationLanguage;
 }
 
-const sessionKindTags: Partial<Record<SessionKind, string>> = {
-  review: 'Review misses',
-  verbs: 'Hardest verbs',
-};
-
 const getTenseColor = (tense: Prompt['tense']) => {
   if (tense === 'present') return 'var(--green)';
   if (tense === 'past') return 'var(--red)';
@@ -40,19 +37,6 @@ const getTenseColor = (tense: Prompt['tense']) => {
   if (tense === 'conditional') return 'var(--gold)';
   if (tense === 'subjunctive') return 'var(--teal)';
   return 'var(--blue)';
-};
-
-const getLocalizedTitle = (languageId: string) => {
-  switch (languageId) {
-    case 'spanish':
-      return 'Selecciona la forma verbal correcta';
-    case 'french':
-      return 'Sélectionnez la forme verbale correcte';
-    case 'italian':
-      return 'Seleziona la forma verbale corretta';
-    default:
-      return 'Select the correct verb form';
-  }
 };
 
 export function TrainerPanel({
@@ -77,6 +61,7 @@ export function TrainerPanel({
   sessionKind,
   translationLanguage,
 }: TrainerPanelProps) {
+  const { t, languageName, tenseName } = useI18n();
   const actionButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -86,9 +71,9 @@ export function TrainerPanel({
   }, [isAnswered, isCorrect]);
 
   const pronounLabel = getPronounLabel(prompt);
-  const tenseLabel = getTenseLabel(prompt.tense);
+  const tenseLabel = tenseName(prompt.language, prompt.tense);
   const translation = getVerbTranslation(prompt.language, prompt.verb, translationLanguage);
-  const sessionTag = sessionKindTags[sessionKind] ?? (practiceTense === 'mixed' ? 'Mixed Mode' : null);
+  const sessionTag = sessionKind === 'review' ? t('Review misses') : sessionKind === 'verbs' ? t('Hardest verbs') : practiceTense === 'mixed' ? t('Mixed practice') : null;
   const showAlertStyle = !isAnswered && timeLeft <= 3;
   const promptTextLength = Array.from(`${pronounLabel}${prompt.verb.infinitive}`).length;
   const promptDensity = promptTextLength >= 23 ? 'condensed' : promptTextLength >= 18 ? 'compact' : 'regular';
@@ -109,28 +94,28 @@ export function TrainerPanel({
   const iconColor = !timerEnabled ? 'var(--muted)' : timedOut || showAlertStyle ? 'var(--red)' : 'var(--ink)';
 
   return (
-    <section className="trainer-panel" aria-label="Multiple choice verb conjugation drill">
+    <section className="trainer-panel" aria-label={t("Multiple choice verb conjugation drill")}>
       <div className="trainer-head">
         <div>
           <span className="eyebrow">
-            Question {Math.min(attempts.length + 1, sessionTarget)}
+            {t('Question {number}', { number: Math.min(attempts.length + 1, sessionTarget) })}
           </span>
-          <h1>{getLocalizedTitle(prompt.language.id)}</h1>
+          <h1>{t('Select the correct verb form')}</h1>
         </div>
 
         <button
           className="timer-ring-btn"
           onClick={toggleTimer}
           type="button"
-          title={timerEnabled ? 'Click to disable timer' : 'Click to enable timer'}
+          title={t(timerEnabled ? 'Click to disable timer' : 'Click to enable timer')}
           aria-label={
             !timerEnabled
-              ? 'Timer off'
+              ? t('Timer off')
               : timedOut
-                ? "Time's up"
+                ? t("Time's up")
                 : isAnswered
-                  ? 'Timer complete'
-                  : `${timeLeft} seconds left`
+                  ? t('Timer complete')
+                  : t('{seconds} seconds left', { seconds: timeLeft })
           }
         >
           <svg
@@ -188,24 +173,24 @@ export function TrainerPanel({
             </span>
             <div className="prompt-meta-tags">
               {sessionTag && <span className="mixed-mode-tag">{sessionTag}</span>}
-              <span>{prompt.language.name}</span>
+              <span>{languageName(prompt.language.id)}</span>
             </div>
           </div>
 
-          <div className="prompt-display" data-density={promptDensity}>
+          <div className="prompt-display" data-density={promptDensity} lang={getStudyLanguageTag(prompt.language.id)}>
             <span className="prompt-pronoun">{pronounLabel}</span>
             <span className="prompt-divider" aria-hidden="true">
               /
             </span>
             <div className="prompt-verb-block">
               <strong className="prompt-infinitive">{prompt.verb.infinitive}</strong>
-              {translation && <em className="prompt-translation">{translation}</em>}
+              {translation && <em className="prompt-translation" lang={translationLanguage}>{translation}</em>}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="choice-grid" aria-label="Answer choices">
+      <div className="choice-grid" aria-label={t("Answer choices")}>
         {choices.map((choice, index) => {
           const isSelectedChoice = selectedAnswer === choice;
           const isCorrectChoice = isAnswered && choice === correctAnswer;
@@ -213,7 +198,7 @@ export function TrainerPanel({
 
           return (
             <button
-              aria-label={`Option ${String.fromCharCode(65 + index)}: ${choice}`}
+              aria-label={t('Option {letter}: {answer}', { letter: String.fromCharCode(65 + index), answer: choice })}
               className="choice-card"
               data-correct={isCorrectChoice}
               data-wrong={isWrongChoice}
@@ -223,9 +208,9 @@ export function TrainerPanel({
               type="button"
             >
               <span className="choice-index">{String.fromCharCode(65 + index)}</span>
-              <strong>{choice}</strong>
-              {isCorrectChoice && <Check size={18} aria-label="Correct answer" />}
-              {isWrongChoice && <X size={18} aria-label="Wrong answer" />}
+              <strong lang={getStudyLanguageTag(prompt.language.id)}>{choice}</strong>
+              {isCorrectChoice && <Check size={18} aria-label={t("Correct answer")} />}
+              {isWrongChoice && <X size={18} aria-label={t("Wrong answer")} />}
             </button>
           );
         })}
@@ -235,11 +220,11 @@ export function TrainerPanel({
         {isAnswered ? (
           <>
             <div>
-              <strong>{timedOut ? "Time's up!" : isCorrect ? 'Good hit.' : 'Missed this one.'}</strong>
+              <strong>{t(timedOut ? "Time's up!" : isCorrect ? 'Correct!' : 'Wrong answer')}</strong>
               <span>
                 {isCorrect
                   ? !showCelebration && !isSessionComplete
-                    ? 'next question loading'
+                    ? t('next question loading')
                     : ''
                   : `${pronounLabel} + ${prompt.verb.infinitive} = ${correctAnswer}`}
               </span>
@@ -247,20 +232,20 @@ export function TrainerPanel({
             {!isCorrect &&
               (isSessionComplete ? (
                 <button ref={actionButtonRef} className="next-button" onClick={resetSession} type="button">
-                  New set
+                  {t("New set")}
                   <RotateCcw size={17} aria-hidden="true" />
                 </button>
               ) : (
                 <button ref={actionButtonRef} className="next-button" onClick={moveNext} type="button">
-                  Next
+                  {t("Next")}
                   <ArrowRight size={17} aria-hidden="true" />
                 </button>
               ))}
           </>
         ) : (
           <div>
-            <strong>Choose one answer card.</strong>
-            <span>Use A–D or 1–4 on your keyboard.</span>
+            <strong>{t("Choose one answer card.")}</strong>
+            <span>{t("Use A–D or 1–4 on your keyboard.")}</span>
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { readPracticeStatsByLanguage, readStoredMisses, readTimerEnabled, writeStoredMisses } from '../storage';
+import { readPracticeStatsByLanguage, readStoredMisses, readTimerEnabled, readTranslationLanguage, writeStoredMisses } from '../storage';
 
 const legacyMiss = {
   languageId: 'spanish',
@@ -42,6 +42,23 @@ describe('storage', () => {
     expect(readTimerEnabled()).toBe(false);
     store.set('conjugo.timerEnabled', 'true');
     expect(readTimerEnabled()).toBe(true);
+  });
+
+  it('preserves the existing translation preference as the global interface locale', () => {
+    vi.stubGlobal('navigator', { language: 'en-US' });
+    store.set('conjugo.translationLanguage', 'zh');
+    expect(readTranslationLanguage()).toBe('zh');
+    vi.stubGlobal('navigator', { language: 'zh-CN' });
+    store.set('conjugo.translationLanguage', 'en');
+    expect(readTranslationLanguage()).toBe('en');
+  });
+
+  it('uses the browser language only when there is no valid saved preference', () => {
+    vi.stubGlobal('navigator', { language: 'zh-TW' });
+    expect(readTranslationLanguage()).toBe('zh');
+    store.set('conjugo.translationLanguage', 'invalid');
+    vi.stubGlobal('navigator', { language: 'fr-FR' });
+    expect(readTranslationLanguage()).toBe('en');
   });
   it('puts misses saved before spaced repetition into box 1, due now', () => {
     store.set('conjugo.misses', JSON.stringify([legacyMiss]));

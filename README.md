@@ -31,7 +31,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 ## Current Features
 
 - Four languages: English, French, Spanish, Italian.
-- Quiz mode below Practice offers 10 randomly selected full-sentence questions per round, with a choice of any available tense or a mixed set. Each tense has 20 distinct localized contexts with varied subjects and verbs across three difficulty levels; answer choices test the same subject across tenses. Each question shows a Chinese translation and explains the time or mood clue after answering.
+- Quiz mode below Practice offers 10 randomly selected full-sentence questions per round, with a choice of any available tense or a mixed set. Each tense has 20 distinct localized contexts with varied subjects and verbs across three difficulty levels; answer choices test the same subject across tenses. Each question shows a Chinese or English translation matching the interface language, and explains the time or mood clue in that language after answering. Redundant English translations are hidden when learning English in the English interface.
 - A live panel beside the Quiz shows this round's progress, correct answers, accuracy, streak, and question-by-question results.
 - Quiz answers count toward the existing seven-day accuracy chart and tense breakdown, with separate quiz totals and accuracy on the Stats dashboard.
 - Present, past, imperfect, future, conditional, and present subjunctive, plus a mixed mode. English drills present, past, and future only.
@@ -67,9 +67,20 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Saved misses are capped per language, and clearing every miss no longer revives legacy stored misses.
 - Missed prompts use three Leitner boxes: a miss must be answered correctly on three separate days (today, then after 1 day, then after 3 days) before it is retired, and any wrong answer sends it back to box 1.
 - Answers are tallied per tense and per verb; the Stats Weak spots card shows accuracy by tense, flags the weakest tense, and lists the five hardest verbs with one-click tense and verb drills.
-- Preferences for translation language (Chinese or English glosses) and, for Spanish, hiding vosotros from prompts, answer choices, reviews, and the Word Book.
+- A single Chinese / English interface-language preference controls navigation, instructions, labels, grammar explanations, verb glosses, and sentence translations. Spanish learners can also hide vosotros from prompts, answer choices, reviews, and the Verb Book.
 - Present subjunctive for French, Spanish, and Italian, derived from each verb's indicative forms with explicit tables for truly irregular stems; prompts read "que tu…", "qu'il…", "che io…".
 - Installable, offline-capable PWA (vite-plugin-pwa) with precached assets and cached Google Fonts; the header logo is a 3 KB WebP.
+
+## Bilingual interface
+
+- The sidebar and mobile menu expose one **Interface language** switch: 中文 / English. Translations follow this choice automatically; there is no separate translation-language setting.
+- Existing `conjugo.translationLanguage` preferences are reused unchanged. Without a valid saved preference, Chinese browser locales default to Chinese and other locales default to English.
+- Switching the interface language updates every workspace, completion dialog, tooltip, accessible label, and chart weekday without restarting the current practice or quiz round. Question order, answer choices, selected answers, progress, and recorded scores remain intact.
+- The learning language is independent. Verbs, pronouns, conjugations, question sentences, and answer choices remain in English, French, Spanish, or Italian, with language attributes for assistive technology.
+- Tense labels are centralized and distinguish French compound past, Spanish preterite, and Italian compound past. Quiz setup cards and the Verb Book show native tense names as secondary labels when different from the interface label. Mixed quizzes reveal the target tense in the explanation only after answering.
+- All supported quiz banks include Chinese and English sentence translations and context-specific grammar explanations. English translations use the corresponding action and tense, including hypothetical conditionals and natural subjunctive meanings.
+- Quiz cards, navigation, selection states, and headings follow the existing UI typography and theme colors; only the study sentence uses display serif typography. Tense controls wrap within their containers at narrow widths.
+- Interface messages live in `src/lib/i18n.ts`; components consume the locale through `src/hooks/useI18n.ts`. Quiz English context explanations live in `src/data/quizEnglish.ts`. New UI copy must have a Chinese message and preserve interpolation parameters.
 
 ## Scripts
 

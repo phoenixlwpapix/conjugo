@@ -1,3 +1,4 @@
+import { useI18n } from '../hooks/useI18n';
 import { RotateCcw } from 'lucide-react';
 import { getLanguageTenses, type PracticeTenseId, type Language } from '../data/verbs';
 import { SegmentedControl } from './ui/SegmentedControl';
@@ -10,23 +11,24 @@ interface SessionBarProps {
 }
 
 export function SessionBar({ language, practiceTense, switchTense, resetSession }: SessionBarProps) {
+  const { t, tenseName } = useI18n();
   const options: Array<{ id: PracticeTenseId; label: string }> = [
-    ...getLanguageTenses(language.id).map((item) => ({ id: item.id, label: language.tenseLabels[item.id] })),
-    { id: 'mixed', label: language.tenseLabels.mixed },
+    ...getLanguageTenses(language.id).map((item) => ({ id: item.id, label: tenseName(language, item.id) })),
+    { id: 'mixed', label: t('Mixed practice') },
   ];
 
   return (
-    <section className="session-bar" aria-label="Practice controls">
+    <section className="session-bar" aria-label={t("Practice controls")}>
       <SegmentedControl
-        ariaLabel="Choose tense"
+        ariaLabel={t('Choose tense')}
         onChange={switchTense}
         options={options}
         value={practiceTense}
       />
 
-      <button className="reset-button" onClick={resetSession} type="button" title="Reset session">
+      <button className="reset-button" onClick={resetSession} type="button" title={t("Reset session")}>
         <RotateCcw size={16} aria-hidden="true" />
-        <span className="reset-button-text">Reset</span>
+        <span className="reset-button-text">{t("Reset")}</span>
       </button>
     </section>
   );

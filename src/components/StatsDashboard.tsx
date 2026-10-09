@@ -1,3 +1,5 @@
+import { formatStudyDate, translate, type Locale } from '../lib/i18n';
+import { useI18n } from '../hooks/useI18n';
 import { BarChart3, CalendarDays, ClipboardList, Crosshair, Flame, Layers, Target, Trophy, type LucideIcon } from 'lucide-react';
 import { getVerbTranslation, type TranslationLanguage } from '../data/translations';
 import type { Language, TenseId } from '../data/verbs';
@@ -36,20 +38,21 @@ type KpiItem = {
 
 const chartTicks = [100, 75, 50, 25, 0];
 
-const formatDue = (miss: StoredMiss) => {
+const formatDue = (miss: StoredMiss, locale: Locale) => {
   const days = getDaysUntilDue(miss);
-  if (days === 0) return 'due now';
-  if (days === 1) return 'due tomorrow';
-  return `due in ${days} days`;
+  if (days === 0) return translate(locale, 'due now');
+  if (days === 1) return translate(locale, 'due tomorrow');
+  return translate(locale, 'due in {days} days', { days });
 };
 
 function AccuracyChart({ trend }: { trend: TrendPoint[] }) {
+  const { t } = useI18n();
   const summary = trend
-    .map((item) => `${item.label}: ${item.answered === 0 ? 'no attempts' : `${item.accuracy}% of ${item.answered}`}`)
+    .map((item) => `${item.label}: ${item.answered === 0 ? t('no attempts') : t('{accuracy}% of {count}', { accuracy: item.accuracy, count: item.answered })}`)
     .join(', ');
 
   return (
-    <div className="stats-trend-chart accuracy-chart" role="img" aria-label={`Seven day accuracy. ${summary}`}>
+    <div className="stats-trend-chart accuracy-chart" role="img" aria-label={t('Seven day accuracy. {summary}', { summary })}>
       <div className="accuracy-chart-axis" aria-hidden="true">
         {chartTicks.map((tick) => (
           <span key={tick}>{tick}%</span>
@@ -66,7 +69,7 @@ function AccuracyChart({ trend }: { trend: TrendPoint[] }) {
                   className="accuracy-chart-bar"
                   data-empty={isEmpty}
                   style={{ height: isEmpty ? undefined : `${item.accuracy}%` }}
-                  title={isEmpty ? `${item.label}: no attempts` : `${item.label}: ${item.accuracy}% of ${item.answered}`}
+                  title={isEmpty ? `${item.label}: ${t('no attempts')}` : `${item.label}: ${t('{accuracy}% of {count}', { accuracy: item.accuracy, count: item.answered })}`}
                 >
                   <span className="accuracy-chart-value">{isEmpty ? '–' : `${item.accuracy}%`}</span>
                 </div>
@@ -93,6 +96,8 @@ export function StatsDashboard({
   onDrillTense,
   onDrillVerbs,
 }: StatsDashboardProps) {
+  const { t, locale, tenseName } = useI18n();
+  const localizedTrend = trend.map((point) => ({ ...point, label: formatStudyDate(point.key, locale) }));
   const overallAccuracy = getAccuracy(stats.totalCorrect, stats.totalAnswered);
   const activeDays = Object.values(stats.days).filter((day) => day.answered > 0).length;
   const completedSets = Object.values(stats.days).reduce((total, day) => total + day.sessions, 0);
@@ -110,39 +115,39 @@ export function StatsDashboard({
     todayStats.answered === 0
       ? ''
       : todayAccuracy >= 90
-        ? 'Excellent'
+        ? t('Excellent')
         : todayAccuracy >= 75
-          ? 'Great'
+          ? t('Great')
           : todayAccuracy >= 60
-            ? 'Getting there'
-            : 'Keep at it';
+            ? t('Getting there')
+            : t('Keep at it');
   const kpis: KpiItem[] = [
-    { icon: Target, label: 'Total answered', value: stats.totalAnswered.toString() },
-    { icon: Trophy, label: 'Total correct', value: stats.totalCorrect.toString() },
-    { icon: Flame, label: 'Best streak', value: bestStreak.toString() },
-    { icon: Layers, label: 'Sets completed', value: completedSets.toString() },
+    { icon: Target, label: t('Total answered'), value: stats.totalAnswered.toString() },
+    { icon: Trophy, label: t('Total correct'), value: stats.totalCorrect.toString() },
+    { icon: Flame, label: t('Best streak'), value: bestStreak.toString() },
+    { icon: Layers, label: t('Sets completed'), value: completedSets.toString() },
   ];
   const quiz = stats.quiz ?? { answered: 0, correct: 0, sessions: 0, byTense: {} };
   const quizAccuracy = getAccuracy(quiz.correct, quiz.answered);
 
   return (
-    <section className="stats-dashboard" aria-label="Performance dashboard">
+    <section className="stats-dashboard" aria-label={t("Performance dashboard")}>
       <div className="stats-hero">
         <div className="stats-hero-copy">
-          <span className="eyebrow">Scoreboard</span>
-          <h1>Performance dashboard</h1>
-          <p>Track recall quality, recent momentum, and the prompts that still need another clean pass.</p>
-          <div className="stats-hero-facts" aria-label="Practice summary">
-            <span>{completedSets} sets</span>
-            <span>{activeDays} active days</span>
-            <span>{totalWeekAnswers} answers this week</span>
+          <span className="eyebrow">{t("Scoreboard")}</span>
+          <h1>{t("Performance dashboard")}</h1>
+          <p>{t("Track recall quality, recent momentum, and the prompts that still need another clean pass.")}</p>
+          <div className="stats-hero-facts" aria-label={t("Practice summary")}>
+            <span>{t('{count} sets', { count: completedSets })}</span>
+            <span>{t('{count} active days', { count: activeDays })}</span>
+            <span>{t('{count} answers this week', { count: totalWeekAnswers })}</span>
           </div>
         </div>
         <RingMeter
           progressPercent={overallAccuracy}
-          label="overall"
+          label={t("overall")}
           className="stats-hero-score"
-          ariaLabel={`Overall accuracy ${overallAccuracy}%`}
+          ariaLabel={t('Overall accuracy {accuracy}%', { accuracy: overallAccuracy })}
         />
       </div>
 
@@ -158,15 +163,15 @@ export function StatsDashboard({
         ))}
       </div>
 
-      <section className="stats-quiz-card" aria-label="Quiz performance">
+      <section className="stats-quiz-card" aria-label={t("Quiz performance")}>
         <div className="panel-title">
           <ClipboardList size={18} aria-hidden="true" />
-          <div><h2>Quiz results</h2><span>Quiz answers are included in the seven day accuracy chart and tense breakdown.</span></div>
+          <div><h2>{t("Quiz results")}</h2><span>{t("Quiz answers are included in the seven day accuracy chart and tense breakdown.")}</span></div>
         </div>
         <div className="stats-quiz-values">
-          <div><strong>{quiz.sessions}</strong><span>quizzes completed</span></div>
-          <div><strong>{quiz.correct}/{quiz.answered}</strong><span>correct answers</span></div>
-          <div><strong>{quiz.answered ? `${quizAccuracy}%` : '—'}</strong><span>quiz accuracy</span></div>
+          <div><strong>{quiz.sessions}</strong><span>{t("quizzes completed")}</span></div>
+          <div><strong>{quiz.correct}/{quiz.answered}</strong><span>{t('Correct answers')}</span></div>
+          <div><strong>{quiz.answered ? `${quizAccuracy}%` : '—'}</strong><span>{t("quiz accuracy")}</span></div>
         </div>
       </section>
 
@@ -176,53 +181,53 @@ export function StatsDashboard({
             <div className="panel-title">
               <BarChart3 size={18} aria-hidden="true" />
               <div>
-                <h2>Seven day accuracy</h2>
-                <span>Answered prompts are plotted by day.</span>
+                <h2>{t("Seven day accuracy")}</h2>
+                <span>{t("Answered prompts are plotted by day.")}</span>
               </div>
             </div>
             <div className="stats-chart-summary">
               <strong>{bestTrendAccuracy}%</strong>
-              <span>best day</span>
+              <span>{t("best day")}</span>
             </div>
           </div>
 
-          <AccuracyChart trend={trend} />
+          <AccuracyChart trend={localizedTrend} />
         </section>
 
         <section className="stats-today-card">
           <div className="panel-title">
             <CalendarDays size={18} aria-hidden="true" />
             <div>
-              <h2>Today</h2>
-              <span>Current calendar day</span>
+              <h2>{t("Today")}</h2>
+              <span>{t("Current calendar day")}</span>
             </div>
           </div>
           <div className="stats-today-meter">
             <strong>{todayAccuracy}%</strong>
-            <span>today accuracy</span>
+            <span>{t("today accuracy")}</span>
             {todayGrade && <b className="stats-today-grade">{todayGrade}</b>}
           </div>
           <div className="stats-today-compare">
             <div>
-              <span>Today</span>
+              <span>{t("Today")}</span>
               <strong>{todayAccuracy}%</strong>
             </div>
             <div>
-              <span>Overall</span>
+              <span>{t("Overall")}</span>
               <strong>{overallAccuracy}%</strong>
             </div>
           </div>
           <div className="stats-today-breakdown">
             <div>
-              <span>Sets</span>
+              <span>{t("Sets")}</span>
               <strong>{todayStats.sessions}</strong>
             </div>
             <div>
-              <span>Answered</span>
+              <span>{t("Answered")}</span>
               <strong>{todayStats.answered}</strong>
             </div>
             <div>
-              <span>Missed</span>
+              <span>{t("Missed")}</span>
               <strong>{Math.max(0, todayStats.answered - todayStats.correct)}</strong>
             </div>
           </div>
@@ -232,43 +237,43 @@ export function StatsDashboard({
           <div className="panel-title">
             <Crosshair size={18} aria-hidden="true" />
             <div>
-              <h2>Weak spots</h2>
+              <h2>{t("Weak spots")}</h2>
               <span>
                 {weakestTense
-                  ? `Weakest tense: ${activeLanguage.tenseLabels[weakestTense.tense]}`
-                  : 'Answer a few more prompts to surface weak spots.'}
+                  ? t('Weakest tense: {tense}', { tense: tenseName(activeLanguage, weakestTense.tense) })
+                  : t('Answer a few more prompts to surface weak spots.')}
               </span>
             </div>
           </div>
 
           <div className="stats-weak-grid">
             <div className="stats-weak-section">
-              <h3>By tense</h3>
+              <h3>{t("By tense")}</h3>
               <ul className="stats-tense-list">
                 {tenseBreakdown.map((item) => {
-                  const label = activeLanguage.tenseLabels[item.tense];
+                  const label = tenseName(activeLanguage, item.tense);
                   const isWeakest = weakestTense?.tense === item.tense;
 
                   return (
                     <li data-weakest={isWeakest} key={item.tense}>
                       <span className="stats-tense-name">
                         {label}
-                        {isWeakest && <b className="stats-weak-tag">Weakest</b>}
+                        {isWeakest && <b className="stats-weak-tag">{t("Weakest")}</b>}
                       </span>
                       <span className="stats-tense-meter" aria-hidden="true">
                         <span style={{ width: `${item.answered === 0 ? 0 : item.accuracy}%` }} />
                       </span>
                       <span className="stats-tense-value">
                         {item.answered === 0 ? '—' : `${item.accuracy}%`}
-                        <small>{item.answered} answered</small>
+                        <small>{t('{count} answered', { count: item.answered })}</small>
                       </span>
                       <button
-                        aria-label={`Drill ${label}`}
+                        aria-label={t('Drill {tense}', { tense: label })}
                         className="stats-drill-button"
                         onClick={() => onDrillTense(item.tense)}
                         type="button"
                       >
-                        Drill
+                        {t("Drill")}
                       </button>
                     </li>
                   );
@@ -278,18 +283,18 @@ export function StatsDashboard({
 
             <div className="stats-weak-section">
               <div className="stats-weak-section-head">
-                <h3>Hardest verbs</h3>
+                <h3>{t("Hardest verbs")}</h3>
                 <button
                   className="stats-review-start-button"
                   disabled={hardestVerbs.length === 0}
                   onClick={() => onDrillVerbs(hardestVerbs.map((item) => item.verbInfinitive))}
                   type="button"
                 >
-                  Drill these verbs
+                  {t("Drill these verbs")}
                 </button>
               </div>
               {hardestVerbs.length === 0 ? (
-                <p className="empty-state">Verbs you miss after at least 3 answers will appear here.</p>
+                <p className="empty-state">{t("Verbs you miss after at least 3 answers will appear here.")}</p>
               ) : (
                 <ol className="stats-verb-list">
                   {hardestVerbs.map((item) => {
@@ -305,7 +310,7 @@ export function StatsDashboard({
                         <span className="stats-verb-score">
                           {item.accuracy}%
                           <small>
-                            {item.correct}/{item.answered} correct
+                            {t('{correct}/{count} correct', { correct: item.correct, count: item.answered })}
                           </small>
                         </span>
                       </li>
@@ -322,10 +327,9 @@ export function StatsDashboard({
             <div className="panel-title">
               <Target size={18} aria-hidden="true" />
               <div>
-                <h2>Review load</h2>
+                <h2>{t("Review load")}</h2>
                 <span>
-                  {storedMisses.length} saved misses · {dueMissCount} due. Each needs {reviewBoxCount} clean passes on
-                  separate days.
+                  {t('{saved} saved misses · {due} due. Each needs {passes} clean passes on separate days.', { saved: storedMisses.length, due: dueMissCount, passes: reviewBoxCount })}
                 </span>
               </div>
             </div>
@@ -335,21 +339,21 @@ export function StatsDashboard({
               onClick={onStartMissPractice}
               type="button"
             >
-              Practice misses
+              {t("Practice misses")}
             </button>
           </div>
           {recentMisses.length === 0 ? (
-            <p className="empty-state">No saved misses yet. Your future review load will appear here.</p>
+            <p className="empty-state">{t("No saved misses yet. Your future review load will appear here.")}</p>
           ) : (
             <div className="stats-review-table-wrap">
               <table className="stats-review-table">
                 <thead>
                   <tr>
-                    <th>Tense</th>
-                    <th>Pronoun</th>
-                    <th>Verb</th>
-                    <th>Answer</th>
-                    <th>Review</th>
+                    <th>{t("Tense")}</th>
+                    <th>{t("Pronoun")}</th>
+                    <th>{t("Verb")}</th>
+                    <th>{t("Answer")}</th>
+                    <th>{t("Review")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -359,12 +363,12 @@ export function StatsDashboard({
 
                     return (
                       <tr key={`${miss.languageId}-${miss.verbInfinitive}-${miss.tense}-${miss.pronoun}`}>
-                        <td>{activeLanguage.tenseLabels[miss.tense]}</td>
+                        <td>{tenseName(activeLanguage, miss.tense)}</td>
                         <td>{activeLanguage.pronounLabels[miss.pronoun]}</td>
                         <td className="stats-review-verb">{miss.verbInfinitive}</td>
                         <td className="stats-review-answer">{displayAnswer}</td>
                         <td className="stats-review-box" data-due={isMissDue(miss)}>
-                          Box {miss.box}/{reviewBoxCount} · {formatDue(miss)}
+                          {t('Box {box}/{count} · {due}', { box: miss.box, count: reviewBoxCount, due: formatDue(miss, locale) })}
                         </td>
                       </tr>
                     );

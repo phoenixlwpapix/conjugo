@@ -1,3 +1,5 @@
+import { LocaleContext } from './hooks/useI18n';
+import { translate } from './lib/i18n';
 import { lazy, Suspense, useEffect, useState, type CSSProperties } from 'react';
 import { usePractice } from './hooks/usePractice';
 import { usePreferences } from './hooks/usePreferences';
@@ -31,6 +33,11 @@ export default function App() {
 
   const preferences = usePreferences();
   const { translationLanguage } = preferences;
+  const t = (key: 'Loading stats' | 'Loading performance dashboard…') => translate(translationLanguage, key);
+
+  useEffect(() => {
+    document.documentElement.lang = translationLanguage === 'zh' ? 'zh-CN' : 'en';
+  }, [translationLanguage]);
 
   const {
     languageId,
@@ -168,139 +175,141 @@ export default function App() {
   };
 
   return (
-    <main
-      className="app-shell"
-      data-theme={themeId}
-      style={{ '--language-accent': themeId === 'dark' ? activeLanguage.darkAccent : activeLanguage.accent } as CSSProperties}
-    >
-      {showCelebration && (
-        <SessionCompleteOverlay
-          mode="perfect"
-          accuracy={accuracy}
-          correctCount={sessionCorrectCount}
-          totalCount={attempts.length}
-          onDismiss={dismissCelebration}
-          onNewSet={resetSession}
-          onReturnHome={returnHome}
-        />
-      )}
-
-      {showCompletion && (
-        <SessionCompleteOverlay
-          mode="complete"
-          accuracy={accuracy}
-          correctCount={sessionCorrectCount}
-          totalCount={attempts.length}
-          onDismiss={dismissCompletion}
-          onNewSet={resetSession}
-          onReturnHome={returnHome}
-        />
-      )}
-
-      <Header
-        languageId={languageId}
-        switchLanguage={switchLanguage}
-        activeView={activeView}
-        setActiveView={setActiveView}
-        themeId={themeId}
-        setThemeId={setThemeId}
-        {...preferences}
-      />
-
-      <div className="app-content">
-        {activeView === 'practice' && (
-          <>
-            <SessionBar
-              language={activeLanguage}
-              practiceTense={practiceTense}
-              switchTense={switchTense}
-              resetSession={resetSession}
-            />
-
-            <section className="practice-layout">
-              <TrainerPanel
-                attempts={attempts}
-                prompt={prompt}
-                practiceTense={practiceTense}
-                choices={choices}
-                selectedAnswer={selectedAnswer}
-                timedOut={timedOut}
-                correctAnswer={correctAnswer}
-                isAnswered={isAnswered}
-                isCorrect={isCorrect}
-                isSessionComplete={isSessionComplete}
-                showCelebration={showCelebration}
-                selectChoice={selectChoice}
-                resetSession={resetSession}
-                moveNext={moveNext}
-                timeLeft={timeLeft}
-                timerEnabled={timerEnabled}
-                toggleTimer={toggleTimer}
-                sessionTarget={sessionTarget}
-                sessionKind={sessionKind}
-                translationLanguage={translationLanguage}
-              />
-
-              <ProgressPanel
-                activeLanguage={activeLanguage}
-                progress={progress}
-                progressPercent={progressPercent}
-                attempts={attempts}
-                accuracy={accuracy}
-                streak={streak}
-                cumulativeStats={stats}
-                sessionTarget={sessionTarget}
-                sessionElapsedSeconds={sessionElapsedSeconds}
-              />
-            </section>
-          </>
-        )}
-
-        {activeView === 'stats' && (
-          <Suspense
-            fallback={
-              <section className="stats-loading-card" aria-busy="true" aria-label="Loading stats">
-                Loading performance dashboard…
-              </section>
-            }
-          >
-            <StatsDashboard
-              activeLanguage={activeLanguage}
-              bestStreak={stats.bestStreak}
-              storedMisses={storedMisses}
-              stats={stats}
-              todayAccuracy={todayAccuracy}
-              todayStats={todayStats}
-              trend={trend}
-              translationLanguage={translationLanguage}
-              onStartMissPractice={startMissReview}
-              onDrillTense={drillTense}
-              onDrillVerbs={startVerbDrill}
-            />
-          </Suspense>
-        )}
-
-        {activeView === 'quiz' && (
-          <QuizPanel key={languageId} language={activeLanguage} onAnswer={recordQuizResult} />
-        )}
-
-        {activeView === 'wordbook' && selectedVerb && (
-          <WordBook
-            activeLanguage={activeLanguage}
-            bookTense={bookTense}
-            filteredVerbs={filteredVerbs}
-            onQueryChange={setWordbookQuery}
-            onSortChange={setWordbookSort}
-            onSelectVerb={setSelectedVerbInfinitive}
-            onTenseChange={setBookTense}
-            query={wordbookQuery}
-            sort={wordbookSort}
-            selectedVerb={selectedVerb}
-            selectedVerbInfinitive={selectedVerbInfinitive}
-            translationLanguage={translationLanguage}
+    <LocaleContext value={translationLanguage}>
+      <main
+        className="app-shell"
+        data-theme={themeId}
+        style={{ '--language-accent': themeId === 'dark' ? activeLanguage.darkAccent : activeLanguage.accent } as CSSProperties}
+      >
+        {showCelebration && (
+          <SessionCompleteOverlay
+            mode="perfect"
+            accuracy={accuracy}
+            correctCount={sessionCorrectCount}
+            totalCount={attempts.length}
+            onDismiss={dismissCelebration}
+            onNewSet={resetSession}
+            onReturnHome={returnHome}
           />
         )}
-      </div>
-    </main>
+
+        {showCompletion && (
+          <SessionCompleteOverlay
+            mode="complete"
+            accuracy={accuracy}
+            correctCount={sessionCorrectCount}
+            totalCount={attempts.length}
+            onDismiss={dismissCompletion}
+            onNewSet={resetSession}
+            onReturnHome={returnHome}
+          />
+        )}
+
+        <Header
+          languageId={languageId}
+          switchLanguage={switchLanguage}
+          activeView={activeView}
+          setActiveView={setActiveView}
+          themeId={themeId}
+          setThemeId={setThemeId}
+          {...preferences}
+        />
+
+        <div className="app-content">
+          {activeView === 'practice' && (
+            <>
+              <SessionBar
+                language={activeLanguage}
+                practiceTense={practiceTense}
+                switchTense={switchTense}
+                resetSession={resetSession}
+              />
+
+              <section className="practice-layout">
+                <TrainerPanel
+                  attempts={attempts}
+                  prompt={prompt}
+                  practiceTense={practiceTense}
+                  choices={choices}
+                  selectedAnswer={selectedAnswer}
+                  timedOut={timedOut}
+                  correctAnswer={correctAnswer}
+                  isAnswered={isAnswered}
+                  isCorrect={isCorrect}
+                  isSessionComplete={isSessionComplete}
+                  showCelebration={showCelebration}
+                  selectChoice={selectChoice}
+                  resetSession={resetSession}
+                  moveNext={moveNext}
+                  timeLeft={timeLeft}
+                  timerEnabled={timerEnabled}
+                  toggleTimer={toggleTimer}
+                  sessionTarget={sessionTarget}
+                  sessionKind={sessionKind}
+                  translationLanguage={translationLanguage}
+                />
+
+                <ProgressPanel
+                  activeLanguage={activeLanguage}
+                  progress={progress}
+                  progressPercent={progressPercent}
+                  attempts={attempts}
+                  accuracy={accuracy}
+                  streak={streak}
+                  cumulativeStats={stats}
+                  sessionTarget={sessionTarget}
+                  sessionElapsedSeconds={sessionElapsedSeconds}
+                />
+              </section>
+            </>
+          )}
+
+          {activeView === 'stats' && (
+            <Suspense
+              fallback={
+                <section className="stats-loading-card" aria-busy="true" aria-label={t('Loading stats')}>
+                  {t('Loading performance dashboard…')}
+                </section>
+              }
+            >
+              <StatsDashboard
+                activeLanguage={activeLanguage}
+                bestStreak={stats.bestStreak}
+                storedMisses={storedMisses}
+                stats={stats}
+                todayAccuracy={todayAccuracy}
+                todayStats={todayStats}
+                trend={trend}
+                translationLanguage={translationLanguage}
+                onStartMissPractice={startMissReview}
+                onDrillTense={drillTense}
+                onDrillVerbs={startVerbDrill}
+              />
+            </Suspense>
+          )}
+
+          {activeView === 'quiz' && (
+            <QuizPanel key={languageId} language={activeLanguage} onAnswer={recordQuizResult} />
+          )}
+
+          {activeView === 'wordbook' && selectedVerb && (
+            <WordBook
+              activeLanguage={activeLanguage}
+              bookTense={bookTense}
+              filteredVerbs={filteredVerbs}
+              onQueryChange={setWordbookQuery}
+              onSortChange={setWordbookSort}
+              onSelectVerb={setSelectedVerbInfinitive}
+              onTenseChange={setBookTense}
+              query={wordbookQuery}
+              sort={wordbookSort}
+              selectedVerb={selectedVerb}
+              selectedVerbInfinitive={selectedVerbInfinitive}
+              translationLanguage={translationLanguage}
+            />
+          )}
+        </div>
+      </main>
+    </LocaleContext>
   );
 }

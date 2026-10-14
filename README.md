@@ -31,7 +31,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 ## Current Features
 
 - Four languages: English, French, Spanish, Italian.
-- Quiz mode below Practice offers 10 randomly selected full-sentence questions per round, with a choice of any available tense or a mixed set. Each tense has 20 distinct localized contexts with varied subjects and verbs across three difficulty levels; answer choices test the same subject across tenses. Each question shows a Chinese or English translation matching the interface language, and explains the time or mood clue in that language after answering. Redundant English translations are hidden when learning English in the English interface.
+- Quiz mode below Practice offers 10 randomly selected full-sentence questions per round, with a choice of any available tense or a mixed set. Each tense has 20 individually authored everyday situations in all four languages (420 supported language/tense questions), with varied subjects and verbs across three difficulty levels. Complete sentences, translations, and explanations are kept together in `src/data/quizScenes.ts`; contexts are never randomly combined with unrelated actions. Scenes include commuting, family meals, travel, interrupted past actions, and realistic hypothetical decisions. Answer choices test the same subject across tenses. Each question shows a Chinese or English translation matching the interface language, and explains the specific scene after answering. Redundant English translations are hidden when learning English in the English interface.
 - A live panel beside the Quiz shows this round's progress, correct answers, accuracy, streak, and question-by-question results.
 - Quiz answers count toward the existing seven-day accuracy chart and tense breakdown, with separate quiz totals and accuracy on the Stats dashboard.
 - Present, past, imperfect, future, conditional, and present subjunctive, plus a mixed mode. English drills present, past, and future only.
@@ -80,7 +80,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Tense labels are centralized and distinguish French compound past, Spanish preterite, and Italian compound past. Quiz setup cards and the Verb Book show native tense names as secondary labels when different from the interface label. Mixed quizzes reveal the target tense in the explanation only after answering.
 - All supported quiz banks include Chinese and English sentence translations and context-specific grammar explanations. English translations use the corresponding action and tense, including hypothetical conditionals and natural subjunctive meanings.
 - Quiz cards, navigation, selection states, and headings follow the existing UI typography and theme colors; only the study sentence uses display serif typography. Tense controls wrap within their containers at narrow widths.
-- Interface messages live in `src/lib/i18n.ts`; components consume the locale through `src/hooks/useI18n.ts`. Quiz English context explanations live in `src/data/quizEnglish.ts`. New UI copy must have a Chinese message and preserve interpolation parameters.
+- Interface messages live in `src/lib/i18n.ts`; components consume the locale through `src/hooks/useI18n.ts`. Quiz sentences and bilingual explanations live together in `src/data/quizScenes.ts`. New UI copy must have a Chinese message and preserve interpolation parameters.
 
 ## Scripts
 

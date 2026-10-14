@@ -30,7 +30,7 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
   const accuracy = getAccuracy(correctCount, answeredCount);
   const options = [...getLanguageTenses(language.id), { id: 'mixed' as const }];
   const subjectHint = question?.pronoun === 'he/she'
-    ? { spanish: 'ella', french: 'il', italian: 'lui', english: 'he' }[language.id]
+    ? { spanish: 'él', french: 'il', italian: 'lui', english: 'he' }[language.id]
     : question ? language.pronounLabels[question.pronoun] : '';
 
   const start = () => {

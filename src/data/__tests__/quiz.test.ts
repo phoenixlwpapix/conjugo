@@ -1,76 +1,104 @@
 import { describe, expect, it } from 'vitest';
-import { createQuizBank, createQuizQuestions, quizBank } from '../quiz';
+import { createQuizBank, createQuizQuestions } from '../quiz';
+import { quizScenes } from '../quizScenes';
 import { getLanguageTenses, languages } from '../verbs';
 
-describe('quiz bank', () => {
-  it('provides complete Chinese and English translations and explanations for every question', () => {
-    for (const language of languages) {
-      for (const { id } of getLanguageTenses(language.id)) {
-        for (const question of createQuizBank(language, id)) {
-          expect(question.translation.en).not.toContain('____');
-          expect(question.translation.en).not.toMatch(/undefined|\p{Script=Han}/u);
-          expect(question.translation.en.endsWith('.')).toBe(true);
-          expect(question.explanation.en).not.toMatch(/undefined|\p{Script=Han}/u);
-          expect(question.explanation.en).toContain(question.answer);
-          expect(question.explanation.zh).toContain(question.answer);
+const spanish = languages.find((language) => language.id === 'spanish');
+if (!spanish) throw new Error('Spanish data missing');
+
+describe('authored quiz scenes', () => {
+  it('provides twenty complete scenes per tense in all four languages', () => {
+    for (const scenes of Object.values(quizScenes)) {
+      expect(scenes).toHaveLength(20);
+      for (const language of languages) {
+        expect(new Set(scenes.map((scene) => scene.sentence[language.id])).size).toBe(20);
+        for (const scene of scenes) {
+          expect(scene.sentence[language.id].split('____')).toHaveLength(2);
+          expect(scene.sentence[language.id]).not.toMatch(/undefined/);
+          expect(scene.reason.zh).toBeTruthy();
+          expect(scene.reason.en).toBeTruthy();
+          expect(scene.zh.endsWith('。')).toBe(true);
         }
       }
     }
   });
 
-  it('translates the completed action and grammatical mood instead of repeating the context', () => {
-    const spanish = languages.find((language) => language.id === 'spanish');
-    if (!spanish) throw new Error('Spanish data missing');
-    expect(createQuizBank(spanish, 'past')[0].translation.en).toBe('Yesterday, Ana went to the market.');
-    expect(createQuizBank(spanish, 'future')[0].translation.en).toBe('Tomorrow, Ana will go to the market.');
-    expect(createQuizBank(spanish, 'conditional')[0].translation.en).toBe('If there were more time, Ana would go to the market.');
-    expect(createQuizBank(spanish, 'subjunctive')[0].translation.en).toBe('I am glad that Ana lives near here.');
-    expect(createQuizBank(spanish, 'imperfect')[3].translation.en).toBe('While the others were waiting, they were working downtown.');
-  });
-  it('has twenty distinct complete sentences for each supported language and tense', () => {
-    for (const seeds of Object.values(quizBank)) {
-      expect(seeds).toHaveLength(20);
-      expect(new Set(seeds.map((seed) => seed.text.spanish)).size).toBe(20);
-    }
+  it('keeps the authored scene, verb, subject, and explanation together', () => {
     for (const language of languages) {
       for (const { id } of getLanguageTenses(language.id)) {
         const bank = createQuizBank(language, id);
         expect(bank).toHaveLength(20);
-        expect(new Set(bank.map((question) => question.sentence)).size).toBe(20);
-        expect(bank.every((question) => question.sentence.includes('____') && question.translation.zh.endsWith('。'))).toBe(true);
-        expect(bank.every((question) => question.explanation.zh.includes(question.answer))).toBe(true);
-        expect(bank.every((question) => question.choices.includes(question.answer) && question.choices.every((choice) => getLanguageTenses(language.id).some(({ id: choiceTense }) => question.verb.forms[choiceTense][question.pronoun] === choice)))).toBe(true);
+        bank.forEach((question, index) => {
+          const scene = quizScenes[id][index];
+          expect(question.sentence).toBe(scene.sentence[language.id]);
+          expect(question.pronoun).toBe(scene.pronoun);
+          expect(question.difficulty).toBe(scene.difficulty);
+          expect(question.translation.zh).toBe(scene.zh);
+          expect(question.explanation.zh).toContain(scene.reason.zh);
+          expect(question.explanation.en).toContain(scene.reason.en);
+          expect(question.explanation.zh).toContain(question.answer);
+          expect(question.explanation.en).toContain(question.answer);
+          expect(question.translation.en).not.toMatch(/____|undefined|\p{Script=Han}/u);
+          expect(question.translation.en.endsWith('.')).toBe(true);
+          expect(question.explanation.en).not.toMatch(/undefined|\p{Script=Han}/u);
+        });
       }
     }
   });
 
-  it('uses the supplied subjunctive example as a complete sentence with a contextual explanation', () => {
-    const spanish = languages.find((language) => language.id === 'spanish');
-    if (!spanish) throw new Error('Spanish data missing');
-    const question = createQuizBank(spanish, 'subjunctive')[0];
-    expect(question.sentence).toBe('Me alegra que Ana ____ cerca de aquí.');
-    expect(question.answer).toBe('viva');
-    expect(question.explanation.zh).toContain('情感反应');
+  it('uses a coherent pharmacy trip rather than attaching a generic destination', () => {
+    const question = createQuizBank(spanish, 'past').find((entry) => entry.verb.infinitive === 'ir' && entry.pronoun === 'he/she');
+    expect(question?.sentence).toBe('Ayer, Alex ____ a la farmacia para comprar una medicina.');
+    expect(question?.translation.en).toBe('Yesterday, Alex went to the pharmacy to buy some medicine.');
+    expect(question?.answer).toBe('fue');
+    expect(question?.explanation.zh).toContain('去药店买药');
   });
 
-  it('builds valid ten-question sets for each language and available tense', () => {
+  it('translates ongoing past actions and hypothetical results naturally', () => {
+    const background = createQuizBank(spanish, 'imperfect').find((entry) => entry.sentence.includes('recepcionista'));
+    expect(background?.translation.en).toBe('You were speaking with the receptionist when your phone rang.');
+    const conditional = createQuizBank(spanish, 'conditional').find((entry) => entry.verb.infinitive === 'vivir');
+    expect(conditional?.translation.en).toBe('If the rent were cheaper, we would live downtown.');
+    expect(conditional?.explanation.zh).toContain('低租金');
+  });
+
+  it('explains factual emotional subjunctives without calling every clause uncertain', () => {
+    const question = createQuizBank(spanish, 'subjunctive').find((entry) => entry.verb.infinitive === 'vivir');
+    expect(question?.sentence).toBe('A mis padres les alegra que nosotros ____ cerca de ellos.');
+    expect(question?.answer).toBe('vivamos');
+    expect(question?.translation.en).toBe('My parents are glad that we live near them.');
+    expect(question?.explanation.zh).toContain('住址可以是事实');
+    expect(question?.explanation.en).toContain('emotional reaction');
+  });
+
+  it('keeps subjunctive English translations grammatical for infinitive and finite clauses', () => {
+    const bank = createQuizBank(spanish, 'subjunctive');
+    expect(bank.find((entry) => entry.sentence.includes('fiebre'))?.translation.en)
+      .toBe('I want Alex to go to the doctor; he has had a fever for three days.');
+    expect(bank.find((entry) => entry.verb.infinitive === 'dormir')?.translation.en)
+      .toBe('I am surprised that Alex sleeps with so much noise in the street.');
+  });
+
+  it('builds unique ten-question rounds with valid, distinct choices', () => {
     for (const language of languages) {
-      for (const { id } of getLanguageTenses(language.id)) {
-        const questions = createQuizQuestions(language, id);
+      for (const selected of [...getLanguageTenses(language.id).map(({ id }) => id), 'mixed' as const]) {
+        const questions = createQuizQuestions(language, selected);
         expect(questions).toHaveLength(10);
         expect(new Set(questions.map((question) => question.id)).size).toBe(10);
         for (const question of questions) {
-          expect(question.tense).toBe(id);
+          if (selected !== 'mixed') expect(question.tense).toBe(selected);
+          expect(question.answer).toBe(question.verb.forms[question.tense][question.pronoun]);
           expect(question.choices).toContain(question.answer);
+          expect(question.choices.length).toBeGreaterThanOrEqual(2);
           expect(new Set(question.choices).size).toBe(question.choices.length);
-          expect(question.answer).toBe(question.verb.forms[id][question.pronoun]);
-          expect(question.choices.every((choice) => getLanguageTenses(language.id).some(({ id: choiceTense }) => question.verb.forms[choiceTense][question.pronoun] === choice))).toBe(true);
-          expect(question.explanation.zh).toContain(question.answer);
+          expect(question.choices.every((choice) => getLanguageTenses(language.id).some(({ id }) => question.verb.forms[id][question.pronoun] === choice))).toBe(true);
         }
+        if (selected === 'mixed') expect(new Set(questions.map((question) => question.tense)).size).toBe(getLanguageTenses(language.id).length);
       }
-      const mixed = createQuizQuestions(language, 'mixed');
-      expect(mixed).toHaveLength(10);
-      expect(new Set(mixed.map((question) => question.tense)).size).toBe(getLanguageTenses(language.id).length);
     }
+  });
+
+  it('does not offer unavailable English tenses', () => {
+    expect(createQuizBank(languages.find((language) => language.id === 'english')!, 'subjunctive')).toEqual([]);
   });
 });

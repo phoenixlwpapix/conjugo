@@ -1,5 +1,5 @@
 import { getLocalizedTenseName, type Locale } from '../lib/i18n';
-import { getLanguageTenses, languages, type Language, type PracticeTenseId, type Pronoun, type TenseId, type VerbEntry } from './verbs';
+import { getLanguagePronouns, getLanguageTenses, languages, type Language, type PracticeTenseId, type Pronoun, type TenseId, type VerbEntry } from './verbs';
 import { quizScenes, quizVerbs } from './quizScenes';
 
 export type QuizQuestion = {
@@ -35,7 +35,10 @@ export const createQuizBank = (language: Language, tense: TenseId): QuizQuestion
     if (!verb || !englishVerb) throw new Error(`Missing quiz verb ${scene.verb}`);
     const answer = verb.forms[tense][scene.pronoun];
     const alternatives = shuffle(available.filter((other) => other !== tense)).map((other) => verb.forms[other][scene.pronoun]);
-    const choices = shuffle([...new Set([answer, ...alternatives])].slice(0, 4));
+    const fallback = shuffle(Object.values(verb.forms).flatMap((forms) =>
+      getLanguagePronouns(language).map((pronoun) => forms[pronoun]),
+    ));
+    const choices = shuffle([...new Set([answer, ...alternatives, ...fallback])].slice(0, 4));
     const englishAnswer = scene.englishAnswer ?? englishVerb.forms[tense][scene.pronoun];
     return {
       id: `${tense}-${index}`, tense, difficulty: scene.difficulty,

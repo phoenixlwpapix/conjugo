@@ -1,7 +1,7 @@
 import { getStudyLanguageTag } from '../lib/i18n';
 import { useI18n } from '../hooks/useI18n';
 import { useEffect, useRef } from 'react';
-import { TimerReset, Check, X, RotateCcw, ArrowRight } from 'lucide-react';
+import { TimerReset, Check, X, RotateCcw, ArrowRight, BookOpen } from 'lucide-react';
 import { getPronounLabel, timerSeconds } from '../lib/prompts';
 import type { Attempt, Prompt, SessionKind } from '../types';
 import type { PracticeTenseId } from '../data/verbs';
@@ -22,6 +22,7 @@ interface TrainerPanelProps {
   selectChoice: (choice: string) => void;
   resetSession: () => void;
   moveNext: () => void;
+  onOpenWordbook: () => void;
   timeLeft: number;
   timerEnabled: boolean;
   toggleTimer: () => void;
@@ -54,6 +55,7 @@ export function TrainerPanel({
   selectChoice,
   resetSession,
   moveNext,
+  onOpenWordbook,
   timeLeft,
   timerEnabled,
   toggleTimer,
@@ -78,6 +80,8 @@ export function TrainerPanel({
   const promptTextLength = Array.from(`${pronounLabel}${prompt.verb.infinitive}`).length;
   const promptDensity = promptTextLength >= 23 ? 'condensed' : promptTextLength >= 18 ? 'compact' : 'regular';
 
+  const currentQuestion = Math.min(attempts.length + (isAnswered ? 0 : 1), sessionTarget);
+
   const size = 40;
   const strokeWidth = 3;
   const radius = (size - strokeWidth) / 2;
@@ -98,7 +102,7 @@ export function TrainerPanel({
       <div className="trainer-head">
         <div>
           <span className="eyebrow">
-            {t('Question {number}', { number: Math.min(attempts.length + 1, sessionTarget) })}
+            {t('Question {number}', { number: currentQuestion })}
             <span className="question-total"> / {sessionTarget}</span>
           </span>
           <h1>{t('Select the correct verb form')}</h1>
@@ -160,7 +164,7 @@ export function TrainerPanel({
 
       <div className="question-progress" aria-hidden="true">
         {Array.from({ length: sessionTarget }, (_, index) => (
-          <span key={index} data-state={attempts[index] ? (attempts[index].correct ? 'correct' : 'wrong') : index === attempts.length ? 'current' : 'pending'} />
+          <span key={index} data-state={attempts[index] ? (attempts[index].correct ? 'correct' : 'wrong') : !isAnswered && index === currentQuestion - 1 ? 'current' : 'pending'} />
         ))}
       </div>
 
@@ -236,7 +240,10 @@ export function TrainerPanel({
                   : `${pronounLabel} + ${prompt.verb.infinitive} = ${correctAnswer}`}
               </span>
             </div>
-            {!isCorrect &&
+            <button className="wordbook-link" onClick={onOpenWordbook} type="button">
+              <BookOpen size={16} aria-hidden="true" /> {t('View in verb book')}
+            </button>
+            {(isSessionComplete || !isCorrect) &&
               (isSessionComplete ? (
                 <button ref={actionButtonRef} className="next-button" onClick={resetSession} type="button">
                   {t("New set")}

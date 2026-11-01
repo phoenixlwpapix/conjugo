@@ -178,7 +178,7 @@ export function Header({
       <div className="mobile-menu-panel" data-open={isMenuOpen} id="mobile-navigation">
         <div className="mobile-menu-section">
           <span>{t("Workspace")}</span>
-          <div className="mobile-view-grid mobile-view-grid-3">
+          <div className="mobile-view-grid">
             <button className="view-button" data-active={activeView === 'practice'} onClick={() => chooseView('practice')} type="button">
               <Target size={16} aria-hidden="true" />
               {t("Practice")}

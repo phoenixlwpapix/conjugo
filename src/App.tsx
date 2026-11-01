@@ -56,6 +56,7 @@ export default function App() {
     selectedVerbInfinitive,
     setSelectedVerbInfinitive,
     filteredVerbs,
+    openPromptInWordbook,
     selectedAnswer,
     timedOut,
     attempts,
@@ -241,6 +242,7 @@ export default function App() {
                   selectChoice={selectChoice}
                   resetSession={resetSession}
                   moveNext={moveNext}
+                  onOpenWordbook={() => { openPromptInWordbook(prompt); setActiveView('wordbook'); }}
                   timeLeft={timeLeft}
                   timerEnabled={timerEnabled}
                   toggleTimer={toggleTimer}
@@ -289,7 +291,7 @@ export default function App() {
           )}
 
           {activeView === 'quiz' && (
-            <QuizPanel key={languageId} language={activeLanguage} onAnswer={recordQuizResult} />
+            <QuizPanel key={`${languageId}-${languageId === 'spanish' && preferences.includeVosotros}`} language={activeLanguage} onAnswer={recordQuizResult} />
           )}
 
           {activeView === 'wordbook' && selectedVerb && (

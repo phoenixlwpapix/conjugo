@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createQuizBank, createQuizQuestions } from '../quiz';
 import { quizScenes } from '../quizScenes';
-import { getLanguageTenses, languages } from '../verbs';
+import { getLanguagePronouns, getLanguageTenses, languages } from '../verbs';
 
 const spanish = languages.find((language) => language.id === 'spanish');
 if (!spanish) throw new Error('Spanish data missing');
@@ -89,11 +89,25 @@ describe('authored quiz scenes', () => {
           if (selected !== 'mixed') expect(question.tense).toBe(selected);
           expect(question.answer).toBe(question.verb.forms[question.tense][question.pronoun]);
           expect(question.choices).toContain(question.answer);
-          expect(question.choices.length).toBeGreaterThanOrEqual(2);
+          expect(question.choices).toHaveLength(4);
           expect(new Set(question.choices).size).toBe(question.choices.length);
-          expect(question.choices.every((choice) => getLanguageTenses(language.id).some(({ id }) => question.verb.forms[id][question.pronoun] === choice))).toBe(true);
+          expect(question.choices.every((choice) => Object.values(question.verb.forms).some((forms) => Object.values(forms).includes(choice)))).toBe(true);
         }
         if (selected === 'mixed') expect(new Set(questions.map((question) => question.tense)).size).toBe(getLanguageTenses(language.id).length);
+      }
+    }
+  });
+
+  it('excludes vosotros scenes and forms when the preference is disabled', () => {
+    const language = { ...spanish, excludedPronouns: ['you plural' as const] };
+    for (const { id } of getLanguageTenses(language.id)) {
+      for (const question of createQuizBank(language, id)) {
+        expect(question.pronoun).not.toBe('you plural');
+        expect(question.choices).toHaveLength(4);
+        const allowed = Object.values(question.verb.forms).flatMap((forms) =>
+          getLanguagePronouns(language).map((pronoun) => forms[pronoun]),
+        );
+        expect(question.choices.every((choice) => allowed.includes(choice))).toBe(true);
       }
     }
   });

@@ -73,6 +73,7 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
   const [timerEnabled, setTimerEnabled] = useState(readTimerEnabled);
   const [sessionKind, setSessionKind] = useState<SessionKind>('standard');
 
+  const drillVerbsRef = useRef<string[]>([]);
   const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const storedMissesRef = useRef(storedMisses);
   const selectedAnswerRef = useRef(selectedAnswer);
@@ -173,10 +174,6 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
     [activeLanguage, beginSession, practiceTense],
   );
 
-  const resetSession = useCallback(() => {
-    startSession(activeLanguage, practiceTense);
-  }, [activeLanguage, practiceTense, startSession]);
-
   const startMissReview = useCallback(() => {
     // Explicit review includes misses that aren't due yet; only due ones get promoted.
     const targets = getReviewTargets(activeLanguage, 'mixed', storedMissesRef.current, { dueOnly: false });
@@ -186,11 +183,24 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
 
   const startVerbDrill = useCallback(
     (verbInfinitives: string[]) => {
+      drillVerbsRef.current = verbInfinitives;
       beginSession(createVerbSessionPrompts(activeLanguage, verbInfinitives), 'verbs');
       setActiveViewState('practice');
     },
     [activeLanguage, beginSession],
   );
+
+  const resetSession = useCallback(() => {
+    if (sessionKind === 'review') {
+      const targets = getReviewTargets(activeLanguage, 'mixed', storedMissesRef.current, { dueOnly: false });
+      // A mastered queue can still be repeated without silently changing modes.
+      beginSession(targets.length ? createMissSessionPrompts(activeLanguage, targets) : [...sessionPrompts], 'review');
+    } else if (sessionKind === 'verbs') {
+      beginSession(createVerbSessionPrompts(activeLanguage, drillVerbsRef.current), 'verbs');
+    } else {
+      startSession(activeLanguage, practiceTense);
+    }
+  }, [activeLanguage, beginSession, practiceTense, sessionKind, sessionPrompts, startSession]);
 
   const moveNext = useCallback(() => {
     clearAutoAdvance();
@@ -207,7 +217,8 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
     }));
   }, []);
 
-  const recordQuizResult = useCallback((answer: RecordedAnswer) => {
+  const recordQuizResult = useCallback((answer: RecordedAnswer, quizPrompt: Prompt) => {
+    setStoredMisses((current) => answer.correct ? recordCorrectReview(current, quizPrompt) : upsertMiss(current, quizPrompt));
     setStatsByLanguage((current) => ({
       ...current,
       [languageId]: recordQuizAnswer(current[languageId] ?? emptyStats(), answer),
@@ -230,7 +241,7 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
 
       setSelectedAnswer(choice);
       setTimedOut(false);
-      setAttempts((current) => [attempt, ...current]);
+      setAttempts((current) => [...current, attempt]);
       setStreak(nextStreak);
       updateStats(languageId, {
         correct: choiceIsCorrect,
@@ -292,7 +303,7 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
 
     setTimedOut(true);
     setSelectedAnswer(null);
-    setAttempts((current) => [attempt, ...current]);
+    setAttempts((current) => [...current, attempt]);
     setStreak(0);
     updateStats(languageId, {
       correct: false,

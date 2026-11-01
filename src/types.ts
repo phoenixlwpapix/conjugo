@@ -69,9 +69,3 @@ export type ReviewTarget = {
   tense: TenseId;
   pronoun: Pronoun;
 };
-
-export type CumulativeStats = {
-  totalAttempts: number;
-  totalCorrect: number;
-  maxStreak: number;
-};

@@ -1,14 +1,16 @@
 import { useI18n } from '../hooks/useI18n';
 import { getStudyLanguageTag, type MessageKey } from '../lib/i18n';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowRight, Check, Flame, RotateCcw, Target, Trophy, X } from 'lucide-react';
 import { createQuizQuestions, type QuizQuestion } from '../data/quiz';
 import { getLanguageTenses, type Language, type PracticeTenseId } from '../data/verbs';
 import { getAccuracy, type RecordedAnswer } from '../lib/scoring';
+import { isEditableElement } from '../lib/focusTrap';
+import type { Prompt } from '../types';
 
 type QuizPanelProps = {
   language: Language;
-  onAnswer: (answer: RecordedAnswer) => void;
+  onAnswer: (answer: RecordedAnswer, prompt: Prompt) => void;
 };
 
 type Outcome = 'correct' | 'wrong' | 'skipped';
@@ -54,8 +56,33 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
       completedSet: index === questions.length - 1,
       tense: question.tense,
       verbInfinitive: question.verb.infinitive,
-    });
+    }, { language, verb: question.verb, tense: question.tense, pronoun: question.pronoun });
   };
+
+  const next = () => {
+    setIndex((current) => current + 1);
+    setSelected(null);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!question || finished || event.defaultPrevented || event.repeat || event.altKey || event.ctrlKey || event.metaKey || isEditableElement(event.target) || document.querySelector('[aria-modal="true"]')) return;
+      const key = event.key.toLowerCase();
+      if (selected === null) {
+        const choiceIndex = ['a', 'b', 'c', 'd'].indexOf(key);
+        const position = choiceIndex >= 0 ? choiceIndex : ['1', '2', '3', '4'].indexOf(key);
+        const choice = question.choices[position];
+        if (choice) { event.preventDefault(); answer(choice); }
+      } else if (key === 'enter' || key === ' ') {
+        // Let focused controls retain their native keyboard activation.
+        if (event.target instanceof Element && event.target.closest('button:not(:disabled), a[href]')) return;
+        event.preventDefault();
+        next();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  });
 
   const displaySentence = question?.sentence.split('____');
 
@@ -154,7 +181,7 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
                 <button className="quiz-skip" onClick={() => answer('')} type="button">{t('Skip and see answer')}</button>
               ) : <span className="quiz-answer-state">{t(selected === question.answer ? 'Correct +1' : 'Explanation viewed')}</span>}
               {selected !== null && (
-                <button className="quiz-primary" onClick={() => { setIndex((current) => current + 1); setSelected(null); }} type="button">
+                <button className="quiz-primary" onClick={next} type="button">
                   {t(index === questions.length - 1 ? 'View results' : 'Next question')} <ArrowRight size={17} aria-hidden="true" />
                 </button>
               )}

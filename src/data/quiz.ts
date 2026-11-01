@@ -57,11 +57,12 @@ export const createQuizBank = (language: Language, tense: TenseId): QuizQuestion
   });
 };
 
-export const createQuizQuestions = (language: Language, selectedTense: PracticeTenseId): QuizQuestion[] => {
-  const tenses = getLanguageTenses(language.id).map(({ id }) => id).filter((tense) => selectedTense === 'mixed' ? !isImperative(tense) : selectedTense === 'commands' ? isImperative(tense) : tense === selectedTense);
+export const createQuizQuestions = (language: Language, selectedTense: PracticeTenseId | readonly PracticeTenseId[]): QuizQuestion[] => {
+  const selections = typeof selectedTense === 'string' ? [selectedTense] : selectedTense;
+  const tenses = getLanguageTenses(language.id).map(({ id }) => id).filter((tense) => selections.some((selection) => selection === 'mixed' ? !isImperative(tense) : selection === 'commands' ? isImperative(tense) : tense === selection));
   const pool = tenses.flatMap((tense) => createQuizBank(language, tense));
-  if (selectedTense === 'commands') return shuffle(tenses.flatMap((tense) => shuffle(pool.filter((question) => question.tense === tense)).slice(0, 5)));
-  if (selectedTense !== 'mixed') return shuffle(pool).slice(0, 10);
+  if (selections.length === 1 && selections[0] === 'commands') return shuffle(tenses.flatMap((tense) => shuffle(pool.filter((question) => question.tense === tense)).slice(0, 5)));
+  if (tenses.length <= 1) return shuffle(pool).slice(0, 10);
   const selected = tenses.flatMap((tense) => shuffle(pool.filter((question) => question.tense === tense)).slice(0, 1));
   return shuffle([...selected, ...shuffle(pool.filter((question) => !selected.includes(question))).slice(0, 10 - selected.length)]);
 };

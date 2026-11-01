@@ -10,3 +10,6 @@ dist
 
 .DS_Store
 Thumbs.db
+
+# Local marketing projects, source media, and video exports.
+/promo/

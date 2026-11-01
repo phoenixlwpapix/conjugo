@@ -117,4 +117,26 @@ describe('authored quiz scenes', () => {
   it('does not offer unavailable English tenses', () => {
     expect(createQuizBank(languages.find((language) => language.id === 'english')!, 'subjunctive')).toEqual([]);
   });
+
+  it('limits multi-select rounds to the selected tenses and covers each one', () => {
+    const questions = createQuizQuestions(spanish, ['past', 'subjunctive', 'commands']);
+    expect(questions).toHaveLength(10);
+    expect(new Set(questions.map(({ id }) => id)).size).toBe(10);
+    expect(new Set(questions.map(({ tense }) => tense))).toEqual(new Set(['past', 'subjunctive', 'imperative', 'imperativeNegative']));
+  });
+
+  it('handles empty, single, and all available selections', () => {
+    for (const language of languages) {
+      expect(createQuizQuestions(language, [])).toEqual([]);
+      expect(createQuizQuestions(language, ['past']).every(({ tense }) => tense === 'past')).toBe(true);
+      const tenses = getLanguageTenses(language.id).map(({ id }) => id);
+      const questions = createQuizQuestions(language, tenses);
+      expect(questions).toHaveLength(10);
+      expect(new Set(questions.map(({ id }) => id)).size).toBe(10);
+      expect(new Set(questions.map(({ tense }) => tense))).toEqual(new Set(tenses));
+    }
+    const commands = createQuizQuestions(spanish, ['commands']);
+    expect(commands.filter(({ tense }) => tense === 'imperative')).toHaveLength(5);
+    expect(commands.filter(({ tense }) => tense === 'imperativeNegative')).toHaveLength(5);
+  });
 });

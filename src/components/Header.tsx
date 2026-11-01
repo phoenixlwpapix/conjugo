@@ -1,6 +1,6 @@
 import { useI18n } from '../hooks/useI18n';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { BarChart3, BookOpenText, Check, ClipboardList, Menu, Moon, Sun, Target, X } from 'lucide-react';
+import { BarChart3, BookOpenText, Check, ClipboardList, Mail, Menu, Moon, Sun, Target, X } from 'lucide-react';
 import { languages, type LanguageId } from '../data/verbs';
 import { type ThemeId } from '../data/themes';
 import type { MessageKey } from '../lib/i18n';
@@ -22,6 +22,8 @@ const viewLabels: Record<AppView, MessageKey> = {
   stats: 'Stats',
   wordbook: 'Verb Book',
 };
+
+const feedbackHref = 'mailto:phoenixlwp@gmail.com?subject=ConjuGO%20Feedback';
 
 export function Header({
   languageId,
@@ -167,14 +169,20 @@ export function Header({
 
       <PreferencesPanel languageId={languageId} {...preferences} />
 
-      <button
-        className="theme-toggle"
-        onClick={toggleTheme}
-        type="button"
-        aria-label={t(themeId === 'dark' ? 'Switch to light mode' : 'Switch to dark mode')}
-      >
-        <ThemeIcon size={18} aria-hidden="true" />
-      </button>
+      <div className="nav-footer">
+        <a className="view-button feedback-link" href={feedbackHref}>
+          <Mail size={16} aria-hidden="true" />
+          {t('Feedback')}
+        </a>
+        <button
+          className="theme-toggle"
+          onClick={toggleTheme}
+          type="button"
+          aria-label={t(themeId === 'dark' ? 'Switch to light mode' : 'Switch to dark mode')}
+        >
+          <ThemeIcon size={18} aria-hidden="true" />
+        </button>
+      </div>
 
       <div className="mobile-status" aria-label={t("Current selection")}>
         <strong>{languageName(activeLanguage.id)}</strong>
@@ -253,6 +261,10 @@ export function Header({
             </button>
           </div>
         </div>
+        <a className="view-button feedback-link" href={feedbackHref} onClick={() => setIsMenuOpen(false)}>
+          <Mail size={16} aria-hidden="true" />
+          {t('Feedback')}
+        </a>
       </div>
     </header>
   );

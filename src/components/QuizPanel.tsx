@@ -22,7 +22,7 @@ const outcomeLabels: Record<Outcome | 'current' | 'pending', MessageKey> = { cor
 
 export function QuizPanel({ active, language, onAnswer, onOpenWordbook }: QuizPanelProps) {
   const { t, locale, languageName, tenseName } = useI18n();
-  const [tense, setTense] = useState<PracticeTenseId>('mixed');
+  const [selectedTenses, setSelectedTenses] = useState<PracticeTenseId[]>(() => getLanguagePracticeTenses(language.id).map(({ id }) => id));
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
@@ -33,7 +33,11 @@ export function QuizPanel({ active, language, onAnswer, onOpenWordbook }: QuizPa
   const correctCount = outcomes.filter((outcome) => outcome === 'correct').length;
   const answeredCount = outcomes.length;
   const accuracy = getAccuracy(correctCount, answeredCount);
-  const options = [...getLanguagePracticeTenses(language.id), { id: 'mixed' as const }];
+  const options = getLanguagePracticeTenses(language.id);
+  const allSelected = selectedTenses.length === options.length;
+  const selectionLabel = selectedTenses.length === 1
+    ? tenseName(language, selectedTenses[0])
+    : t('Selected {count} tenses or moods', { count: selectedTenses.length });
   const subjectHint = question && isImperative(question.tense)
     ? getConjugationPronounLabel(language, question.tense, question.pronoun)
     : question?.pronoun === 'he/she'
@@ -41,7 +45,8 @@ export function QuizPanel({ active, language, onAnswer, onOpenWordbook }: QuizPa
     : question ? language.pronounLabels[question.pronoun] : '';
 
   const start = () => {
-    setQuestions(createQuizQuestions(language, tense));
+    if (selectedTenses.length === 0) return;
+    setQuestions(createQuizQuestions(language, selectedTenses));
     setIndex(0);
     setSelected(null);
     setOutcomes([]);
@@ -99,31 +104,37 @@ export function QuizPanel({ active, language, onAnswer, onOpenWordbook }: QuizPa
           <div className="quiz-card quiz-setup-card">
             <div className="quiz-card-heading">
               <h1 className="workspace-title">{t('Quiz')}</h1>
-              <p>{t('Choose a tense or mood, or try mixed practice. Each round has 10 questions with explanations after you answer.')}</p>
+              <p>{t('Select one or more tenses or moods. Each round has 10 questions with explanations after you answer.')}</p>
+            </div>
+            <div className="quiz-selection-toolbar">
+              <span aria-live="polite">{selectionLabel}</span>
+              <button type="button" onClick={() => setSelectedTenses(allSelected ? [] : options.map(({ id }) => id))}>
+                {t(allSelected ? 'Deselect all' : 'Select all')}
+              </button>
             </div>
             <div className="quiz-tense-grid" role="group" aria-label={t('Choose a quiz tense or mood')}>
               {options.map((option) => (
                 <button
                   className="quiz-tense-option"
-                  data-active={tense === option.id}
-                  data-mixed={option.id === 'mixed'}
-                  aria-pressed={tense === option.id}
+                  data-active={selectedTenses.includes(option.id)}
+                  role="checkbox"
+                  aria-checked={selectedTenses.includes(option.id)}
                   key={option.id}
-                  onClick={() => setTense(option.id)}
+                  onClick={() => setSelectedTenses((current) => current.includes(option.id) ? current.filter((id) => id !== option.id) : [...current, option.id])}
                   type="button"
                 >
                   <span className="quiz-tense-copy">
                     <span>{tenseName(language, option.id)}</span>
-                    {option.id === 'mixed' ? <small>{t(language.id === 'english' ? 'All available tenses' : 'Commands practiced separately')}</small> : language.tenseLabels[option.id] !== tenseName(language, option.id) && <small lang={getStudyLanguageTag(language.id)}>{language.tenseLabels[option.id]}</small>}
+                    {language.tenseLabels[option.id] !== tenseName(language, option.id) && <small lang={getStudyLanguageTag(language.id)}>{language.tenseLabels[option.id]}</small>}
                   </span>
                   <span className="quiz-tense-check" aria-hidden="true">
-                    {tense === option.id && <Check size={11} strokeWidth={2.5} />}
+                    {selectedTenses.includes(option.id) && <Check size={11} strokeWidth={2.5} />}
                   </span>
                 </button>
               ))}
             </div>
             <div className="quiz-setup-footer">
-              <button className="quiz-primary" onClick={start} type="button">{t('Start quiz')} <ArrowRight size={16} aria-hidden="true" /></button>
+              <button className="quiz-primary" disabled={selectedTenses.length === 0} onClick={start} type="button">{t('Start quiz')} <ArrowRight size={16} aria-hidden="true" /></button>
             </div>
           </div>
         ) : finished ? (
@@ -148,7 +159,7 @@ export function QuizPanel({ active, language, onAnswer, onOpenWordbook }: QuizPa
             </div>
             <div className="quiz-question">
               <div className="quiz-question-meta">
-                <span className="quiz-tense-tag">{tenseName(language, tense === 'mixed' ? 'mixed' : question.tense)}</span>
+                <span className="quiz-tense-tag">{selectedTenses.length > 1 ? selectionLabel : tenseName(language, question.tense)}</span>
                 <span>{question.verb.infinitive} · {subjectHint}</span>
               </div>
               <p className="quiz-instruction">{t('Complete the sentence with the correct verb form. Use the context to choose the tense or mood.')}</p>
@@ -201,7 +212,7 @@ export function QuizPanel({ active, language, onAnswer, onOpenWordbook }: QuizPa
         <aside className="quiz-sidebar" aria-label={t('Quiz progress')}>
           <div className="quiz-sidebar-head">
             <div className="panel-title"><Target size={18} aria-hidden="true" /><h2>{t('This round')}</h2></div>
-            <p>{languageName(language.id)} · {tenseName(language, tense)}</p>
+            <p>{languageName(language.id)} · {selectionLabel}</p>
           </div>
           <div className="quiz-sidebar-progress">
             <span>{t('Completed')}</span>

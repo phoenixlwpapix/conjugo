@@ -237,7 +237,7 @@ export function TrainerPanel({
                   ? !showCelebration && !isSessionComplete
                     ? t('next question loading')
                     : ''
-                  : `${pronounLabel} + ${prompt.verb.infinitive} = ${correctAnswer}`}
+                  : `${pronounLabel} → ${correctAnswer}`}
               </span>
             </div>
             <button aria-label={t('View in verb book')} className="wordbook-link" onClick={onOpenWordbook} title={t('View in verb book')} type="button">

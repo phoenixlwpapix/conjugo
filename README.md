@@ -115,6 +115,10 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 
 Local-only promotional projects are organized under `promo/` and excluded from Git. Start with `promo/README.md` for the asset index and `promo/HANDOFF.md` for cross-agent handoff and versioning instructions. These files are not included in GitHub checkouts; back up the local folder separately.
 
+## Web Analytics
+
+Vercel Web Analytics is integrated at the React entry point. Enable Analytics in the Vercel project dashboard and deploy to start collecting page views and visitor counts. Custom domains such as `conjugo.studioyyh.com` need no DNS changes; use the dashboard's Hostname filter to view their traffic separately. Earlier uncollected visits cannot be recovered. Only default page analytics are enabled; practice answers and local learning statistics are not sent as custom events.
+
 ## Scripts
 
 ```bash

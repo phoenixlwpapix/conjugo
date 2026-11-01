@@ -66,7 +66,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Mid-width practice layouts now move the progress rail below the drill and stack the prompt as pronoun, plus, and verb before words can wrap awkwardly.
 - Mobile practice controls use a compact horizontal tense selector, with the pronoun prompt prioritized above metadata tags.
 - Modern responsive interface using React 19, TypeScript, Vite, and lucide-react icons.
-- The blue C-arrow and gold ribbon logo uses a transparent background without the source image's outer frame, sized for the header, browser favicon, Apple touch icon, and PWA icons.
+- The layered logo combines a blue C with speech-bubble negative space and navy, gold, and orange cards behind it. Transparent assets are sized for the header, browser favicon, Apple touch icon, and PWA icons.
 - The per-question countdown timer is off by default and can be toggled from the trainer card.
 - Gender-agreeing past forms (French être / Italian essere verbs) are prompted with the masculine pronoun so the expected participle is always correct.
 - Saved misses are capped per language, and clearing every miss no longer revives legacy stored misses.

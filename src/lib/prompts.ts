@@ -1,6 +1,8 @@
+import { isCommandVariant, isImperative } from '../data/imperative';
 import {
   concreteTenses,
-  getLanguagePronouns,
+  getConjugationPronouns,
+  getConjugationPronounLabel,
   getLanguageTenses,
   isTenseAvailable,
   type Language,
@@ -17,11 +19,14 @@ export const timerSeconds = 8;
 
 /** Falls back to present when the language has no such tense (English imperfect, subjunctive…). */
 export const clampEnglishTense = (languageId: LanguageId, tense: PracticeTenseId): PracticeTenseId =>
-  tense === 'mixed' || isTenseAvailable(languageId, tense) ? tense : 'present';
+  tense === 'mixed' ? tense
+    : tense === 'commands' ? languageId === 'english' ? 'present' : 'commands'
+    : isTenseAvailable(languageId, tense) ? isImperative(tense) ? 'commands' : tense : 'present';
 
 export const getPracticeTenses = (practiceTense: PracticeTenseId, languageId?: Language['id']): TenseId[] => {
   const tenses = languageId ? getLanguageTenses(languageId) : concreteTenses;
-  return practiceTense === 'mixed' ? tenses.map((tense) => tense.id) : [practiceTense];
+  if (practiceTense === 'commands') return tenses.filter(({ id }) => isImperative(id)).map(({ id }) => id);
+  return practiceTense === 'mixed' ? tenses.filter((tense) => !isImperative(tense.id)).map((tense) => tense.id) : [practiceTense];
 };
 
 const subjunctiveMarkers: Partial<Record<LanguageId, string>> = { french: 'que', spanish: 'que', italian: 'che' };
@@ -29,7 +34,7 @@ const subjunctiveMarkers: Partial<Record<LanguageId, string>> = { french: 'que',
 /** Subjunctive prompts read as "que tu…", "qu'elle…", "che io…". */
 export const withMoodMarker = (languageId: LanguageId, tense: TenseId, pronounLabel: string) => {
   const marker = subjunctiveMarkers[languageId];
-  if (tense !== 'subjunctive' || !marker) {
+  if ((tense !== 'subjunctive' && tense !== 'imperfectSubjunctive') || !marker) {
     return pronounLabel;
   }
 
@@ -63,14 +68,14 @@ const choosePronounLabel = (label: string, masculineOnly = false) => {
 
 const choosePromptPronounLabel = (language: Language, verb: VerbEntry, tense: TenseId, pronoun: Pronoun) =>
   choosePronounLabel(
-    language.pronounLabels[pronoun],
+    getConjugationPronounLabel(language, tense, pronoun),
     isGenderAgreeingForm(language.id, tense, verb.forms[tense][pronoun]),
   );
 
 export const createPromptPool = (language: Language, practiceTense: PracticeTenseId): Prompt[] =>
   language.verbs.flatMap((verb) =>
     getPracticeTenses(practiceTense, language.id).flatMap((tense) =>
-      getLanguagePronouns(language).map((pronoun) => {
+      getConjugationPronouns(language, tense, verb).map((pronoun) => {
         const selectedPronounLabel = choosePromptPronounLabel(language, verb, tense, pronoun);
         return {
           language,
@@ -112,17 +117,21 @@ export const createSessionPrompts = (
     .filter((prompt): prompt is Prompt => Boolean(prompt))
     .slice(0, reviewLimit);
   const reviewKeys = new Set(reviewPrompts.map(getPromptKey));
-  const freshPrompts = shufflePrompts(promptPool.filter((prompt) => !reviewKeys.has(getPromptKey(prompt)))).slice(
-    0,
-    sessionTarget - reviewPrompts.length,
-  );
+  const freshPool = shufflePrompts(promptPool.filter((prompt) => !reviewKeys.has(getPromptKey(prompt))));
+  const freshPrompts = practiceTense === 'commands'
+    ? getPracticeTenses(practiceTense, language.id).flatMap((tense) =>
+      freshPool.filter((prompt) => prompt.tense === tense).slice(
+        0, sessionTarget / 2 - reviewPrompts.filter((prompt) => prompt.tense === tense).length,
+      ),
+    )
+    : freshPool.slice(0, sessionTarget - reviewPrompts.length);
 
   return shufflePrompts([...reviewPrompts, ...freshPrompts]).slice(0, sessionTarget);
 };
 
 /** Targets arrive in priority order (due first), so trim before shuffling. */
 export const createMissSessionPrompts = (language: Language, reviewTargets: ReviewTarget[]): Prompt[] => {
-  const promptPool = createPromptPool(language, 'mixed');
+  const promptPool = getLanguageTenses(language.id).flatMap(({ id }) => createPromptPool(language, id));
   const reviewPrompts = reviewTargets
     .map((target) => promptPool.find((prompt) => matchesReviewTarget(prompt, target)))
     .filter((prompt): prompt is Prompt => Boolean(prompt))
@@ -141,22 +150,15 @@ export const createVerbSessionPrompts = (language: Language, verbInfinitives: st
 };
 
 export const getFallbackPrompt = (language: Language, practiceTense: PracticeTenseId): Prompt => {
-  const firstVerb = language.verbs[0];
-
-  if (!firstVerb) {
-    throw new Error(`${language.name} needs at least one verb`);
+  for (const tense of getPracticeTenses(clampEnglishTense(language.id, practiceTense), language.id)) {
+    for (const verb of language.verbs) {
+      const pronoun = getConjugationPronouns(language, tense, verb)[0];
+      if (pronoun) {
+        return { language, verb, tense, pronoun, selectedPronounLabel: choosePromptPronounLabel(language, verb, tense, pronoun) };
+      }
+    }
   }
-
-  const pronoun = getLanguagePronouns(language)[0];
-  const tense = getPracticeTenses(practiceTense, language.id)[0];
-
-  return {
-    language,
-    verb: firstVerb,
-    tense,
-    pronoun,
-    selectedPronounLabel: choosePromptPronounLabel(language, firstVerb, tense, pronoun),
-  };
+  throw new Error(`${language.name} needs at least one available verb form`);
 };
 
 export const getAnswer = (prompt: Prompt) => prompt.verb.forms[prompt.tense][prompt.pronoun];
@@ -165,7 +167,7 @@ export const getPronounLabel = (prompt: Prompt) =>
   withMoodMarker(
     prompt.language.id,
     prompt.tense,
-    prompt.selectedPronounLabel || prompt.language.pronounLabels[prompt.pronoun],
+    prompt.selectedPronounLabel || getConjugationPronounLabel(prompt.language, prompt.tense, prompt.pronoun),
   );
 
 export const getTenseLabel = (tense: TenseId) => concreteTenses.find((item) => item.id === tense)?.label ?? tense;
@@ -183,20 +185,20 @@ const stableScore = (value: string, seed: number) => {
 
 export const getChoices = (prompt: Prompt, seed: number, choiceCount = 4) => {
   const correctAnswer = getAnswer(prompt);
-  const pronouns = getLanguagePronouns(prompt.language);
+  const pronouns = getConjugationPronouns(prompt.language, prompt.tense, prompt.verb);
   const sameTenseDistractors = pronouns
     .map((pronoun) => prompt.verb.forms[prompt.tense][pronoun])
-    .filter((value, index, values) => value !== correctAnswer && values.indexOf(value) === index)
+    .filter((value, index, values) => Boolean(value) && !isCommandVariant(prompt.language.id, prompt.verb.infinitive, prompt.tense, prompt.pronoun, value) && value !== correctAnswer && values.indexOf(value) === index)
     .sort((first, second) => stableScore(first, seed) - stableScore(second, seed))
     .slice(0, choiceCount - 1);
 
-  const languageTenses = getLanguageTenses(prompt.language.id);
+  const languageTenses = getLanguageTenses(prompt.language.id).filter(({ id }) => isImperative(prompt.tense) || !isImperative(id));
 
   const fallbackDistractors = languageTenses
-    .flatMap((tense) => pronouns.map((pronoun) => prompt.verb.forms[tense.id][pronoun]))
+    .flatMap((tense) => getConjugationPronouns(prompt.language, tense.id, prompt.verb).map((pronoun) => prompt.verb.forms[tense.id][pronoun]))
     .filter(
       (value, index, values) =>
-        value !== correctAnswer && !sameTenseDistractors.includes(value) && values.indexOf(value) === index,
+        Boolean(value) && !isCommandVariant(prompt.language.id, prompt.verb.infinitive, prompt.tense, prompt.pronoun, value) && value !== correctAnswer && !sameTenseDistractors.includes(value) && values.indexOf(value) === index,
     )
     .sort((first, second) => stableScore(first, seed) - stableScore(second, seed))
     .slice(0, choiceCount - 1 - sameTenseDistractors.length);

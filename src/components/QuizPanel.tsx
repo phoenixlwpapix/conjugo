@@ -1,9 +1,10 @@
+import { isImperative } from '../data/imperative';
 import { useI18n } from '../hooks/useI18n';
 import { getStudyLanguageTag, type MessageKey } from '../lib/i18n';
 import { useEffect, useState } from 'react';
 import { ArrowRight, Check, Flame, RotateCcw, Target, Trophy, X } from 'lucide-react';
 import { createQuizQuestions, type QuizQuestion } from '../data/quiz';
-import { getLanguageTenses, type Language, type PracticeTenseId } from '../data/verbs';
+import { getConjugationPronounLabel, getLanguagePracticeTenses, type Language, type PracticeTenseId } from '../data/verbs';
 import { getAccuracy, type RecordedAnswer } from '../lib/scoring';
 import { isEditableElement } from '../lib/focusTrap';
 import type { Prompt } from '../types';
@@ -30,8 +31,10 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
   const correctCount = outcomes.filter((outcome) => outcome === 'correct').length;
   const answeredCount = outcomes.length;
   const accuracy = getAccuracy(correctCount, answeredCount);
-  const options = [...getLanguageTenses(language.id), { id: 'mixed' as const }];
-  const subjectHint = question?.pronoun === 'he/she'
+  const options = [...getLanguagePracticeTenses(language.id), { id: 'mixed' as const }];
+  const subjectHint = question && isImperative(question.tense)
+    ? getConjugationPronounLabel(language, question.tense, question.pronoun)
+    : question?.pronoun === 'he/she'
     ? { spanish: 'él', french: 'il', italian: 'lui', english: 'he' }[language.id]
     : question ? language.pronounLabels[question.pronoun] : '';
 
@@ -93,9 +96,9 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
           <div className="quiz-card quiz-setup-card">
             <div className="quiz-card-heading">
               <h1>{t('Quiz')}</h1>
-              <p>{t('Choose a tense, or try mixed practice. Each round has 10 questions with grammar explanations after you answer.')}</p>
+              <p>{t('Choose a tense or mood, or try mixed practice. Each round has 10 questions with explanations after you answer.')}</p>
             </div>
-            <div className="quiz-tense-grid" role="group" aria-label={t('Choose a quiz tense')}>
+            <div className="quiz-tense-grid" role="group" aria-label={t('Choose a quiz tense or mood')}>
               {options.map((option) => (
                 <button
                   className="quiz-tense-option"
@@ -108,7 +111,7 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
                 >
                   <span className="quiz-tense-copy">
                     <span>{tenseName(language, option.id)}</span>
-                    {option.id === 'mixed' ? <small>{t('All available tenses')}</small> : language.tenseLabels[option.id] !== tenseName(language, option.id) && <small lang={getStudyLanguageTag(language.id)}>{language.tenseLabels[option.id]}</small>}
+                    {option.id === 'mixed' ? <small>{t(language.id === 'english' ? 'All available tenses' : 'Commands practiced separately')}</small> : language.tenseLabels[option.id] !== tenseName(language, option.id) && <small lang={getStudyLanguageTag(language.id)}>{language.tenseLabels[option.id]}</small>}
                   </span>
                   <span className="quiz-tense-check" aria-hidden="true">
                     {tense === option.id && <Check size={11} strokeWidth={2.5} />}
@@ -125,10 +128,10 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
             <span className="quiz-step">{t('Round complete')}</span>
             <strong>{correctCount}<span> / 10</span></strong>
             <h2>{t(correctCount >= 8 ? 'Well mastered' : correctCount >= 5 ? 'Keep practicing' : 'Try another round')}</h2>
-            <p>{t('Your results have been added to your statistics and tense breakdown. Try a new set of questions.')}</p>
+            <p>{t('Your results have been added to your statistics and tense/mood breakdown. Try a new set of questions.')}</p>
             <div className="quiz-actions">
               <button className="quiz-primary" onClick={start} type="button"><RotateCcw size={17} aria-hidden="true" /> {t('New quiz')}</button>
-              <button className="quiz-secondary" onClick={() => setQuestions([])} type="button">{t('Change tense')}</button>
+              <button className="quiz-secondary" onClick={() => setQuestions([])} type="button">{t('Change tense or mood')}</button>
             </div>
           </div>
         ) : question && displaySentence && (
@@ -145,7 +148,7 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
                 <span className="quiz-tense-tag">{tenseName(language, tense === 'mixed' ? 'mixed' : question.tense)}</span>
                 <span>{question.verb.infinitive} · {subjectHint}</span>
               </div>
-              <p className="quiz-instruction">{t('Complete the sentence with the correct form of the verb. Use the context to choose the tense.')}</p>
+              <p className="quiz-instruction">{t('Complete the sentence with the correct verb form. Use the context to choose the tense or mood.')}</p>
               <h2 lang={getStudyLanguageTag(language.id)}>
                 {displaySentence[0]}<span className="quiz-blank" data-empty={selected === null} aria-label={selected === null ? t('Blank to fill') : undefined}>{selected === null ? '\u00a0' : question.answer}</span>{displaySentence[1]}
               </h2>

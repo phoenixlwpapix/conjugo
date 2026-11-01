@@ -36,7 +36,7 @@ const getTenseColor = (tense: Prompt['tense']) => {
   if (tense === 'past') return 'var(--red)';
   if (tense === 'imperfect') return 'var(--purple)';
   if (tense === 'conditional') return 'var(--gold)';
-  if (tense === 'subjunctive') return 'var(--teal)';
+  if (tense === 'subjunctive' || tense === 'imperfectSubjunctive') return 'var(--teal)';
   return 'var(--blue)';
 };
 

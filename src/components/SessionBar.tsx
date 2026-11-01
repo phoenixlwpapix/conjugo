@@ -1,6 +1,6 @@
 import { useI18n } from '../hooks/useI18n';
 import { RotateCcw } from 'lucide-react';
-import { getLanguageTenses, type PracticeTenseId, type Language } from '../data/verbs';
+import { getLanguagePracticeTenses, type PracticeTenseId, type Language } from '../data/verbs';
 import { SegmentedControl } from './ui/SegmentedControl';
 
 interface SessionBarProps {
@@ -13,14 +13,14 @@ interface SessionBarProps {
 export function SessionBar({ language, practiceTense, switchTense, resetSession }: SessionBarProps) {
   const { t, tenseName } = useI18n();
   const options: Array<{ id: PracticeTenseId; label: string }> = [
-    ...getLanguageTenses(language.id).map((item) => ({ id: item.id, label: tenseName(language, item.id) })),
+    ...getLanguagePracticeTenses(language.id).map((item) => ({ id: item.id, label: tenseName(language, item.id) })),
     { id: 'mixed', label: t('Mixed practice') },
   ];
 
   return (
     <section className="session-bar" aria-label={t("Practice controls")}>
       <SegmentedControl
-        ariaLabel={t('Choose tense')}
+        ariaLabel={t('Choose tense or mood')}
         onChange={switchTense}
         options={options}
         value={practiceTense}

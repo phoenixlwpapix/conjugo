@@ -1,3 +1,4 @@
+import { isImperative } from '../data/imperative';
 import { languages, type LanguageId, type PracticeTenseId, type Pronoun, type TenseId } from '../data/verbs';
 import { isTranslationLanguage, type TranslationLanguage } from '../data/translations';
 import type { AnswerTally, AppView, PracticeStats, PracticeStatsByLanguage, ReviewBox, StoredMiss } from '../types';
@@ -27,9 +28,9 @@ const legacyKeys = {
 } as const;
 
 const languageIds = languages.map((language) => language.id);
-const practiceTenses: PracticeTenseId[] = ['present', 'past', 'imperfect', 'future', 'conditional', 'subjunctive', 'mixed'];
+const practiceTenses: PracticeTenseId[] = ['present', 'past', 'imperfect', 'future', 'conditional', 'subjunctive', 'imperfectSubjunctive', 'imperative', 'imperativeNegative', 'commands', 'mixed'];
 const appViews: AppView[] = ['practice', 'quiz', 'stats', 'wordbook'];
-const tenseIds: TenseId[] = ['present', 'past', 'imperfect', 'future', 'conditional', 'subjunctive'];
+const tenseIds: TenseId[] = ['present', 'past', 'imperfect', 'future', 'conditional', 'subjunctive', 'imperfectSubjunctive', 'imperative', 'imperativeNegative'];
 const pronounIds: Pronoun[] = ['I', 'you', 'he/she', 'we', 'you plural', 'they'];
 
 const canUseStorage = () => typeof window !== 'undefined' && 'localStorage' in window;
@@ -234,11 +235,10 @@ export const writeLanguageId = (languageId: LanguageId) => {
 };
 
 export const readPracticeTense = (): PracticeTenseId => {
-  if (safeGet(storageKeys.practiceTense)) {
-    return readString<PracticeTenseId>(storageKeys.practiceTense, 'present', practiceTenses);
-  }
-
-  return readString<PracticeTenseId>(legacyKeys.practiceTense, 'present', practiceTenses);
+  const key = safeGet(storageKeys.practiceTense) ? storageKeys.practiceTense : legacyKeys.practiceTense;
+  const tense = readString<PracticeTenseId>(key, 'present', practiceTenses);
+  // Old affirmative/negative selections now open the unified command practice.
+  return tense !== 'mixed' && tense !== 'commands' && isImperative(tense) ? 'commands' : tense;
 };
 
 export const writePracticeTense = (practiceTense: PracticeTenseId) => {

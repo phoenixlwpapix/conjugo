@@ -2,9 +2,8 @@ import { formatStudyDate, translate, type Locale } from '../lib/i18n';
 import { useI18n } from '../hooks/useI18n';
 import { BarChart3, CalendarDays, ClipboardList, Crosshair, Flame, Layers, Target, Trophy, type LucideIcon } from 'lucide-react';
 import { getVerbTranslation, type TranslationLanguage } from '../data/translations';
-import type { Language, TenseId } from '../data/verbs';
+import { getLanguageTenses, getConjugationPronounLabel, type Language, type TenseId } from '../data/verbs';
 import { getDaysUntilDue, isMissDue, reviewBoxCount } from '../lib/misses';
-import { getPracticeTenses } from '../lib/prompts';
 import { getAccuracy, getHardestVerbs, getTenseBreakdown, getWeakestTense } from '../lib/scoring';
 import type { DailyStats, PracticeStats, StoredMiss } from '../types';
 import { RingMeter } from './ui/RingMeter';
@@ -105,7 +104,7 @@ export function StatsDashboard({
   const dueMissCount = storedMisses.filter((miss) => isMissDue(miss)).length;
   const bestTrendAccuracy = trend.reduce((best, item) => (item.answered > 0 ? Math.max(best, item.accuracy) : best), 0);
   const totalWeekAnswers = trend.reduce((total, item) => total + item.answered, 0);
-  const tenseBreakdown = getTenseBreakdown(stats, getPracticeTenses('mixed', activeLanguage.id));
+  const tenseBreakdown = getTenseBreakdown(stats, getLanguageTenses(activeLanguage.id).map(({ id }) => id));
   const weakestTense = getWeakestTense(tenseBreakdown);
   const hardestVerbs = getHardestVerbs(
     stats,
@@ -166,7 +165,7 @@ export function StatsDashboard({
       <section className="stats-quiz-card" aria-label={t("Quiz performance")}>
         <div className="panel-title">
           <ClipboardList size={18} aria-hidden="true" />
-          <div><h2>{t("Quiz results")}</h2><span>{t("Quiz answers are included in the seven day accuracy chart and tense breakdown.")}</span></div>
+          <div><h2>{t("Quiz results")}</h2><span>{t("Quiz answers are included in the seven day accuracy chart and tense/mood breakdown.")}</span></div>
         </div>
         <div className="stats-quiz-values">
           <div><strong>{quiz.sessions}</strong><span>{t("quizzes completed")}</span></div>
@@ -240,7 +239,7 @@ export function StatsDashboard({
               <h2>{t("Weak spots")}</h2>
               <span>
                 {weakestTense
-                  ? t('Weakest tense: {tense}', { tense: tenseName(activeLanguage, weakestTense.tense) })
+                  ? t('Weakest tense or mood: {tense}', { tense: tenseName(activeLanguage, weakestTense.tense) })
                   : t('Answer a few more prompts to surface weak spots.')}
               </span>
             </div>
@@ -248,7 +247,7 @@ export function StatsDashboard({
 
           <div className="stats-weak-grid">
             <div className="stats-weak-section">
-              <h3>{t("By tense")}</h3>
+              <h3>{t("By tense and mood")}</h3>
               <ul className="stats-tense-list">
                 {tenseBreakdown.map((item) => {
                   const label = tenseName(activeLanguage, item.tense);
@@ -349,7 +348,7 @@ export function StatsDashboard({
               <table className="stats-review-table">
                 <thead>
                   <tr>
-                    <th>{t("Tense")}</th>
+                    <th>{t("Tense / mood")}</th>
                     <th>{t("Pronoun")}</th>
                     <th>{t("Verb")}</th>
                     <th>{t("Answer")}</th>
@@ -364,7 +363,7 @@ export function StatsDashboard({
                     return (
                       <tr key={`${miss.languageId}-${miss.verbInfinitive}-${miss.tense}-${miss.pronoun}`}>
                         <td>{tenseName(activeLanguage, miss.tense)}</td>
-                        <td>{activeLanguage.pronounLabels[miss.pronoun]}</td>
+                        <td>{getConjugationPronounLabel(activeLanguage, miss.tense, miss.pronoun)}</td>
                         <td className="stats-review-verb">{miss.verbInfinitive}</td>
                         <td className="stats-review-answer">{displayAnswer}</td>
                         <td className="stats-review-box" data-due={isMissDue(miss)}>

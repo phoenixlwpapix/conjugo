@@ -1,4 +1,4 @@
-import { getLanguagePronouns, type Language, type PracticeTenseId } from '../data/verbs';
+import { getConjugationPronouns, getLanguageTenses, type Language, type PracticeTenseId } from '../data/verbs';
 import type { Prompt, ReviewBox, ReviewTarget, StoredMiss } from '../types';
 import { getAnswer, getPracticeTenses } from './prompts';
 
@@ -45,15 +45,14 @@ export const getReviewTargets = (
   misses: StoredMiss[],
   { dueOnly = true, now = Date.now() }: ReviewTargetOptions = {},
 ): ReviewTarget[] => {
-  const activeTenses = new Set(getPracticeTenses(practiceTense, language.id));
-  const activePronouns = new Set(getLanguagePronouns(language));
+  const activeTenses = new Set(practiceTense === 'mixed' ? getLanguageTenses(language.id).map(({ id }) => id) : getPracticeTenses(practiceTense, language.id));
   const verbInfinitives = new Set(language.verbs.map((verb) => verb.infinitive));
 
   const matching = misses.filter(
     (miss) =>
       miss.languageId === language.id &&
       activeTenses.has(miss.tense) &&
-      activePronouns.has(miss.pronoun) &&
+      getConjugationPronouns(language, miss.tense, language.verbs.find((verb) => verb.infinitive === miss.verbInfinitive)).includes(miss.pronoun) &&
       verbInfinitives.has(miss.verbInfinitive) &&
       (!dueOnly || isMissDue(miss, now)),
   );

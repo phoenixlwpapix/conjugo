@@ -1,19 +1,21 @@
+import { isImperative } from '../imperative';
 import { describe, expect, it } from 'vitest';
 import { createQuizBank, createQuizQuestions } from '../quiz';
 import { quizScenes } from '../quizScenes';
-import { getLanguagePronouns, getLanguageTenses, languages } from '../verbs';
+import { getLanguagePronouns, getLanguageTenses, isTenseAvailable, languages, type TenseId } from '../verbs';
 
 const spanish = languages.find((language) => language.id === 'spanish');
 if (!spanish) throw new Error('Spanish data missing');
 
 describe('authored quiz scenes', () => {
-  it('provides twenty complete scenes per tense in all four languages', () => {
-    for (const scenes of Object.values(quizScenes)) {
+  it('provides twenty complete scenes per tense in its supported languages', () => {
+    for (const [tense, scenes] of Object.entries(quizScenes)) {
       expect(scenes).toHaveLength(20);
       for (const language of languages) {
+        if (!isTenseAvailable(language.id, tense as TenseId)) continue;
         expect(new Set(scenes.map((scene) => scene.sentence[language.id])).size).toBe(20);
         for (const scene of scenes) {
-          expect(scene.sentence[language.id].split('____')).toHaveLength(2);
+          expect(scene.sentence[language.id]?.split('____')).toHaveLength(2);
           expect(scene.sentence[language.id]).not.toMatch(/undefined/);
           expect(scene.reason.zh).toBeTruthy();
           expect(scene.reason.en).toBeTruthy();
@@ -93,7 +95,7 @@ describe('authored quiz scenes', () => {
           expect(new Set(question.choices).size).toBe(question.choices.length);
           expect(question.choices.every((choice) => Object.values(question.verb.forms).some((forms) => Object.values(forms).includes(choice)))).toBe(true);
         }
-        if (selected === 'mixed') expect(new Set(questions.map((question) => question.tense)).size).toBe(getLanguageTenses(language.id).length);
+        if (selected === 'mixed') expect(new Set(questions.map((question) => question.tense)).size).toBe(getLanguageTenses(language.id).filter(({ id }) => !isImperative(id)).length);
       }
     }
   });

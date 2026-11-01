@@ -185,9 +185,9 @@ export function TrainerPanel({
           </div>
 
           <div className="prompt-display" data-density={promptDensity} lang={getStudyLanguageTag(prompt.language.id)}>
-            <span className="prompt-pronoun">{pronounLabel}</span>
-            <span className="prompt-divider" aria-hidden="true">
-              /
+            <span className="prompt-subject">
+              <span className="prompt-pronoun">{pronounLabel}</span>
+              <span className="prompt-divider" aria-hidden="true">/</span>
             </span>
             <div className="prompt-verb-block">
               <strong className="prompt-infinitive">{prompt.verb.infinitive}</strong>

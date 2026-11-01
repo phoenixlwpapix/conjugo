@@ -63,7 +63,7 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
     <section className="quiz-page" aria-label={t('Quiz mode')}>
       <div className="quiz-layout">
         {questions.length === 0 ? (
-          <div className="quiz-card">
+          <div className="quiz-card quiz-setup-card">
             <div className="quiz-card-heading">
               <h1>{t('Quiz')}</h1>
               <p>{t('Choose a tense, or try mixed practice. Each round has 10 questions with grammar explanations after you answer.')}</p>
@@ -73,17 +73,25 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
                 <button
                   className="quiz-tense-option"
                   data-active={tense === option.id}
+                  data-mixed={option.id === 'mixed'}
                   aria-pressed={tense === option.id}
                   key={option.id}
                   onClick={() => setTense(option.id)}
                   type="button"
                 >
-                  <span>{tenseName(language, option.id)}</span>
-                  {option.id === 'mixed' ? <small>{t('All available tenses')}</small> : language.tenseLabels[option.id] !== tenseName(language, option.id) && <small lang={getStudyLanguageTag(language.id)}>{language.tenseLabels[option.id]}</small>}
+                  <span className="quiz-tense-copy">
+                    <span>{tenseName(language, option.id)}</span>
+                    {option.id === 'mixed' ? <small>{t('All available tenses')}</small> : language.tenseLabels[option.id] !== tenseName(language, option.id) && <small lang={getStudyLanguageTag(language.id)}>{language.tenseLabels[option.id]}</small>}
+                  </span>
+                  <span className="quiz-tense-check" aria-hidden="true">
+                    {tense === option.id && <Check size={11} strokeWidth={2.5} />}
+                  </span>
                 </button>
               ))}
             </div>
-            <button className="quiz-primary" onClick={start} type="button">{t('Start quiz')} <ArrowRight size={18} aria-hidden="true" /></button>
+            <div className="quiz-setup-footer">
+              <button className="quiz-primary" onClick={start} type="button">{t('Start quiz')} <ArrowRight size={16} aria-hidden="true" /></button>
+            </div>
           </div>
         ) : finished ? (
           <div className="quiz-card quiz-finish">
@@ -117,9 +125,10 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
               {!(language.id === 'english' && locale === 'en') && <p className="quiz-translation">{question.translation[locale]}</p>}
             </div>
             <div className="quiz-choices" role="group" aria-label={t('Choose the correct conjugation')}>
-              {question.choices.map((choice) => (
+              {question.choices.map((choice, choiceIndex) => (
                 <button
                   className="quiz-choice"
+                  aria-label={t('Option {letter}: {answer}', { letter: String.fromCharCode(65 + choiceIndex), answer: choice })}
                   lang={getStudyLanguageTag(language.id)}
                   data-result={selected === null ? undefined : choice === question.answer ? 'correct' : choice === selected ? 'wrong' : undefined}
                   disabled={selected !== null}
@@ -127,6 +136,7 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
                   onClick={() => answer(choice)}
                   type="button"
                 >
+                  <span className="choice-index" aria-hidden="true">{String.fromCharCode(65 + choiceIndex)}</span>
                   <span>{choice}</span>
                   {selected !== null && choice === question.answer && <Check size={18} aria-hidden="true" />}
                   {selected === choice && choice !== question.answer && <X size={18} aria-hidden="true" />}

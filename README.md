@@ -61,7 +61,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Mid-width practice layouts now move the progress rail below the drill and stack the prompt as pronoun, plus, and verb before words can wrap awkwardly.
 - Mobile practice controls use a compact horizontal tense selector, with the pronoun prompt prioritized above metadata tags.
 - Modern responsive interface using React 19, TypeScript, Vite, and lucide-react icons.
-- Generated modern app logo applied to the app header and browser favicon.
+- The blue C-arrow and gold ribbon logo uses a transparent background without the source image's outer frame, sized for the header, browser favicon, Apple touch icon, and PWA icons.
 - The per-question countdown timer is off by default and can be toggled from the trainer card.
 - Gender-agreeing past forms (French être / Italian essere verbs) are prompted with the masculine pronoun so the expected participle is always correct.
 - Saved misses are capped per language, and clearing every miss no longer revives legacy stored misses.
@@ -69,14 +69,18 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Answers are tallied per tense and per verb; the Stats Weak spots card shows accuracy by tense, flags the weakest tense, and lists the five hardest verbs with one-click tense and verb drills.
 - A single Chinese / English interface-language preference controls navigation, instructions, labels, grammar explanations, verb glosses, and sentence translations. Spanish learners can also hide vosotros from prompts, answer choices, reviews, and the Verb Book.
 - Present subjunctive for French, Spanish, and Italian, derived from each verb's indicative forms with explicit tables for truly irregular stems; prompts read "que tu…", "qu'il…", "che io…".
-- Installable, offline-capable PWA (vite-plugin-pwa) with precached assets and cached Google Fonts; the header logo is a 3 KB WebP.
+- Installable, offline-capable PWA (vite-plugin-pwa) with precached assets and cached Google Fonts; the header logo uses WebP, and the maskable app icon keeps the mark inside the safe area.
 
 ## UI design
 
 - Stageshow-inspired visual hierarchy: the conjugation prompt is the focal surface, with a quiet navigation rail and lighter session metrics. The existing Vite/React components remain fully interactive; no simulated cursor or decorative app frame is added.
 - Neutral canvas, restrained borders and shadows, consistent rounded surfaces, language accents, and serif study text carry across Practice, Quiz, Stats, and the Verb Book.
+- Quiz tense selection uses compact two-column options with lighter typography, subtle selection fills and checked indicators. Mixed practice spans the full row, and the start action sits in a separate footer.
+- All workspaces share panel radii, responsive padding, spacing, body/caption typography, and primary/secondary action styling based on the Practice screen. Quiz answers use the same A–D key badges and sans-serif answer typography as practice choices; sentence prompts retain display serif text.
+- Stats uses neutral metric surfaces, quieter chart summaries, lighter supporting text, consistent review buttons and a scrollable missed-answer table. The Word Book uses navigation-style verb selection, the same inset active tense control as Practice, and compact ruled conjugation rows that retain two columns on phones.
+- Practice completion dialogs and quiz results follow the same panel, metric and action styling. Empty/search states, answer feedback, Chinese/English interfaces, and both themes use the shared styling.
 - A 20-segment trail above each practice prompt shows completed correct/incorrect answers and the current question. The progress ring, timer, and cumulative metrics remain available.
-- At narrow widths, prompts stack their pronoun and infinitive, answer choices become full-width rows, and session progress becomes a compact summary. Navigation stays in the mobile menu. Both color themes and reduced-motion preferences are supported.
+- At narrow widths, short prompts keep the pronoun and infinitive on one line; longer prompts wrap only when space runs out, keeping the separator with the pronoun. Answer choices become full-width rows, and session progress becomes a compact summary. Navigation stays in the mobile menu. Both color themes and reduced-motion preferences are supported.
 
 ## Bilingual interface
 

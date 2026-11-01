@@ -79,6 +79,7 @@ export function VerbListPanel({
             <button
               className="verb-list-item"
               data-active={selectedVerbInfinitive === verb.infinitive}
+              aria-pressed={selectedVerbInfinitive === verb.infinitive}
               key={verb.infinitive}
               onClick={() => onSelectVerb(verb.infinitive)}
               type="button"

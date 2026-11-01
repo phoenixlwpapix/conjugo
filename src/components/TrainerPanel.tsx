@@ -1,7 +1,7 @@
 import { getStudyLanguageTag } from '../lib/i18n';
 import { useI18n } from '../hooks/useI18n';
 import { useEffect, useRef } from 'react';
-import { TimerReset, Check, X, RotateCcw, ArrowRight, BookOpen } from 'lucide-react';
+import { TimerReset, Check, X, RotateCcw, ArrowRight, BookOpenText } from 'lucide-react';
 import { getPronounLabel, timerSeconds } from '../lib/prompts';
 import type { Attempt, Prompt, SessionKind } from '../types';
 import type { PracticeTenseId } from '../data/verbs';
@@ -240,8 +240,8 @@ export function TrainerPanel({
                   : `${pronounLabel} + ${prompt.verb.infinitive} = ${correctAnswer}`}
               </span>
             </div>
-            <button className="wordbook-link" onClick={onOpenWordbook} type="button">
-              <BookOpen size={16} aria-hidden="true" /> {t('View in verb book')}
+            <button aria-label={t('View in verb book')} className="wordbook-link" onClick={onOpenWordbook} title={t('View in verb book')} type="button">
+              <BookOpenText size={16} aria-hidden="true" />
             </button>
             {(isSessionComplete || !isCorrect) &&
               (isSessionComplete ? (

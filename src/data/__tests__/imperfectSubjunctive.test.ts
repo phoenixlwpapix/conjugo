@@ -61,7 +61,7 @@ describe('Spanish imperfect subjunctive', () => {
 
   it('keeps past requests and hypothetical future events distinct from past completed actions', () => {
     const bank = createQuizBank(spanish, tense);
-    expect(bank).toHaveLength(20);
+    expect(bank).toHaveLength(40);
     const request = bank.find((question) => question.sentence.includes('Ana te pidió'))!;
     expect(request.answer).toBe('vinieras');
     expect(request.translation.en).toBe('Yesterday, Ana asked you to come to her house today.');

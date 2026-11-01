@@ -1,19 +1,19 @@
 import { isImperative } from '../imperative';
 import { describe, expect, it } from 'vitest';
 import { createQuizBank, createQuizQuestions } from '../quiz';
-import { quizScenes } from '../quizScenes';
-import { getLanguagePronouns, getLanguageTenses, isTenseAvailable, languages, type TenseId } from '../verbs';
+import { quizScenes, quizVerbs } from '../quizScenes';
+import { getLanguagePronouns, getLanguageTenses, isTenseAvailable, languages, pronouns, type TenseId } from '../verbs';
 
 const spanish = languages.find((language) => language.id === 'spanish');
 if (!spanish) throw new Error('Spanish data missing');
 
 describe('authored quiz scenes', () => {
-  it('provides twenty complete scenes per tense in its supported languages', () => {
+  it('provides forty complete scenes per tense in its supported languages', () => {
     for (const [tense, scenes] of Object.entries(quizScenes)) {
-      expect(scenes).toHaveLength(20);
+      expect(scenes).toHaveLength(40);
       for (const language of languages) {
         if (!isTenseAvailable(language.id, tense as TenseId)) continue;
-        expect(new Set(scenes.map((scene) => scene.sentence[language.id])).size).toBe(20);
+        expect(new Set(scenes.map((scene) => scene.sentence[language.id])).size).toBe(40);
         for (const scene of scenes) {
           expect(scene.sentence[language.id]?.split('____')).toHaveLength(2);
           expect(scene.sentence[language.id]).not.toMatch(/undefined/);
@@ -25,11 +25,31 @@ describe('authored quiz scenes', () => {
     }
   });
 
+  it('covers all pronouns, difficulties, and diverse verbs across the expanded bank', () => {
+    const usedVerbs = new Set<string>();
+    for (const [tense, scenes] of Object.entries(quizScenes)) {
+      const tensePronouns = new Set(scenes.map((scene) => scene.pronoun));
+      const tenseDifficulties = new Set(scenes.map((scene) => scene.difficulty));
+      const tenseVerbs = new Set(scenes.map((scene) => scene.verb));
+      scenes.forEach((scene) => usedVerbs.add(scene.verb));
+
+      expect(tenseDifficulties).toEqual(new Set(['beginner', 'intermediate', 'advanced']));
+      expect(tenseVerbs.size).toBeGreaterThanOrEqual(24);
+
+      if (isImperative(tense as TenseId)) {
+        expect(tensePronouns).toEqual(new Set(['you', 'we', 'you plural']));
+      } else {
+        expect(tensePronouns).toEqual(new Set(pronouns));
+      }
+    }
+    expect(usedVerbs.size).toBe(Object.keys(quizVerbs).length);
+  });
+
   it('keeps the authored scene, verb, subject, and explanation together', () => {
     for (const language of languages) {
       for (const { id } of getLanguageTenses(language.id)) {
         const bank = createQuizBank(language, id);
-        expect(bank).toHaveLength(20);
+        expect(bank).toHaveLength(40);
         bank.forEach((question, index) => {
           const scene = quizScenes[id][index];
           expect(question.sentence).toBe(scene.sentence[language.id]);
@@ -54,6 +74,42 @@ describe('authored quiz scenes', () => {
     expect(question?.translation.en).toBe('Yesterday, Alex went to the pharmacy to buy some medicine.');
     expect(question?.answer).toBe('fue');
     expect(question?.explanation.zh).toContain('去药店买药');
+  });
+
+  it.each([
+    ['english', 'present', 'his bed', 'makes', 'Every morning before leaving, Leo makes his bed.'],
+    ['english', 'present', 'the truth', 'tell', 'You always tell the truth when you speak with your friends.'],
+    ['spanish', 'conditional', 'la verdad exacta', 'diría', 'If they asked for my opinion, I would tell the exact truth.'],
+    ['spanish', 'subjunctive', 'Marco ____ la verdad', 'diga', 'It is essential that Marco tell the truth during the meeting.'],
+    ['spanish', 'imperative', 'la verdad aunque', 'di', 'tell the truth even if it proves difficult at this moment.'],
+    ['spanish', 'imperativeNegative', 'promesas que', 'no hagas', 'Don’t make promises that you cannot keep later on.'],
+    ['spanish', 'conditional', 'la grabación entera', 'escucharías', 'If the audio had less background noise, you would listen to the entire recording.'],
+  ] as const)('uses idiomatic English for %s %s (%s)', (languageId, tense, fragment, answer, translation) => {
+    const language = languages.find(({ id }) => id === languageId)!;
+    const question = createQuizBank(language, tense).find(({ sentence }) => sentence.includes(fragment));
+    expect(question?.answer).toBe(answer);
+    expect(question?.choices).toContain(answer);
+    expect(question?.translation.en).toBe(translation);
+  });
+
+  it.each([
+    ['spanish', 'rumores infundados', 'Alumnos, no escuchéis rumores infundados sobre los criterios de evaluación.'],
+    ['french', 'rumeurs infondées', "Les élèves, n'écoutez pas les rumeurs infondées sur les critères d’évaluation."],
+    ['italian', 'voci infondate', 'Studenti, non ascoltate le voci infondate sui criteri di valutazione.'],
+  ] as const)('uses a direct object for the %s command about rumours', (languageId, fragment, completedSentence) => {
+    const language = languages.find(({ id }) => id === languageId)!;
+    const question = createQuizBank(language, 'imperativeNegative').find(({ sentence }) => sentence.includes(fragment));
+    expect(question).toBeDefined();
+    expect(question?.sentence.replace('____', question.answer)).toBe(completedSentence);
+  });
+
+  it('uses estar for feeling calmer after a hypothetical success', () => {
+    const question = createQuizBank(spanish, 'conditional').find(({ sentence }) => sentence.includes('Si este proyecto tuviera éxito'));
+    expect(question?.verb.infinitive).toBe('estar');
+    expect(question?.answer).toBe('estaría');
+    expect(question?.choices).toContain('estaría');
+    expect(question?.choices).not.toContain('sería');
+    expect(question?.explanation.en).toContain('estar');
   });
 
   it('translates ongoing past actions and hypothetical results naturally', () => {

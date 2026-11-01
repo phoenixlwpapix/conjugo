@@ -33,6 +33,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Four languages: English, French, Spanish, Italian.
 - Quiz mode below Practice offers 10 randomly selected full-sentence questions per round, with a choice of any available tense or a mixed set. Each tense or mood has 20 individually authored everyday situations in its supported languages (560 supported language/tense/mood questions), with varied subjects and verbs across three difficulty levels. Complete sentences, translations, and explanations are kept together in `src/data/quizScenes.ts`; contexts are never randomly combined with unrelated actions. Scenes include commuting, family meals, travel, interrupted past actions, and realistic hypothetical decisions. Every question has four distinct choices, prioritizing the same subject across tenses and filling remaining slots from the same verb’s conjugation family. Each question shows a Chinese or English translation matching the interface language, and explains the specific scene after answering. Redundant English translations are hidden when learning English in the English interface.
 - A live panel beside the Quiz shows this round's progress, correct answers, accuracy, streak, and question-by-question results.
+- Quiz explanations link directly to the matching Verb Book entry and tense; returning to Quiz preserves the current round and answer. Hidden quizzes do not receive answer shortcuts. On phones/tablets, the progress sidebar appears only during a round; narrow phones use a single-column tense picker and full-width start/next actions, with repeated question instructions hidden.
 - Quiz supports A–D / 1–4 to answer and Enter / Space to continue. Spanish vosotros preference changes reset the quiz pool; interface-language changes preserve the current round.
 - Incorrect or skipped Quiz answers enter the shared Leitner review queue; correct answers use the same review promotion rules as practice.
 - Practice progress follows question order and keeps the current question number stable during feedback. Completed sets always offer New set, including after a correct final answer.
@@ -57,6 +58,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Interactive verb book with per-tense conjugation tables.
 - Review items can be opened directly in the Word Book with the matching tense selected.
 - Searchable compact verb list built for larger future vocabularies.
+- On phones and tablets (up to 980px), the Verb Book uses separate list and detail views. Selecting a verb or opening a practice/review reference goes straight to its conjugation; Back restores the filtered list, and previous/next follows its current order. Search and sorting share one row, verb entries use compact single rows, and the tense strip scrolls horizontally with the selected tense centered. Compact headings and conjugation rows keep the reference visible; desktop retains both panels.
 - Card-style multiple-choice answer selection.
 - Multiple-choice answer cards now use randomized positions per prompt while keeping distractors relevant to the current verb family.
 - Auto-advance on correct answers and confetti for a perfect set.
@@ -69,6 +71,8 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - The prompt card no longer repeats the same build information in a side rail, giving the question more room.
 - Desktop navigation now uses a sticky left sidebar for brand, language, and workspace switching.
 - Mobile navigation now collapses language and workspace tabs behind a hamburger menu so the current drill stays visible first.
+- Tablet workspace navigation stays on one row. The mobile menu closes on outside clicks or focus, and language choices show codes and a selection check. Scrollable practice tense controls keep the active tense visible, while phones omit idle keyboard hints.
+- On phones, saved misses use compact two-line review cards instead of a horizontally scrolling table, with full-width review/drill actions. Completion summaries use gold, language-accent, danger, and muted icon colors in both themes.
 - Theme switching now supports Light and Dark tones from the sidebar and mobile menu, with the choice persisted locally.
 - Mid-width practice layouts now move the progress rail below the drill and stack the prompt as pronoun, plus, and verb before words can wrap awkwardly.
 - Mobile practice controls use a compact horizontal tense selector, with the pronoun prompt prioritized above metadata tags.
@@ -89,6 +93,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Neutral canvas, restrained borders and shadows, consistent rounded surfaces, language accents, and serif study text carry across Practice, Quiz, Stats, and the Verb Book.
 - Quiz tense selection uses compact two-column options with lighter typography, subtle selection fills and checked indicators. Mixed practice spans the full row, and the start action sits in a separate footer.
 - All workspaces share panel radii, responsive padding, spacing, body/caption typography, and primary/secondary action styling based on the Practice screen. Quiz answers use the same A–D key badges and sans-serif answer typography as practice choices; sentence prompts retain display serif text.
+- Practice, Quiz setup, Stats, and the Verb Book share one main-heading style (Manrope 600, 1.3rem desktop/tablet and 1.15rem phone). Stats uses a single title above its description and summary; supplementary labels remain only where they identify a question number or study language.
 - Stats uses neutral metric surfaces, quieter chart summaries, lighter supporting text, consistent review buttons and a scrollable missed-answer table. The Word Book uses navigation-style verb selection, the same inset active tense control as Practice, and compact ruled conjugation rows that retain two columns on phones.
 - Practice completion dialogs and quiz results follow the same panel, metric and action styling. Empty/search states, answer feedback, Chinese/English interfaces, and both themes use the shared styling.
 - A 20-segment trail above each practice prompt shows completed correct/incorrect answers and the current question. The progress ring, timer, and cumulative metrics remain available.

@@ -133,8 +133,7 @@ export function StatsDashboard({
     <section className="stats-dashboard" aria-label={t("Performance dashboard")}>
       <div className="stats-hero">
         <div className="stats-hero-copy">
-          <span className="eyebrow">{t("Scoreboard")}</span>
-          <h1>{t("Performance dashboard")}</h1>
+          <h1 className="workspace-title">{t("Performance dashboard")}</h1>
           <p>{t("Track recall quality, recent momentum, and the prompts that still need another clean pass.")}</p>
           <div className="stats-hero-facts" aria-label={t("Practice summary")}>
             <span>{t('{count} sets', { count: completedSets })}</span>

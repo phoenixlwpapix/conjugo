@@ -2,7 +2,7 @@ import { isImperative } from '../data/imperative';
 import { useI18n } from '../hooks/useI18n';
 import { getStudyLanguageTag, type MessageKey } from '../lib/i18n';
 import { useEffect, useState } from 'react';
-import { ArrowRight, Check, Flame, RotateCcw, Target, Trophy, X } from 'lucide-react';
+import { ArrowRight, BookOpenText, Check, Flame, RotateCcw, Target, Trophy, X } from 'lucide-react';
 import { createQuizQuestions, type QuizQuestion } from '../data/quiz';
 import { getConjugationPronounLabel, getLanguagePracticeTenses, type Language, type PracticeTenseId } from '../data/verbs';
 import { getAccuracy, type RecordedAnswer } from '../lib/scoring';
@@ -10,15 +10,17 @@ import { isEditableElement } from '../lib/focusTrap';
 import type { Prompt } from '../types';
 
 type QuizPanelProps = {
+  active: boolean;
   language: Language;
   onAnswer: (answer: RecordedAnswer, prompt: Prompt) => void;
+  onOpenWordbook: (prompt: Prompt) => void;
 };
 
 type Outcome = 'correct' | 'wrong' | 'skipped';
 const difficultyLabels: Record<QuizQuestion['difficulty'], MessageKey> = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
 const outcomeLabels: Record<Outcome | 'current' | 'pending', MessageKey> = { correct: 'Correct', wrong: 'Missed', skipped: 'Skipped', current: 'Current question', pending: 'Not answered' };
 
-export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
+export function QuizPanel({ active, language, onAnswer, onOpenWordbook }: QuizPanelProps) {
   const { t, locale, languageName, tenseName } = useI18n();
   const [tense, setTense] = useState<PracticeTenseId>('mixed');
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -68,6 +70,7 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
   };
 
   useEffect(() => {
+    if (!active) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!question || finished || event.defaultPrevented || event.repeat || event.altKey || event.ctrlKey || event.metaKey || isEditableElement(event.target) || document.querySelector('[aria-modal="true"]')) return;
       const key = event.key.toLowerCase();
@@ -90,12 +93,12 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
   const displaySentence = question?.sentence.split('____');
 
   return (
-    <section className="quiz-page" aria-label={t('Quiz mode')}>
+    <section className="quiz-page" hidden={!active} data-stage={questions.length === 0 ? 'setup' : finished ? 'finished' : 'playing'} aria-label={t('Quiz mode')}>
       <div className="quiz-layout">
         {questions.length === 0 ? (
           <div className="quiz-card quiz-setup-card">
             <div className="quiz-card-heading">
-              <h1>{t('Quiz')}</h1>
+              <h1 className="workspace-title">{t('Quiz')}</h1>
               <p>{t('Choose a tense or mood, or try mixed practice. Each round has 10 questions with explanations after you answer.')}</p>
             </div>
             <div className="quiz-tense-grid" role="group" aria-label={t('Choose a quiz tense or mood')}>
@@ -177,6 +180,9 @@ export function QuizPanel({ language, onAnswer }: QuizPanelProps) {
               <div className="quiz-feedback" data-correct={selected === question.answer} role="status">
                 <strong>{selected === question.answer ? t('Correct!') : t('Target answer: {answer}', { answer: question.answer })}</strong>
                 <p>{question.explanation[locale]}</p>
+                <button className="quiz-wordbook-link" onClick={() => onOpenWordbook({ language, verb: question.verb, tense: question.tense, pronoun: question.pronoun })} type="button">
+                  <BookOpenText size={16} aria-hidden="true" />{t('View in verb book')}
+                </button>
               </div>
             )}
             <div className="quiz-card-footer">

@@ -428,6 +428,8 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
     activeView,
     setActiveView,
     bookTense: wordbook.bookTense,
+    wordbookView: wordbook.wordbookView,
+    setWordbookView: wordbook.setWordbookView,
     setBookTense: wordbook.setBookTense,
     wordbookQuery: wordbook.wordbookQuery,
     setWordbookQuery: wordbook.setWordbookQuery,

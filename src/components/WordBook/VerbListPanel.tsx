@@ -34,41 +34,45 @@ export function VerbListPanel({
       <div className="wordbook-heading">
         <div>
           <span className="eyebrow">{languageName(activeLanguage.id)}</span>
-          <h1>{t("Verb Book")}</h1>
+          <h1 className="workspace-title">{t("Verb Book")}</h1>
         </div>
         <span>{t('{count} verbs', { count: activeLanguage.verbs.length })}</span>
       </div>
 
-      <label className="wordbook-search">
-        <Search size={16} aria-hidden="true" />
-        <input
-          aria-label={t("Search verbs")}
-          onChange={(event) => onQueryChange(event.target.value)}
-          placeholder={t("Search verbs")}
-          type="search"
-          value={query}
-        />
-      </label>
+      <div className="wordbook-tools">
+        <label className="wordbook-search">
+          <Search size={16} aria-hidden="true" />
+          <input
+            aria-label={t("Search verbs")}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder={t("Search verbs")}
+            type="search"
+            value={query}
+          />
+        </label>
 
-      <div className="wordbook-sort" aria-label={t("Verb order")} role="group">
-        <button
-          aria-pressed={sort === 'current'}
-          data-active={sort === 'current'}
-          onClick={() => onSortChange('current')}
-          type="button"
-        >
-          <List size={15} aria-hidden="true" />
-          {t("Current")}
-        </button>
-        <button
-          aria-pressed={sort === 'alphabetical'}
-          data-active={sort === 'alphabetical'}
-          onClick={() => onSortChange('alphabetical')}
-          type="button"
-        >
-          <ArrowDownAZ size={15} aria-hidden="true" />
-          A–Z
-        </button>
+        <div className="wordbook-sort" aria-label={t("Verb order")} role="group">
+          <button
+            aria-label={t('Current')}
+            title={t('Current')}
+            aria-pressed={sort === 'current'}
+            data-active={sort === 'current'}
+            onClick={() => onSortChange('current')}
+            type="button"
+          >
+            <List size={15} aria-hidden="true" />
+            <span>{t("Current")}</span>
+          </button>
+          <button
+            aria-pressed={sort === 'alphabetical'}
+            data-active={sort === 'alphabetical'}
+            onClick={() => onSortChange('alphabetical')}
+            type="button"
+          >
+            <ArrowDownAZ size={15} aria-hidden="true" />
+            A–Z
+          </button>
+        </div>
       </div>
 
       <div className="verb-list" aria-label={t('{language} verbs', { language: languageName(activeLanguage.id) })}>

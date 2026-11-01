@@ -30,7 +30,7 @@ export function ConjugationPanel({
   return (
     <section className="conjugation-panel" aria-label={t('{verb} conjugation table', { verb: selectedVerb.infinitive })}>
       <div className="conjugation-head">
-        <div>
+        <div className="conjugation-title">
           <span className="eyebrow">{languageName(activeLanguage.id)}</span>
           <h2 lang={getStudyLanguageTag(activeLanguage.id)}>{selectedVerb.infinitive}</h2>
           {translation && <p>{translation}</p>}

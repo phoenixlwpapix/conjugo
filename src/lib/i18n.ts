@@ -4,6 +4,9 @@ import type { Language, LanguageId, PracticeTenseId } from '../data/verbs';
 export type Locale = TranslationLanguage;
 
 export const chineseMessages = {
+  "Back to verbs": "返回动词列表",
+  "Previous verb": "上一个动词",
+  "Next verb": "下一个动词",
   "Imperative comparison": "命令式对照",
   "Affirmative": "肯定",
   "Negative": "否定",

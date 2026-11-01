@@ -1,5 +1,5 @@
 import { useI18n } from '../hooks/useI18n';
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { BarChart3, BookOpenText, Check, ClipboardList, Menu, Moon, Sun, Target, X } from 'lucide-react';
 import { languages, type LanguageId } from '../data/verbs';
 import { type ThemeId } from '../data/themes';
@@ -34,6 +34,7 @@ export function Header({
 }: HeaderProps) {
   const { t, languageName } = useI18n();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
   const activeLanguage = languages.find((language) => language.id === languageId) ?? languages[0];
 
   useEffect(() => {
@@ -46,9 +47,25 @@ export function Header({
         setIsMenuOpen(false);
       }
     };
+    const closeOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !headerRef.current?.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+    const closeOnFocusOutside = (event: FocusEvent) => {
+      if (event.target instanceof Node && !headerRef.current?.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
 
     window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
+    document.addEventListener('pointerdown', closeOutside);
+    document.addEventListener('focusin', closeOnFocusOutside);
+    return () => {
+      window.removeEventListener('keydown', closeOnEscape);
+      document.removeEventListener('pointerdown', closeOutside);
+      document.removeEventListener('focusin', closeOnFocusOutside);
+    };
   }, [isMenuOpen]);
 
   const chooseLanguage = (nextLanguageId: LanguageId) => {
@@ -68,7 +85,7 @@ export function Header({
   const ThemeIcon = themeId === 'dark' ? Sun : Moon;
 
   return (
-    <header className="app-topbar">
+    <header ref={headerRef} className="app-topbar">
       <div className="brand-lockup">
         <img src="/conjugo-logo.webp" alt="" aria-hidden="true" width="46" height="46" />
         <div>
@@ -205,12 +222,15 @@ export function Header({
               <button
                 className="tab-button"
                 data-active={language.id === languageId}
+                aria-pressed={language.id === languageId}
                 key={language.id}
                 onClick={() => chooseLanguage(language.id)}
                 style={{ '--accent': themeId === 'dark' ? language.darkAccent : language.accent } as CSSProperties}
                 type="button"
               >
-                {languageName(language.id)}
+                <span className="language-code" aria-hidden="true">{language.id === 'english' ? 'EN' : language.id === 'french' ? 'FR' : language.id === 'spanish' ? 'ES' : 'IT'}</span>
+                <span>{languageName(language.id)}</span>
+                {language.id === languageId && <Check className="language-selected" size={14} aria-hidden="true" />}
               </button>
             ))}
           </div>

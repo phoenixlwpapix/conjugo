@@ -4,16 +4,19 @@ import { isTenseAvailable, type Language, type TenseId } from '../data/verbs';
 import type { Prompt } from '../types';
 
 export type WordbookSort = 'current' | 'alphabetical';
+export type WordbookView = 'list' | 'detail';
 
 export const useWordbook = (activeLanguage: Language) => {
   const [bookTense, setBookTense] = useState<TenseId>('present');
   const [selectedVerbInfinitive, setSelectedVerbInfinitive] = useState(activeLanguage.verbs[0]?.infinitive ?? '');
   const [wordbookQuery, setWordbookQuery] = useState('');
   const [wordbookSort, setWordbookSort] = useState<WordbookSort>('current');
+  const [wordbookView, setWordbookView] = useState<WordbookView>('list');
 
   useEffect(() => {
     setSelectedVerbInfinitive(activeLanguage.verbs[0]?.infinitive ?? '');
     setWordbookQuery('');
+    setWordbookView('list');
     if (!isTenseAvailable(activeLanguage.id, bookTense)) {
       setBookTense('present');
     }
@@ -50,6 +53,7 @@ export const useWordbook = (activeLanguage: Language) => {
     setSelectedVerbInfinitive(prompt.verb.infinitive);
     setBookTense(prompt.tense);
     setWordbookQuery('');
+    setWordbookView('detail');
   };
 
   return {
@@ -64,5 +68,7 @@ export const useWordbook = (activeLanguage: Language) => {
     setWordbookSort,
     wordbookQuery,
     wordbookSort,
+    wordbookView,
+    setWordbookView,
   };
 };

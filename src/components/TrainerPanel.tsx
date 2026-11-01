@@ -105,7 +105,7 @@ export function TrainerPanel({
             {t('Question {number}', { number: currentQuestion })}
             <span className="question-total"> / {sessionTarget}</span>
           </span>
-          <h1>{t('Select the correct verb form')}</h1>
+          <h1 className="workspace-title">{t('Select the correct verb form')}</h1>
         </div>
 
         <button

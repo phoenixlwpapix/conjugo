@@ -51,6 +51,8 @@ export default function App() {
     wordbookQuery,
     setWordbookQuery,
     wordbookSort,
+    wordbookView,
+    setWordbookView,
     setWordbookSort,
     selectedVerb,
     selectedVerbInfinitive,
@@ -290,12 +292,18 @@ export default function App() {
             </Suspense>
           )}
 
-          {activeView === 'quiz' && (
-            <QuizPanel key={`${languageId}-${languageId === 'spanish' && preferences.includeVosotros}`} language={activeLanguage} onAnswer={recordQuizResult} />
-          )}
+          <QuizPanel
+            key={`${languageId}-${languageId === 'spanish' && preferences.includeVosotros}`}
+            active={activeView === 'quiz'}
+            language={activeLanguage}
+            onAnswer={recordQuizResult}
+            onOpenWordbook={(quizPrompt) => { openPromptInWordbook(quizPrompt); setActiveView('wordbook'); }}
+          />
 
           {activeView === 'wordbook' && selectedVerb && (
             <WordBook
+              view={wordbookView}
+              onViewChange={setWordbookView}
               activeLanguage={activeLanguage}
               bookTense={bookTense}
               filteredVerbs={filteredVerbs}

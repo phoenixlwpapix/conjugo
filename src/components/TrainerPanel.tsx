@@ -99,6 +99,7 @@ export function TrainerPanel({
         <div>
           <span className="eyebrow">
             {t('Question {number}', { number: Math.min(attempts.length + 1, sessionTarget) })}
+            <span className="question-total"> / {sessionTarget}</span>
           </span>
           <h1>{t('Select the correct verb form')}</h1>
         </div>
@@ -155,6 +156,12 @@ export function TrainerPanel({
           />
           {showAlertStyle && timerEnabled && <span className="timer-pulse-ring" aria-hidden="true" />}
         </button>
+      </div>
+
+      <div className="question-progress" aria-hidden="true">
+        {Array.from({ length: sessionTarget }, (_, index) => (
+          <span key={index} data-state={attempts[index] ? (attempts[index].correct ? 'correct' : 'wrong') : index === attempts.length ? 'current' : 'pending'} />
+        ))}
       </div>
 
       <div className="prompt-card">

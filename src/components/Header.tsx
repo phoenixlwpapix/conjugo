@@ -1,6 +1,6 @@
 import { useI18n } from '../hooks/useI18n';
 import { useEffect, useState, type CSSProperties } from 'react';
-import { BarChart3, BookOpenText, ClipboardList, Menu, Moon, Sun, Target, X } from 'lucide-react';
+import { BarChart3, BookOpenText, Check, ClipboardList, Menu, Moon, Sun, Target, X } from 'lucide-react';
 import { languages, type LanguageId } from '../data/verbs';
 import { type ThemeId } from '../data/themes';
 import type { MessageKey } from '../lib/i18n';
@@ -81,19 +81,21 @@ export function Header({
         <button
           className="view-button"
           data-active={activeView === 'practice'}
+          aria-current={activeView === 'practice' ? 'page' : undefined}
           onClick={() => setActiveView('practice')}
           type="button"
         >
           <Target size={16} aria-hidden="true" />
           {t("Practice")}
         </button>
-        <button className="view-button" data-active={activeView === 'quiz'} onClick={() => setActiveView('quiz')} type="button">
+        <button className="view-button" data-active={activeView === 'quiz'} aria-current={activeView === 'quiz' ? 'page' : undefined} onClick={() => setActiveView('quiz')} type="button">
           <ClipboardList size={16} aria-hidden="true" />
           {t("Quiz")}
         </button>
         <button
           className="view-button"
           data-active={activeView === 'stats'}
+          aria-current={activeView === 'stats' ? 'page' : undefined}
           onClick={() => setActiveView('stats')}
           type="button"
         >
@@ -103,6 +105,7 @@ export function Header({
         <button
           className="view-button"
           data-active={activeView === 'wordbook'}
+          aria-current={activeView === 'wordbook' ? 'page' : undefined}
           onClick={() => setActiveView('wordbook')}
           type="button"
         >
@@ -117,12 +120,15 @@ export function Header({
           <button
             className="tab-button"
             data-active={language.id === languageId}
+            aria-pressed={language.id === languageId}
             key={language.id}
             onClick={() => switchLanguage(language.id)}
             style={{ '--accent': themeId === 'dark' ? language.darkAccent : language.accent } as CSSProperties}
             type="button"
           >
+            <span className="language-code" aria-hidden="true">{language.id === 'english' ? 'EN' : language.id === 'french' ? 'FR' : language.id === 'spanish' ? 'ES' : 'IT'}</span>
             <span>{languageName(language.id)}</span>
+            {language.id === languageId && <Check className="language-selected" size={14} aria-hidden="true" />}
           </button>
         ))}
       </nav>

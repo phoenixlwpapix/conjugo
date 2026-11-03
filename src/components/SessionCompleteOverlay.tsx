@@ -1,6 +1,5 @@
 import { useI18n } from '../hooks/useI18n';
 import { useEffect, useRef } from 'react';
-import confetti from 'canvas-confetti';
 import { Target, Trophy, AlertCircle, RotateCcw, Home, X } from 'lucide-react';
 import { useFocusTrap } from '../lib/focusTrap';
 
@@ -52,39 +51,53 @@ export function SessionCompleteOverlay({
       return;
     }
 
-    const burst = confetti.create(confettiCanvasRef.current, {
-      resize: true,
-      useWorker: true,
+    const canvas = confettiCanvasRef.current;
+    let cancelled = false;
+    let stop = () => {};
+
+    void import('canvas-confetti').then(({ default: confetti }) => {
+      if (cancelled) return;
+
+      const burst = confetti.create(canvas, {
+        resize: true,
+        useWorker: true,
+      });
+      const endTime = Date.now() + 2_000;
+      let frameId = 0;
+
+      const fire = () => {
+        burst({
+          particleCount: 3,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0, y: 0.8 },
+          colors: confettiColors,
+        });
+        burst({
+          particleCount: 3,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1, y: 0.8 },
+          colors: confettiColors,
+        });
+
+        if (Date.now() < endTime) {
+          frameId = window.requestAnimationFrame(fire);
+        }
+      };
+
+      fire();
+      stop = () => {
+        window.cancelAnimationFrame(frameId);
+        burst.reset();
+      };
+    }).catch(() => {
+      // A failed decorative animation must not prevent viewing the summary.
     });
-    const endTime = Date.now() + 2_000;
-    let frameId = 0;
-
-    const fire = () => {
-      burst({
-        particleCount: 3,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0, y: 0.8 },
-        colors: confettiColors,
-      });
-      burst({
-        particleCount: 3,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1, y: 0.8 },
-        colors: confettiColors,
-      });
-
-      if (Date.now() < endTime) {
-        frameId = window.requestAnimationFrame(fire);
-      }
-    };
-
-    fire();
 
     return () => {
-      window.cancelAnimationFrame(frameId);
-      burst.reset();
+      cancelled = true;
+      stop();
     };
   }, [isPerfect]);
 

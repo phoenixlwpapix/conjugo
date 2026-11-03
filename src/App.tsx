@@ -1,20 +1,24 @@
 import { LocaleContext } from './hooks/useI18n';
-import { translate } from './lib/i18n';
+import { translate, type MessageKey } from './lib/i18n';
 import { lazy, Suspense, useEffect, useState, type CSSProperties } from 'react';
 import { usePractice } from './hooks/usePractice';
 import { usePreferences } from './hooks/usePreferences';
 import { Header } from './components/Header';
 import { SessionBar } from './components/SessionBar';
-import { TrainerPanel } from './components/TrainerPanel';
+import { TimedTrainerPanel } from './components/TrainerPanel';
 import { ProgressPanel } from './components/ProgressPanel';
-import { WordBook } from './components/WordBook/WordBook';
 import { SessionCompleteOverlay } from './components/SessionCompleteOverlay';
-import { QuizPanel } from './components/QuizPanel';
 import { isEditableElement } from './lib/focusTrap';
 import { isThemeId, themeStorageKey, type ThemeId } from './data/themes';
 
 const StatsDashboard = lazy(() =>
   import('./components/StatsDashboard').then((module) => ({ default: module.StatsDashboard })),
+);
+const QuizPanel = lazy(() =>
+  import('./components/QuizPanel').then((module) => ({ default: module.QuizPanel })),
+);
+const WordBook = lazy(() =>
+  import('./components/WordBook/WordBook').then((module) => ({ default: module.WordBook })),
 );
 
 export default function App() {
@@ -33,7 +37,7 @@ export default function App() {
 
   const preferences = usePreferences();
   const { translationLanguage } = preferences;
-  const t = (key: 'Loading stats' | 'Loading performance dashboard…') => translate(translationLanguage, key);
+  const t = (key: MessageKey) => translate(translationLanguage, key);
 
   useEffect(() => {
     document.documentElement.lang = translationLanguage === 'zh' ? 'zh-CN' : 'en';
@@ -86,8 +90,8 @@ export default function App() {
     sessionKind,
     dismissCelebration,
     dismissCompletion,
-    timeLeft,
-    sessionElapsedSeconds,
+    countdownClock,
+    elapsedClock,
     timerEnabled,
     toggleTimer,
     todayStats,
@@ -96,6 +100,17 @@ export default function App() {
     sessionTarget,
     recordQuizResult,
   } = usePractice({ includeVosotros: preferences.includeVosotros });
+
+  // Defer the quiz until its first visit, then keep the round mounted across views.
+  const [hasOpenedQuiz, setHasOpenedQuiz] = useState(activeView === 'quiz');
+  if (activeView === 'quiz' && !hasOpenedQuiz) {
+    setHasOpenedQuiz(true);
+  }
+  const workspaceLoading = (
+    <section className="stats-loading-card" role="status" aria-busy="true">
+      {t('Loading workspace…')}
+    </section>
+  );
 
   useEffect(() => {
     document.documentElement.dataset.theme = themeId;
@@ -229,7 +244,7 @@ export default function App() {
               />
 
               <section className="practice-layout">
-                <TrainerPanel
+                <TimedTrainerPanel
                   attempts={attempts}
                   prompt={prompt}
                   practiceTense={practiceTense}
@@ -245,7 +260,7 @@ export default function App() {
                   resetSession={resetSession}
                   moveNext={moveNext}
                   onOpenWordbook={() => { openPromptInWordbook(prompt); setActiveView('wordbook'); }}
-                  timeLeft={timeLeft}
+                  clock={countdownClock}
                   timerEnabled={timerEnabled}
                   toggleTimer={toggleTimer}
                   sessionTarget={sessionTarget}
@@ -262,7 +277,7 @@ export default function App() {
                   streak={streak}
                   cumulativeStats={stats}
                   sessionTarget={sessionTarget}
-                  sessionElapsedSeconds={sessionElapsedSeconds}
+                  elapsedClock={elapsedClock}
                 />
               </section>
             </>
@@ -292,31 +307,37 @@ export default function App() {
             </Suspense>
           )}
 
-          <QuizPanel
-            key={`${languageId}-${languageId === 'spanish' && preferences.includeVosotros}`}
-            active={activeView === 'quiz'}
-            language={activeLanguage}
-            onAnswer={recordQuizResult}
-            onOpenWordbook={(quizPrompt) => { openPromptInWordbook(quizPrompt); setActiveView('wordbook'); }}
-          />
+          {hasOpenedQuiz && (
+            <Suspense fallback={activeView === 'quiz' ? workspaceLoading : null}>
+              <QuizPanel
+                key={`${languageId}-${languageId === 'spanish' && preferences.includeVosotros}`}
+                active={activeView === 'quiz'}
+                language={activeLanguage}
+                onAnswer={recordQuizResult}
+                onOpenWordbook={(quizPrompt) => { openPromptInWordbook(quizPrompt); setActiveView('wordbook'); }}
+              />
+            </Suspense>
+          )}
 
           {activeView === 'wordbook' && selectedVerb && (
-            <WordBook
-              view={wordbookView}
-              onViewChange={setWordbookView}
-              activeLanguage={activeLanguage}
-              bookTense={bookTense}
-              filteredVerbs={filteredVerbs}
-              onQueryChange={setWordbookQuery}
-              onSortChange={setWordbookSort}
-              onSelectVerb={setSelectedVerbInfinitive}
-              onTenseChange={setBookTense}
-              query={wordbookQuery}
-              sort={wordbookSort}
-              selectedVerb={selectedVerb}
-              selectedVerbInfinitive={selectedVerbInfinitive}
-              translationLanguage={translationLanguage}
-            />
+            <Suspense fallback={workspaceLoading}>
+              <WordBook
+                view={wordbookView}
+                onViewChange={setWordbookView}
+                activeLanguage={activeLanguage}
+                bookTense={bookTense}
+                filteredVerbs={filteredVerbs}
+                onQueryChange={setWordbookQuery}
+                onSortChange={setWordbookSort}
+                onSelectVerb={setSelectedVerbInfinitive}
+                onTenseChange={setBookTense}
+                query={wordbookQuery}
+                sort={wordbookSort}
+                selectedVerb={selectedVerb}
+                selectedVerbInfinitive={selectedVerbInfinitive}
+                translationLanguage={translationLanguage}
+              />
+            </Suspense>
           )}
         </div>
       </main>

@@ -1040,8 +1040,9 @@ const spanishVerbs: BaseVerbEntry[] = [
     present: { I: 'oigo', you: 'oyes', 'he/she': 'oye', we: 'oímos', 'you plural': 'oís', they: 'oyen' },
     past: { I: 'oí', you: 'oíste', 'he/she': 'oyó', we: 'oímos', 'you plural': 'oísteis', they: 'oyeron' },
     imperfect: spanishErIrImperfect('o'),
-    future: spanishFuture('oír'),
-    conditional: spanishConditional('oír'),
+    // RAE conjugation model 46: oír loses its infinitive accent in these stems.
+    future: spanishFuture('oir'),
+    conditional: spanishConditional('oir'),
   }),
   verb('pensar', '想 / 认为', {
     present: { I: 'pienso', you: 'piensas', 'he/she': 'piensa', we: 'pensamos', 'you plural': 'pensáis', they: 'piensan' },

@@ -87,6 +87,7 @@ export const chineseMessages = {
   "{verb} conjugation table": "{verb} 变位表",
   "{language} verb book": "{language}动词本",
   "Loading stats": "加载统计",
+  "Loading workspace…": "正在加载学习板块…",
   "Loading performance dashboard…": "正在加载学习统计…",
   "due now": "现在可复习",
   "due tomorrow": "明天复习",

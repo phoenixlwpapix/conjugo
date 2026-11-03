@@ -1,7 +1,7 @@
 import { isImperative } from '../data/imperative';
 import { useI18n } from '../hooks/useI18n';
 import { getStudyLanguageTag, type MessageKey } from '../lib/i18n';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ArrowRight, BookOpenText, Check, Flame, RotateCcw, Target, Trophy, X } from 'lucide-react';
 import { createQuizQuestions, type QuizQuestion } from '../data/quiz';
 import { getConjugationPronounLabel, getLanguagePracticeTenses, type Language, type PracticeTenseId } from '../data/verbs';
@@ -53,7 +53,7 @@ export function QuizPanel({ active, language, onAnswer, onOpenWordbook }: QuizPa
     setStreak(0);
   };
 
-  const answer = (choice: string) => {
+  const answer = useCallback((choice: string) => {
     if (!question || selected !== null) return;
     const correct = choice === question.answer;
     const nextStreak = correct ? streak + 1 : 0;
@@ -67,12 +67,12 @@ export function QuizPanel({ active, language, onAnswer, onOpenWordbook }: QuizPa
       tense: question.tense,
       verbInfinitive: question.verb.infinitive,
     }, { language, verb: question.verb, tense: question.tense, pronoun: question.pronoun });
-  };
+  }, [index, language, onAnswer, question, questions.length, selected, streak]);
 
-  const next = () => {
+  const next = useCallback(() => {
     setIndex((current) => current + 1);
     setSelected(null);
-  };
+  }, []);
 
   useEffect(() => {
     if (!active) return;
@@ -93,7 +93,7 @@ export function QuizPanel({ active, language, onAnswer, onOpenWordbook }: QuizPa
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  });
+  }, [active, answer, finished, next, question, selected]);
 
   const displaySentence = question?.sentence.split('____');
 

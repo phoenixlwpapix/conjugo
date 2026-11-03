@@ -30,9 +30,12 @@ export const createQuizBank = (language: Language, tense: TenseId): QuizQuestion
   if (!available.includes(tense)) return [];
   const english = languages.find((entry) => entry.id === 'english');
   if (!english) throw new Error('English verb data is missing');
-  return quizScenes[tense].filter((scene) => getConjugationPronouns(language, tense).includes(scene.pronoun)).map((scene, index) => {
-    const verb = language.verbs.find((entry) => entry.infinitive === quizVerbs[scene.verb][language.id]);
-    const englishVerb = english.verbs.find((entry) => entry.infinitive === quizVerbs[scene.verb].english);
+  const verbIndex = new Map(language.verbs.map((verb) => [verb.infinitive, verb]));
+  const englishVerbIndex = new Map(english.verbs.map((verb) => [verb.infinitive, verb]));
+  const pronouns = new Set(getConjugationPronouns(language, tense));
+  return quizScenes[tense].filter((scene) => pronouns.has(scene.pronoun)).map((scene, index) => {
+    const verb = verbIndex.get(quizVerbs[scene.verb][language.id]);
+    const englishVerb = englishVerbIndex.get(quizVerbs[scene.verb].english);
     if (!verb || !englishVerb) throw new Error(`Missing quiz verb ${scene.verb}`);
     const sentence = scene.sentence[language.id];
     if (!sentence) throw new Error(`Missing ${language.id} quiz scene for ${tense}`);

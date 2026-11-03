@@ -1,6 +1,7 @@
 import { getStudyLanguageTag } from '../lib/i18n';
 import { useI18n } from '../hooks/useI18n';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
+import type { PracticeClock } from '../lib/practiceClock';
 import { TimerReset, Check, X, RotateCcw, ArrowRight, BookOpenText } from 'lucide-react';
 import { getPronounLabel, timerSeconds } from '../lib/prompts';
 import type { Attempt, Prompt, SessionKind } from '../types';
@@ -29,6 +30,11 @@ interface TrainerPanelProps {
   sessionTarget: number;
   sessionKind: SessionKind;
   translationLanguage: TranslationLanguage;
+}
+
+export function TimedTrainerPanel({ clock, ...props }: Omit<TrainerPanelProps, 'timeLeft'> & { clock: PracticeClock }) {
+  const timeLeft = useSyncExternalStore(clock.subscribe, clock.getSnapshot, clock.getSnapshot);
+  return <TrainerPanel {...props} timeLeft={timeLeft} />;
 }
 
 const getTenseColor = (tense: Prompt['tense']) => {

@@ -4,6 +4,8 @@ import { type Language } from '../data/verbs';
 import { getAccuracy } from '../lib/scoring';
 import type { Attempt, PracticeStats } from '../types';
 import { RingMeter } from './ui/RingMeter';
+import { useSyncExternalStore } from 'react';
+import type { PracticeClock } from '../lib/practiceClock';
 
 interface ProgressPanelProps {
   activeLanguage: Language;
@@ -14,7 +16,7 @@ interface ProgressPanelProps {
   streak: number;
   cumulativeStats: PracticeStats;
   sessionTarget: number;
-  sessionElapsedSeconds: number;
+  elapsedClock: PracticeClock;
 }
 
 const formatElapsedTime = (totalSeconds: number) => {
@@ -27,6 +29,19 @@ const formatElapsedTime = (totalSeconds: number) => {
   return hours > 0 ? `${hours}:${paddedMinutes}:${paddedSeconds}` : `${paddedMinutes}:${paddedSeconds}`;
 };
 
+function SessionElapsed({ clock }: { clock: PracticeClock }) {
+  const { t } = useI18n();
+  const seconds = useSyncExternalStore(clock.subscribe, clock.getSnapshot, clock.getSnapshot);
+  const elapsedTime = formatElapsedTime(seconds);
+  return (
+    <div className="session-elapsed" aria-label={t('Training time {time}', { time: elapsedTime })}>
+      <Clock3 size={16} aria-hidden="true" />
+      <span>{t('Training time')}</span>
+      <strong>{elapsedTime}</strong>
+    </div>
+  );
+}
+
 export function ProgressPanel({
   activeLanguage,
   progress,
@@ -36,12 +51,11 @@ export function ProgressPanel({
   streak,
   cumulativeStats,
   sessionTarget,
-  sessionElapsedSeconds,
+  elapsedClock,
 }: ProgressPanelProps) {
   const { t, languageName } = useI18n();
   const allTimeAccuracy = getAccuracy(cumulativeStats.totalCorrect, cumulativeStats.totalAnswered);
   const remaining = Math.max(sessionTarget - progress, 0);
-  const elapsedTime = formatElapsedTime(sessionElapsedSeconds);
 
   return (
     <aside className="progress-panel" aria-label={t("Practice progress")}>
@@ -51,11 +65,7 @@ export function ProgressPanel({
           <h2>{t("This set")}</h2>
         </div>
         <RingMeter progressPercent={progressPercent} />
-        <div className="session-elapsed" aria-label={t('Training time {time}', { time: elapsedTime })}>
-          <Clock3 size={16} aria-hidden="true" />
-          <span>{t("Training time")}</span>
-          <strong>{elapsedTime}</strong>
-        </div>
+        <SessionElapsed clock={elapsedClock} />
         <p>{remaining > 0 ? t('{count} more to complete this set', { count: remaining }) : t('Set complete. Reset or keep going.')}</p>
       </section>
 

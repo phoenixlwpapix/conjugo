@@ -3,6 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Manrope:wght@400;500;600;700;800&display=swap" />
+    </noscript>
+    <script>
+      try {
+        const theme = localStorage.getItem('conjugo-theme');
+        document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light';
+      } catch {
+        // Use the default light theme when storage is unavailable.
+      }
+    </script>
     <meta
       name="description"
       content="ConjuGO helps learners practice English, French, Spanish, and Italian verb conjugations."

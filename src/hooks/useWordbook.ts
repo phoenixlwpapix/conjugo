@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { getVerbSearchText } from '../data/translations';
 import { isTenseAvailable, type Language, type TenseId } from '../data/verbs';
 import type { Prompt } from '../types';
+import { getStudyLanguageTag } from '../lib/i18n';
 
 export type WordbookSort = 'current' | 'alphabetical';
 export type WordbookView = 'list' | 'detail';
@@ -24,28 +25,27 @@ export const useWordbook = (activeLanguage: Language) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeLanguage.id]);
 
-  const filteredVerbs = useMemo(() => {
-    const normalizedQuery = wordbookQuery.trim().toLowerCase();
+  const searchEntries = useMemo(() => activeLanguage.verbs.map((verb) => ({
+    verb,
+    searchText: getVerbSearchText(activeLanguage, verb),
+  })), [activeLanguage]);
+  const verbIndex = useMemo(() => new Map(activeLanguage.verbs.map((verb) => [verb.infinitive, verb])), [activeLanguage.verbs]);
 
-    const matchingVerbs = activeLanguage.verbs.filter((verb) => {
-      if (!normalizedQuery) {
-        return true;
-      }
-
-      return getVerbSearchText(activeLanguage, verb).includes(normalizedQuery);
-    });
-
+  const sortedEntries = useMemo(() => {
     if (wordbookSort === 'alphabetical') {
-      return [...matchingVerbs].sort((first, second) =>
-        first.infinitive.localeCompare(second.infinitive, activeLanguage.id, { sensitivity: 'base' }),
-      );
+      const collator = new Intl.Collator(getStudyLanguageTag(activeLanguage.id), { sensitivity: 'base' });
+      return [...searchEntries].sort((first, second) => collator.compare(first.verb.infinitive, second.verb.infinitive));
     }
+    return searchEntries;
+  }, [activeLanguage.id, searchEntries, wordbookSort]);
 
-    return matchingVerbs;
-  }, [activeLanguage, wordbookQuery, wordbookSort]);
+  const filteredVerbs = useMemo(() => {
+    const query = wordbookQuery.trim().toLowerCase();
+    return sortedEntries.filter(({ searchText }) => !query || searchText.includes(query)).map(({ verb }) => verb);
+  }, [sortedEntries, wordbookQuery]);
 
   const selectedVerb =
-    activeLanguage.verbs.find((verb) => verb.infinitive === selectedVerbInfinitive) ??
+    verbIndex.get(selectedVerbInfinitive) ??
     filteredVerbs[0] ??
     activeLanguage.verbs[0];
 

@@ -27,7 +27,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,webp,svg,ico}'],
-        // styles.css pulls fonts from Google Fonts; cache them so the app looks the same offline.
+        // Cache the fonts linked from index.html for subsequent offline visits.
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\//,

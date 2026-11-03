@@ -37,6 +37,7 @@ import {
 } from '../lib/storage';
 import type { AppView, Attempt, PracticeStats, PracticeStatsByLanguage, Prompt, SessionKind, StoredMiss } from '../types';
 import { useWordbook } from './useWordbook';
+import { createPracticeClock } from '../lib/practiceClock';
 
 type PracticePreferences = {
   includeVosotros: boolean;
@@ -51,15 +52,14 @@ const resolveLanguage = (languageId: LanguageId, { includeVosotros }: PracticePr
 export function usePractice({ includeVosotros }: PracticePreferences) {
   const [languageId, setLanguageId] = useState<LanguageId>(readLanguageId);
   const [practiceTense, setPracticeTense] = useState<PracticeTenseId>(() =>
-    clampEnglishTense(readLanguageId(), readPracticeTense()),
+    clampEnglishTense(languageId, readPracticeTense()),
   );
   const [activeView, setActiveViewState] = useState<AppView>(readActiveView);
   const [storedMisses, setStoredMisses] = useState<StoredMiss[]>(readStoredMisses);
   const [statsByLanguage, setStatsByLanguage] = useState<PracticeStatsByLanguage>(readPracticeStatsByLanguage);
   const [sessionPrompts, setSessionPrompts] = useState(() => {
-    const language = resolveLanguage(readLanguageId(), { includeVosotros });
-    const tense = clampEnglishTense(language.id, readPracticeTense());
-    return createSessionPrompts(language, tense, getReviewTargets(language, tense, readStoredMisses()));
+    const language = resolveLanguage(languageId, { includeVosotros });
+    return createSessionPrompts(language, practiceTense, getReviewTargets(language, practiceTense, storedMisses));
   });
   const [promptIndex, setPromptIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -68,8 +68,8 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
   const [streak, setStreak] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(timerSeconds);
-  const [sessionElapsedSeconds, setSessionElapsedSeconds] = useState(0);
+  const [countdownClock] = useState(() => createPracticeClock(timerSeconds, -1));
+  const [elapsedClock] = useState(() => createPracticeClock(0, 1));
   const [timerEnabled, setTimerEnabled] = useState(readTimerEnabled);
   const [sessionKind, setSessionKind] = useState<SessionKind>('standard');
 
@@ -157,10 +157,10 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
       setShowCompletion(false);
       setSelectedAnswer(null);
       setTimedOut(false);
-      setTimeLeft(timerSeconds);
-      setSessionElapsedSeconds(0);
+      countdownClock.reset();
+      elapsedClock.reset();
     },
-    [clearAutoAdvance],
+    [clearAutoAdvance, countdownClock, elapsedClock],
   );
 
   const startSession = useCallback(
@@ -207,8 +207,8 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
     setPromptIndex((current) => Math.min(current + 1, sessionLength - 1));
     setSelectedAnswer(null);
     setTimedOut(false);
-    setTimeLeft(timerSeconds);
-  }, [clearAutoAdvance, sessionLength]);
+    countdownClock.reset();
+  }, [clearAutoAdvance, countdownClock, sessionLength]);
 
   const updateStats = useCallback((language: LanguageId, answer: RecordedAnswer) => {
     setStatsByLanguage((current) => ({
@@ -272,7 +272,7 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
           setPromptIndex((current) => Math.min(current + 1, sessionLength - 1));
           setSelectedAnswer(null);
           setTimedOut(false);
-          setTimeLeft(timerSeconds);
+          countdownClock.reset();
           autoAdvanceTimer.current = null;
         }, autoAdvanceDelayMs);
       }
@@ -282,6 +282,7 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
       clearAutoAdvance,
       correctAnswer,
       correctCount,
+      countdownClock,
       isAnswered,
       isSessionComplete,
       languageId,
@@ -321,21 +322,18 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
 
   useEffect(() => {
     if (!isAnswered && !isSessionComplete) {
-      setTimeLeft(timerSeconds);
+      countdownClock.reset();
     }
-  }, [promptIndex, isAnswered, isSessionComplete]);
+  }, [countdownClock, promptIndex, isAnswered, isSessionComplete]);
 
   useEffect(() => {
     if (activeView !== 'practice' || isSessionComplete || showCelebration || showCompletion) {
       return undefined;
     }
 
-    const interval = setInterval(() => {
-      setSessionElapsedSeconds((current) => current + 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [activeView, isSessionComplete, showCelebration, showCompletion]);
+    elapsedClock.start();
+    return elapsedClock.stop;
+  }, [activeView, elapsedClock, isSessionComplete, showCelebration, showCompletion]);
 
   useEffect(() => {
     if (
@@ -349,19 +347,9 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
       return undefined;
     }
 
-    // Updaters must stay pure (StrictMode may run them twice), so the timeout fires from the effect below.
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => Math.max(prev - 1, 0));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [activeView, isAnswered, isSessionComplete, showCelebration, showCompletion, timerEnabled]);
-
-  useEffect(() => {
-    if (timerEnabled && timeLeft === 0 && !isAnswered && !isSessionComplete) {
-      handleTimeout();
-    }
-  }, [handleTimeout, isAnswered, isSessionComplete, timeLeft, timerEnabled]);
+    countdownClock.start(handleTimeout);
+    return countdownClock.stop;
+  }, [activeView, countdownClock, handleTimeout, isAnswered, isSessionComplete, showCelebration, showCompletion, timerEnabled]);
 
   useEffect(
     () => () => {
@@ -468,8 +456,8 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
     sessionKind,
     dismissCelebration,
     dismissCompletion,
-    timeLeft,
-    sessionElapsedSeconds,
+    countdownClock,
+    elapsedClock,
     timerEnabled,
     toggleTimer,
     todayStats,

@@ -14,10 +14,12 @@ type WordBookProps = {
   bookTense: TenseId;
   filteredVerbs: VerbEntry[];
   onQueryChange: (query: string) => void;
+  onReturnToSession: (view: 'practice' | 'quiz') => void;
   onSelectVerb: (infinitive: string) => void;
   onSortChange: (sort: WordbookSort) => void;
   onTenseChange: (tense: TenseId) => void;
   query: string;
+  returnTo?: 'practice' | 'quiz';
   selectedVerb: VerbEntry;
   selectedVerbInfinitive: string;
   sort: WordbookSort;
@@ -31,10 +33,12 @@ export function WordBook({
   bookTense,
   filteredVerbs,
   onQueryChange,
+  onReturnToSession,
   onSelectVerb,
   onSortChange,
   onTenseChange,
   query,
+  returnTo,
   selectedVerb,
   selectedVerbInfinitive,
   sort,
@@ -62,6 +66,11 @@ export function WordBook({
     onViewChange('detail');
   };
 
+  const goBack = () => {
+    if (returnTo) onReturnToSession(returnTo);
+    else onViewChange('list');
+  };
+
   return (
     <section ref={layoutRef} className="wordbook-layout" data-view={view} aria-label={t('{language} verb book', { language: languageName(activeLanguage.id) })}>
       <VerbListPanel
@@ -76,9 +85,9 @@ export function WordBook({
         translationLanguage={translationLanguage}
       />
       <div className="wordbook-detail" ref={detailRef} tabIndex={-1}>
-        <nav className="wordbook-detail-nav" aria-label={t('Verb Book')}>
-          <button type="button" onClick={() => onViewChange('list')}>
-            <ArrowLeft size={18} aria-hidden="true" />{t('Back to verbs')}
+        <nav className="wordbook-detail-nav" data-return-to-session={Boolean(returnTo)} aria-label={t('Verb Book')}>
+          <button type="button" onClick={goBack}>
+            <ArrowLeft size={18} aria-hidden="true" />{t(returnTo === 'practice' ? 'Back to practice' : returnTo === 'quiz' ? 'Back to quiz' : 'Back to verbs')}
           </button>
           <div>
             <button type="button" aria-label={t('Previous verb')} disabled={selectedIndex <= 0} onClick={() => selectVerb(filteredVerbs[selectedIndex - 1].infinitive)}>

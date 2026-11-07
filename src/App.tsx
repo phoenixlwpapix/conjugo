@@ -63,6 +63,7 @@ export default function App() {
     setSelectedVerbInfinitive,
     filteredVerbs,
     openPromptInWordbook,
+    wordbookReturnView,
     selectedAnswer,
     timedOut,
     attempts,
@@ -142,6 +143,8 @@ export default function App() {
 
       if (isAnswered) {
         if (event.key === 'Enter' || event.key === ' ') {
+          // Let focused controls, including the Verb Book shortcut, handle activation.
+          if (event.target instanceof Element && event.target.closest('button:not(:disabled), a[href]')) return;
           event.preventDefault();
           if (isSessionComplete) {
             resetSession();
@@ -259,7 +262,7 @@ export default function App() {
                   selectChoice={selectChoice}
                   resetSession={resetSession}
                   moveNext={moveNext}
-                  onOpenWordbook={() => { openPromptInWordbook(prompt); setActiveView('wordbook'); }}
+                  onOpenWordbook={() => openPromptInWordbook(prompt, 'practice')}
                   clock={countdownClock}
                   timerEnabled={timerEnabled}
                   toggleTimer={toggleTimer}
@@ -314,7 +317,7 @@ export default function App() {
                 active={activeView === 'quiz'}
                 language={activeLanguage}
                 onAnswer={recordQuizResult}
-                onOpenWordbook={(quizPrompt) => { openPromptInWordbook(quizPrompt); setActiveView('wordbook'); }}
+                onOpenWordbook={(quizPrompt) => openPromptInWordbook(quizPrompt, 'quiz')}
               />
             </Suspense>
           )}
@@ -328,10 +331,12 @@ export default function App() {
                 bookTense={bookTense}
                 filteredVerbs={filteredVerbs}
                 onQueryChange={setWordbookQuery}
+                onReturnToSession={setActiveView}
                 onSortChange={setWordbookSort}
                 onSelectVerb={setSelectedVerbInfinitive}
                 onTenseChange={setBookTense}
                 query={wordbookQuery}
+                returnTo={wordbookReturnView}
                 sort={wordbookSort}
                 selectedVerb={selectedVerb}
                 selectedVerbInfinitive={selectedVerbInfinitive}

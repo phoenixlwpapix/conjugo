@@ -43,6 +43,10 @@ type PracticePreferences = {
   includeVosotros: boolean;
 };
 
+type Workspace =
+  | { view: AppView; returnTo?: undefined }
+  | { view: 'wordbook'; returnTo: 'practice' | 'quiz' };
+
 /** Applies learner preferences that change which prompts a language can produce. */
 const resolveLanguage = (languageId: LanguageId, { includeVosotros }: PracticePreferences): Language => {
   const language = languages.find((item) => item.id === languageId) ?? languages[0];
@@ -54,7 +58,7 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
   const [practiceTense, setPracticeTense] = useState<PracticeTenseId>(() =>
     clampEnglishTense(languageId, readPracticeTense()),
   );
-  const [activeView, setActiveViewState] = useState<AppView>(readActiveView);
+  const [{ view: activeView, returnTo: wordbookReturnView }, setWorkspace] = useState<Workspace>(() => ({ view: readActiveView() }));
   const [storedMisses, setStoredMisses] = useState<StoredMiss[]>(readStoredMisses);
   const [statsByLanguage, setStatsByLanguage] = useState<PracticeStatsByLanguage>(readPracticeStatsByLanguage);
   const [sessionPrompts, setSessionPrompts] = useState(() => {
@@ -142,8 +146,14 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
   }, []);
 
   const setActiveView = useCallback((view: AppView) => {
-    setActiveViewState(view);
+    setWorkspace({ view });
   }, []);
+
+  const openPromptInWordbook = (prompt: Prompt, returnTo: 'practice' | 'quiz') => {
+    if (returnTo === 'practice') clearAutoAdvance();
+    wordbook.openPromptInWordbook(prompt);
+    setWorkspace({ view: 'wordbook', returnTo });
+  };
 
   const beginSession = useCallback(
     (prompts: Prompt[], kind: SessionKind) => {
@@ -178,16 +188,16 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
     // Explicit review includes misses that aren't due yet; only due ones get promoted.
     const targets = getReviewTargets(activeLanguage, 'mixed', storedMissesRef.current, { dueOnly: false });
     beginSession(createMissSessionPrompts(activeLanguage, targets), 'review');
-    setActiveViewState('practice');
-  }, [activeLanguage, beginSession]);
+    setActiveView('practice');
+  }, [activeLanguage, beginSession, setActiveView]);
 
   const startVerbDrill = useCallback(
     (verbInfinitives: string[]) => {
       drillVerbsRef.current = verbInfinitives;
       beginSession(createVerbSessionPrompts(activeLanguage, verbInfinitives), 'verbs');
-      setActiveViewState('practice');
+      setActiveView('practice');
     },
-    [activeLanguage, beginSession],
+    [activeLanguage, beginSession, setActiveView],
   );
 
   const resetSession = useCallback(() => {
@@ -231,7 +241,6 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
         return;
       }
 
-      clearAutoAdvance();
       const choiceIsCorrect = choice === correctAnswer;
       const nextAttemptTotal = attempts.length + 1;
       const nextCorrectTotal = correctCount + (choiceIsCorrect ? 1 : 0);
@@ -264,25 +273,12 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
 
       if (nextAttemptTotal >= sessionLength) {
         setShowCompletion(true);
-        return;
-      }
-
-      if (choiceIsCorrect) {
-        autoAdvanceTimer.current = setTimeout(() => {
-          setPromptIndex((current) => Math.min(current + 1, sessionLength - 1));
-          setSelectedAnswer(null);
-          setTimedOut(false);
-          countdownClock.reset();
-          autoAdvanceTimer.current = null;
-        }, autoAdvanceDelayMs);
       }
     },
     [
       attempts.length,
-      clearAutoAdvance,
       correctAnswer,
       correctCount,
-      countdownClock,
       isAnswered,
       isSessionComplete,
       languageId,
@@ -351,12 +347,13 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
     return countdownClock.stop;
   }, [activeView, countdownClock, handleTimeout, isAnswered, isSessionComplete, showCelebration, showCompletion, timerEnabled]);
 
-  useEffect(
-    () => () => {
-      clearAutoAdvance();
-    },
-    [clearAutoAdvance],
-  );
+  const isReviewingPracticeAnswer = wordbookReturnView === 'practice';
+  useEffect(() => {
+    if (isReviewingPracticeAnswer || !isCorrect || isSessionComplete) return;
+
+    autoAdvanceTimer.current = setTimeout(moveNext, autoAdvanceDelayMs);
+    return clearAutoAdvance;
+  }, [clearAutoAdvance, isCorrect, isReviewingPracticeAnswer, isSessionComplete, moveNext]);
 
   const switchLanguage = useCallback(
     (nextLanguageId: LanguageId) => {
@@ -369,9 +366,10 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
       if (!isTenseAvailable(nextLanguageId, wordbook.bookTense)) {
         wordbook.setBookTense('present');
       }
+      if (nextLanguageId !== languageId && wordbookReturnView) setActiveView('wordbook');
       startSession(nextLanguage, nextTense);
     },
-    [includeVosotros, practiceTense, startSession, wordbook],
+    [includeVosotros, languageId, practiceTense, setActiveView, startSession, wordbook, wordbookReturnView],
   );
 
   const switchTense = useCallback(
@@ -386,9 +384,9 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
   const drillTense = useCallback(
     (tense: TenseId) => {
       switchTense(tense);
-      setActiveViewState('practice');
+      setActiveView('practice');
     },
-    [switchTense],
+    [setActiveView, switchTense],
   );
 
   // Toggling vosotros changes the Spanish prompt pool, so the running set would be stale.
@@ -427,7 +425,8 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
     selectedVerbInfinitive: wordbook.selectedVerbInfinitive,
     setSelectedVerbInfinitive: wordbook.setSelectedVerbInfinitive,
     filteredVerbs: wordbook.filteredVerbs,
-    openPromptInWordbook: wordbook.openPromptInWordbook,
+    openPromptInWordbook,
+    wordbookReturnView,
     selectedAnswer,
     timedOut,
     attempts,

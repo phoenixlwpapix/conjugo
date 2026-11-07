@@ -5,6 +5,7 @@ export type Locale = TranslationLanguage;
 
 export const chineseMessages = {
   "Back to verbs": "返回动词列表",
+  "Back to quiz": "返回句子测验",
   "Previous verb": "上一个动词",
   "Next verb": "下一个动词",
   "Imperative comparison": "命令式对照",

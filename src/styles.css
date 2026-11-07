@@ -3318,17 +3318,18 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
 .wordbook-tools { display: grid; gap: 12px; }
 .verb-list-panel { grid-template-rows: auto auto minmax(0, 1fr); }
 .wordbook-detail { min-width: 0; }
-.wordbook-detail-nav { display: none; }
+.wordbook-detail-nav { display: none; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.wordbook-detail-nav[data-return-to-session='true'] { display: flex; }
+.wordbook-detail-nav > div { display: none; gap: 6px; }
+.wordbook-detail-nav button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 0 10px; border: 1px solid var(--panel-border); border-radius: var(--radius-control); background: var(--paper-strong); color: var(--ink); font: inherit; font-size: var(--text-body); cursor: pointer; }
+.wordbook-detail-nav button:disabled { opacity: .35; cursor: default; }
 
 @media (max-width: 980px) {
   .wordbook-layout { scroll-margin-top: 90px; }
   .wordbook-layout[data-view='list'] .wordbook-detail,
   .wordbook-layout[data-view='detail'] .verb-list-panel { display: none; }
   .wordbook-detail:focus { outline: none; }
-  .wordbook-detail-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
-  .wordbook-detail-nav > div { display: flex; gap: 6px; }
-  .wordbook-detail-nav button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 0 10px; border: 1px solid var(--panel-border); border-radius: var(--radius-control); background: var(--paper-strong); color: var(--ink); font: inherit; font-size: var(--text-body); cursor: pointer; }
-  .wordbook-detail-nav button:disabled { opacity: .35; cursor: default; }
+  .wordbook-detail-nav, .wordbook-detail-nav > div { display: flex; }
   .wordbook-tools { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
   .wordbook-sort { gap: 2px; padding: 2px; }
   .wordbook-sort button { min-width: 40px; min-height: 40px; padding: 0 8px; }

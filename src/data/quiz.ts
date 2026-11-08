@@ -41,13 +41,16 @@ export const createQuizBank = (language: Language, tense: TenseId): QuizQuestion
     const sentence = scene.sentence[language.id];
     if (!sentence) throw new Error(`Missing ${language.id} quiz scene for ${tense}`);
     const answer = verb.forms[tense][scene.pronoun];
-    const alternatives = shuffle(available.filter((other) => other !== tense && (isImperative(tense) || !isImperative(other)))).map((other) => verb.forms[other][scene.pronoun]).filter(Boolean);
-    const fallback = shuffle((Object.keys(verb.forms) as TenseId[]).filter((id) => isImperative(tense) || !isImperative(id)).flatMap((id) =>
+    // These two French tenses can narrate the same event in different registers.
+    const alternateFrenchPast = language.id === 'french' && (tense === 'passeSimple' ? 'past' : tense === 'past' ? 'passeSimple' : null);
+    const canUseAsDistractor = (other: TenseId) => other !== alternateFrenchPast && (isImperative(tense) || !isImperative(other));
+    const alternatives = shuffle(available.filter((other) => other !== tense && canUseAsDistractor(other))).map((other) => verb.forms[other][scene.pronoun]).filter(Boolean);
+    const fallback = shuffle((Object.keys(verb.forms) as TenseId[]).filter(canUseAsDistractor).flatMap((id) =>
       getConjugationPronouns(language, id, verb).map((pronoun) => verb.forms[id][pronoun]),
     ));
     const choices = shuffle([...new Set([answer, ...[...alternatives, ...fallback].filter((form) => !isCommandVariant(language.id, verb.infinitive, tense, scene.pronoun, form))])].slice(0, 4));
     const addressee = getConjugationPronounLabel(language, tense, scene.pronoun);
-    const englishAnswer = scene.englishAnswer ?? englishVerb.forms[tense][scene.pronoun];
+    const englishAnswer = scene.englishAnswer ?? englishVerb.forms[tense === 'passeSimple' ? 'past' : tense][scene.pronoun];
     return {
       id: `${tense}-${index}`, tense, difficulty: scene.difficulty,
       sentence,

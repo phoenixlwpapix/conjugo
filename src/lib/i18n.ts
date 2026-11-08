@@ -219,6 +219,7 @@ export const getLanguageName = (id: LanguageId, locale: Locale): string => langu
 const tenseNames: Record<PracticeTenseId, Record<Locale, string>> = {
   present: { zh: '现在时', en: 'Present' },
   past: { zh: '过去时', en: 'Past' },
+  passeSimple: { zh: '简单过去时', en: 'Simple past' },
   imperfect: { zh: '未完成过去时', en: 'Imperfect' },
   future: { zh: '将来时', en: 'Future' },
   conditional: { zh: '条件式', en: 'Conditional' },

@@ -1,4 +1,4 @@
-import type { LanguageId, Pronoun, TenseId } from './verbs';
+import type { BaseVerbEntry, LanguageId, Pronoun, TenseId } from './verbs';
 
 export type ImperativeId = 'imperative' | 'imperativeNegative';
 export const isImperative = (tense: TenseId): tense is ImperativeId =>
@@ -9,7 +9,7 @@ export const isCommandVariant = (languageId: LanguageId, infinitive: string, ten
   languageId === 'spanish' && infinitive === 'ir' && tense === 'imperative' && pronoun === 'we' && form === 'vayamos';
 
 type PersonForms = Record<Pronoun, string>;
-type MoodVerb = { infinitive: string; translation: string; forms: Record<Exclude<TenseId, ImperativeId | 'imperfectSubjunctive'>, PersonForms> };
+type MoodVerb = BaseVerbEntry & { forms: { subjunctive: PersonForms } };
 const emptyForms = (): PersonForms => ({ I: '', you: '', 'he/she': '', we: '', 'you plural': '', they: '' });
 
 // Start with useful everyday commands; unsupported verbs stay out of drills.

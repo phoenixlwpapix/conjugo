@@ -1,5 +1,5 @@
 import { isImperative } from '../data/imperative';
-import { languages, type LanguageId, type PracticeTenseId, type Pronoun, type TenseId } from '../data/verbs';
+import { concreteTenses, languages, type LanguageId, type PracticeTenseId, type Pronoun, type TenseId } from '../data/verbs';
 import { isTranslationLanguage, type TranslationLanguage } from '../data/translations';
 import type { AnswerTally, AppView, FavoriteVerbsByLanguage, PracticeStats, PracticeStatsByLanguage, ReviewBox, StoredMiss } from '../types';
 import { capMissesPerLanguage } from './misses';
@@ -32,9 +32,9 @@ const legacyKeys = {
 } as const;
 
 const languageIds = languages.map((language) => language.id);
-const practiceTenses: PracticeTenseId[] = ['present', 'past', 'imperfect', 'future', 'conditional', 'subjunctive', 'imperfectSubjunctive', 'imperative', 'imperativeNegative', 'commands', 'mixed'];
+const tenseIds = concreteTenses.map(({ id }) => id);
+const practiceTenses: PracticeTenseId[] = [...tenseIds, 'commands', 'mixed'];
 const appViews: AppView[] = ['practice', 'quiz', 'stats', 'wordbook', 'settings'];
-const tenseIds: TenseId[] = ['present', 'past', 'imperfect', 'future', 'conditional', 'subjunctive', 'imperfectSubjunctive', 'imperative', 'imperativeNegative'];
 const pronounIds: Pronoun[] = ['I', 'you', 'he/she', 'we', 'you plural', 'they'];
 
 const canUseStorage = () => typeof window !== 'undefined' && 'localStorage' in window;

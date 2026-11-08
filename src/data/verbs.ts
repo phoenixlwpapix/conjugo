@@ -1,9 +1,10 @@
-import { withImperfectSubjunctive } from './imperfectSubjunctive';
+import { spanishImperfectSubjunctive } from './imperfectSubjunctive';
 import { isImperative, withImperative } from './imperative';
+import { frenchPasseSimple } from './passeSimple';
 import { englishSubjunctive, frenchSubjunctive, italianSubjunctive, spanishSubjunctive, withSubjunctive } from './subjunctive';
 
 export type LanguageId = 'english' | 'french' | 'spanish' | 'italian';
-export type TenseId = 'present' | 'past' | 'imperfect' | 'future' | 'conditional' | 'subjunctive' | 'imperfectSubjunctive' | 'imperative' | 'imperativeNegative';
+export type TenseId = 'present' | 'past' | 'passeSimple' | 'imperfect' | 'future' | 'conditional' | 'subjunctive' | 'imperfectSubjunctive' | 'imperative' | 'imperativeNegative';
 export type PracticeTenseId = TenseId | 'commands' | 'mixed';
 export type Pronoun = 'I' | 'you' | 'he/she' | 'we' | 'you plural' | 'they';
 
@@ -14,11 +15,11 @@ export type VerbEntry = {
   imperfectSubjunctiveSe?: Record<Pronoun, string>;
 };
 
-/** Authored indicative forms; subjunctive and supported commands are derived separately. */
+/** Authored forms before adding derived tenses and moods. */
 export type BaseVerbEntry = {
   infinitive: string;
   translation: string;
-  forms: Omit<VerbEntry['forms'], 'subjunctive' | 'imperfectSubjunctive' | 'imperative' | 'imperativeNegative'>;
+  forms: Omit<VerbEntry['forms'], 'passeSimple' | 'subjunctive' | 'imperfectSubjunctive' | 'imperative' | 'imperativeNegative'>;
 };
 
 export type Language = {
@@ -39,6 +40,7 @@ type Forms = BaseVerbEntry['forms'];
 export const concreteTenses: Array<{ id: TenseId; label: string }> = [
   { id: 'present', label: 'Present' },
   { id: 'past', label: 'Past' },
+  { id: 'passeSimple', label: 'Simple past' },
   { id: 'imperfect', label: 'Imperfect' },
   { id: 'future', label: 'Future' },
   { id: 'conditional', label: 'Conditional' },
@@ -51,8 +53,11 @@ export const concreteTenses: Array<{ id: TenseId; label: string }> = [
 /** English drills only cover the tenses it marks with distinct verb forms. */
 const englishTenses: TenseId[] = ['present', 'past', 'future'];
 
-export const isTenseAvailable = (languageId: LanguageId, tense: TenseId) =>
-  tense === 'imperfectSubjunctive' ? languageId === 'spanish' : languageId !== 'english' || englishTenses.includes(tense);
+export const isTenseAvailable = (languageId: LanguageId, tense: TenseId) => {
+  if (tense === 'passeSimple') return languageId === 'french';
+  if (tense === 'imperfectSubjunctive') return languageId === 'spanish';
+  return languageId !== 'english' || englishTenses.includes(tense);
+};
 
 export const getLanguageTenses = (languageId: LanguageId) =>
   concreteTenses.filter((tense) => isTenseAvailable(languageId, tense.id));
@@ -85,7 +90,7 @@ export const getConjugationPronounLabel = (language: Language, tense: TenseId, p
 
 export const getConjugationPronouns = (language: Language, tense: TenseId, verb?: VerbEntry): Pronoun[] =>
   getLanguagePronouns(language).filter((pronoun) => {
-    if (tense === 'imperfectSubjunctive' && language.id !== 'spanish') return false;
+    if (tense === 'imperfectSubjunctive' || tense === 'passeSimple') return isTenseAvailable(language.id, tense);
     if (!isImperative(tense)) return true;
     if (verb) return Boolean(verb.forms[tense][pronoun]);
     return language.verbs.some((entry) => Boolean(entry.forms[tense][pronoun]));
@@ -1682,6 +1687,20 @@ const italianVerbs: BaseVerbEntry[] = [
   italianAreVerb('cambiare', '改变'),
 ];
 
+const emptyForms = (): Record<Pronoun, string> => ({ I: '', you: '', 'he/she': '', we: '', 'you plural': '', they: '' });
+
+const buildVerbEntries = (verbs: BaseVerbEntry[], languageId: LanguageId, deriveSubjunctive: Parameters<typeof withSubjunctive>[1]): VerbEntry[] =>
+  withImperative(withSubjunctive(verbs, deriveSubjunctive), languageId).map((verb) => ({
+    ...verb,
+    forms: {
+      ...verb.forms,
+      passeSimple: languageId === 'french' ? frenchPasseSimple(verb.infinitive) : emptyForms(),
+      imperfectSubjunctive: languageId === 'spanish' ? spanishImperfectSubjunctive(verb, 'ra') : emptyForms(),
+    },
+    // The -se paradigm is reference data and is never a quiz target or distractor.
+    ...(languageId === 'spanish' ? { imperfectSubjunctiveSe: spanishImperfectSubjunctive(verb, 'se') } : {}),
+  }));
+
 export const languages: Language[] = [
   {
     id: 'english',
@@ -1690,8 +1709,8 @@ export const languages: Language[] = [
     accent: '#2563eb',
     darkAccent: '#6d9ff5',
     pronounLabels: { I: 'I', you: 'you', 'he/she': 'he/she', we: 'we', 'you plural': 'you (plural)', they: 'they' },
-    tenseLabels: { present: 'Present', past: 'Past', imperfect: 'Imperfect', future: 'Future', conditional: 'Conditional', subjunctive: 'Subjunctive', imperfectSubjunctive: 'Imperfect subjunctive', imperative: 'Affirmative imperative', imperativeNegative: 'Negative imperative', commands: 'Imperative', mixed: 'Mixed' },
-    verbs: withImperfectSubjunctive(withImperative(withSubjunctive(englishVerbs, englishSubjunctive), 'english'), 'english'),
+    tenseLabels: { present: 'Present', past: 'Past', passeSimple: 'Passé simple', imperfect: 'Imperfect', future: 'Future', conditional: 'Conditional', subjunctive: 'Subjunctive', imperfectSubjunctive: 'Imperfect subjunctive', imperative: 'Affirmative imperative', imperativeNegative: 'Negative imperative', commands: 'Imperative', mixed: 'Mixed' },
+    verbs: buildVerbEntries(englishVerbs, 'english', englishSubjunctive),
   },
   {
     id: 'french',
@@ -1700,8 +1719,8 @@ export const languages: Language[] = [
     accent: '#0f766e',
     darkAccent: '#5ec4b8',
     pronounLabels: { I: 'je', you: 'tu', 'he/she': 'il/elle', we: 'nous', 'you plural': 'vous', they: 'ils/elles' },
-    tenseLabels: { present: 'Présent', past: 'Passé composé', imperfect: 'Imparfait', future: 'Futur', conditional: 'Conditionnel', subjunctive: 'Subjonctif', imperfectSubjunctive: 'Imperfecto de subjuntivo', imperative: 'Impératif affirmatif', imperativeNegative: 'Impératif négatif', commands: 'Impératif', mixed: 'Mixte' },
-    verbs: withImperfectSubjunctive(withImperative(withSubjunctive(frenchVerbs, frenchSubjunctive), 'french'), 'french'),
+    tenseLabels: { present: 'Présent', past: 'Passé composé', passeSimple: 'Passé simple', imperfect: 'Imparfait', future: 'Futur', conditional: 'Conditionnel', subjunctive: 'Subjonctif', imperfectSubjunctive: 'Imperfecto de subjuntivo', imperative: 'Impératif affirmatif', imperativeNegative: 'Impératif négatif', commands: 'Impératif', mixed: 'Mixte' },
+    verbs: buildVerbEntries(frenchVerbs, 'french', frenchSubjunctive),
   },
   {
     id: 'spanish',
@@ -1710,8 +1729,8 @@ export const languages: Language[] = [
     accent: '#d97706',
     darkAccent: '#f5a623',
     pronounLabels: { I: 'yo', you: 'tú', 'he/she': 'él/ella', we: 'nosotros', 'you plural': 'vosotros/as', they: 'ellos/ellas' },
-    tenseLabels: { present: 'Presente', past: 'Pretérito', imperfect: 'Imperfecto', future: 'Futuro', conditional: 'Condicional', subjunctive: 'Subjuntivo', imperfectSubjunctive: 'Imperfecto de subjuntivo', imperative: 'Imperativo afirmativo', imperativeNegative: 'Imperativo negativo', commands: 'Imperativo', mixed: 'Mixto' },
-    verbs: withImperfectSubjunctive(withImperative(withSubjunctive(spanishVerbs, spanishSubjunctive), 'spanish'), 'spanish'),
+    tenseLabels: { present: 'Presente', past: 'Pretérito', passeSimple: 'Passé simple', imperfect: 'Imperfecto', future: 'Futuro', conditional: 'Condicional', subjunctive: 'Subjuntivo', imperfectSubjunctive: 'Imperfecto de subjuntivo', imperative: 'Imperativo afirmativo', imperativeNegative: 'Imperativo negativo', commands: 'Imperativo', mixed: 'Mixto' },
+    verbs: buildVerbEntries(spanishVerbs, 'spanish', spanishSubjunctive),
   },
   {
     id: 'italian',
@@ -1720,7 +1739,7 @@ export const languages: Language[] = [
     accent: '#be123c',
     darkAccent: '#f06680',
     pronounLabels: { I: 'io', you: 'tu', 'he/she': 'lui/lei', we: 'noi', 'you plural': 'voi', they: 'loro' },
-    tenseLabels: { present: 'Presente', past: 'Passato prossimo', imperfect: 'Imperfetto', future: 'Futuro', conditional: 'Condizionale', subjunctive: 'Congiuntivo', imperfectSubjunctive: 'Imperfecto de subjuntivo', imperative: 'Imperativo affermativo', imperativeNegative: 'Imperativo negativo', commands: 'Imperativo', mixed: 'Misto' },
-    verbs: withImperfectSubjunctive(withImperative(withSubjunctive(italianVerbs, italianSubjunctive), 'italian'), 'italian'),
+    tenseLabels: { present: 'Presente', past: 'Passato prossimo', passeSimple: 'Passé simple', imperfect: 'Imperfetto', future: 'Futuro', conditional: 'Condizionale', subjunctive: 'Congiuntivo', imperfectSubjunctive: 'Imperfecto de subjuntivo', imperative: 'Imperativo affermativo', imperativeNegative: 'Imperativo negativo', commands: 'Imperativo', mixed: 'Misto' },
+    verbs: buildVerbEntries(italianVerbs, 'italian', italianSubjunctive),
   },
 ];

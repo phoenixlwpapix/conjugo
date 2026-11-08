@@ -70,6 +70,20 @@ describe('storage', () => {
     expect(readPracticeStatsByLanguage().spanish!.byTense.imperfectSubjunctive).toEqual({ answered: 3, correct: 2 });
   });
 
+  it('preserves French passé simple selection, misses, and statistics across reloads', () => {
+    writePracticeTense('passeSimple');
+    expect(readPracticeTense()).toBe('passeSimple');
+    const miss = { ...legacyMiss, languageId: 'french' as const, verbInfinitive: 'venir', tense: 'passeSimple' as const, pronoun: 'you' as const, answer: 'vins', box: 1 as const, dueAt: 1 };
+    writeStoredMisses([miss]);
+    expect(readStoredMisses()).toEqual([miss]);
+    const stats = readPracticeStatsByLanguage();
+    stats.french!.byTense.passeSimple = { answered: 3, correct: 2 };
+    stats.french!.quiz.byTense.passeSimple = { answered: 2, correct: 1 };
+    writePracticeStatsByLanguage(stats);
+    expect(readPracticeStatsByLanguage().french!.byTense.passeSimple).toEqual({ answered: 3, correct: 2 });
+    expect(readPracticeStatsByLanguage().french!.quiz.byTense.passeSimple).toEqual({ answered: 2, correct: 1 });
+  });
+
   it('defaults the timer to off', () => {
     expect(readTimerEnabled()).toBe(false);
     store.set('conjugo.timerEnabled', 'true');

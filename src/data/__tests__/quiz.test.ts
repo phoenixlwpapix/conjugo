@@ -76,6 +76,21 @@ describe('authored quiz scenes', () => {
     expect(question?.explanation.zh).toContain('去药店买药');
   });
 
+  it('teaches the literary French past without competing compound-past answers', () => {
+    const french = languages.find(({ id }) => id === 'french')!;
+    const literaryPast = createQuizBank(french, 'passeSimple');
+    const question = literaryPast.find(({ verb, pronoun }) => verb.infinitive === 'manger' && pronoun === 'we')!;
+    expect(question.sentence.replace('____', question.answer)).toBe('Nous mangeâmes à l’auberge, puis nous reprîmes la route.');
+    expect(question.translation.en).toBe('We ate at the inn and then set off again.');
+    expect(question.explanation.zh).toContain('简单过去时（Passé simple）');
+    for (const entry of literaryPast) {
+      expect(entry.choices).toHaveLength(4);
+      expect(entry.choices).not.toContain(entry.verb.forms.past[entry.pronoun]);
+    }
+    const compoundPast = createQuizBank(french, 'past').find(({ verb }) => verb.infinitive === 'aller')!;
+    expect(compoundPast.choices).not.toContain(compoundPast.verb.forms.passeSimple[compoundPast.pronoun]);
+  });
+
   it.each([
     ['english', 'present', 'his bed', 'makes', 'Every morning before leaving, Leo makes his bed.'],
     ['english', 'present', 'the truth', 'tell', 'You always tell the truth when you speak with your friends.'],

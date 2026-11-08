@@ -13,7 +13,10 @@ import {
 } from '../data/verbs';
 import type { Pronoun, Prompt, ReviewTarget } from '../types';
 
-export const sessionTarget = 20;
+export const practiceQuestionCounts = [10, 20, 30, 40] as const;
+export type PracticeQuestionCount = (typeof practiceQuestionCounts)[number];
+export const defaultPracticeQuestionCount = 20;
+export const defaultQuizQuestionCount = 10;
 export const autoAdvanceDelayMs = 1200;
 export const timerSeconds = 8;
 
@@ -72,8 +75,8 @@ const choosePromptPronounLabel = (language: Language, verb: VerbEntry, tense: Te
     isGenderAgreeingForm(language.id, tense, verb.forms[tense][pronoun]),
   );
 
-export const createPromptPool = (language: Language, practiceTense: PracticeTenseId): Prompt[] =>
-  language.verbs.flatMap((verb) =>
+export const createPromptPool = (language: Language, practiceTense: PracticeTenseId, verbInfinitives?: ReadonlySet<string>): Prompt[] =>
+  (verbInfinitives ? language.verbs.filter((verb) => verbInfinitives.has(verb.infinitive)) : language.verbs).flatMap((verb) =>
     getPracticeTenses(practiceTense, language.id).flatMap((tense) =>
       getConjugationPronouns(language, tense, verb).map((pronoun) => {
         const selectedPronounLabel = choosePromptPronounLabel(language, verb, tense, pronoun);
@@ -109,45 +112,45 @@ export const createSessionPrompts = (
   language: Language,
   practiceTense: PracticeTenseId,
   reviewTargets: ReviewTarget[] = [],
+  { limit = defaultPracticeQuestionCount, verbInfinitives }: { limit?: number; verbInfinitives?: ReadonlySet<string> } = {},
 ) => {
-  const promptPool = createPromptPool(language, practiceTense);
-  const reviewLimit = Math.min(Math.ceil(sessionTarget * 0.3), reviewTargets.length);
+  const promptPool = createPromptPool(language, practiceTense, verbInfinitives);
+  const reviewLimit = Math.ceil(Math.min(limit, promptPool.length) * 0.3);
   const reviewPrompts = shufflePrompts(reviewTargets)
     .map((target) => promptPool.find((prompt) => matchesReviewTarget(prompt, target)))
     .filter((prompt): prompt is Prompt => Boolean(prompt))
     .slice(0, reviewLimit);
   const reviewKeys = new Set(reviewPrompts.map(getPromptKey));
   const freshPool = shufflePrompts(promptPool.filter((prompt) => !reviewKeys.has(getPromptKey(prompt))));
-  const freshPrompts = practiceTense === 'commands'
-    ? getPracticeTenses(practiceTense, language.id).flatMap((tense) =>
-      freshPool.filter((prompt) => prompt.tense === tense).slice(
-        0, sessionTarget / 2 - reviewPrompts.filter((prompt) => prompt.tense === tense).length,
-      ),
-    )
-    : freshPool.slice(0, sessionTarget - reviewPrompts.length);
+  const remaining = limit - reviewPrompts.length;
+  if (practiceTense !== 'commands') {
+    return shufflePrompts([...reviewPrompts, ...freshPool.slice(0, remaining)]);
+  }
 
-  return shufflePrompts([...reviewPrompts, ...freshPrompts]).slice(0, sessionTarget);
+  const balanced = getPracticeTenses(practiceTense, language.id).flatMap((tense, index) => {
+    const quota = index === 0 ? Math.ceil(limit / 2) : Math.floor(limit / 2);
+    const reviewCount = reviewPrompts.filter((prompt) => prompt.tense === tense).length;
+    return freshPool.filter((prompt) => prompt.tense === tense).slice(0, Math.max(0, quota - reviewCount));
+  });
+  const sampled = new Set(balanced);
+  const extra = freshPool.filter((prompt) => !sampled.has(prompt)).slice(0, Math.max(0, remaining - balanced.length));
+  return shufflePrompts([...reviewPrompts, ...balanced.slice(0, remaining), ...extra]);
 };
 
 /** Targets arrive in priority order (due first), so trim before shuffling. */
-export const createMissSessionPrompts = (language: Language, reviewTargets: ReviewTarget[]): Prompt[] => {
+export const createMissSessionPrompts = (language: Language, reviewTargets: ReviewTarget[], limit = defaultPracticeQuestionCount): Prompt[] => {
   const promptPool = getLanguageTenses(language.id).flatMap(({ id }) => createPromptPool(language, id));
   const reviewPrompts = reviewTargets
     .map((target) => promptPool.find((prompt) => matchesReviewTarget(prompt, target)))
     .filter((prompt): prompt is Prompt => Boolean(prompt))
-    .slice(0, sessionTarget);
+    .slice(0, limit);
 
   return shufflePrompts(reviewPrompts);
 };
 
 /** A focused set drawn from every tense of the given verbs. */
-export const createVerbSessionPrompts = (language: Language, verbInfinitives: string[]): Prompt[] => {
-  const focusVerbs = new Set(verbInfinitives);
-  return shufflePrompts(createPromptPool(language, 'mixed').filter((prompt) => focusVerbs.has(prompt.verb.infinitive))).slice(
-    0,
-    sessionTarget,
-  );
-};
+export const createVerbSessionPrompts = (language: Language, verbInfinitives: string[], limit = defaultPracticeQuestionCount): Prompt[] =>
+  shufflePrompts(createPromptPool(language, 'mixed', new Set(verbInfinitives))).slice(0, limit);
 
 export const getFallbackPrompt = (language: Language, practiceTense: PracticeTenseId): Prompt => {
   for (const tense of getPracticeTenses(clampEnglishTense(language.id, practiceTense), language.id)) {

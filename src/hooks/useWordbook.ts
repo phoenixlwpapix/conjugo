@@ -7,12 +7,13 @@ import { getStudyLanguageTag } from '../lib/i18n';
 export type WordbookSort = 'current' | 'alphabetical';
 export type WordbookView = 'list' | 'detail';
 
-export const useWordbook = (activeLanguage: Language) => {
+export const useWordbook = (activeLanguage: Language, favoriteVerbs: ReadonlySet<string>) => {
   const [bookTense, setBookTense] = useState<TenseId>('present');
   const [selectedVerbInfinitive, setSelectedVerbInfinitive] = useState(activeLanguage.verbs[0]?.infinitive ?? '');
   const [wordbookQuery, setWordbookQuery] = useState('');
   const [wordbookSort, setWordbookSort] = useState<WordbookSort>('current');
   const [wordbookView, setWordbookView] = useState<WordbookView>('list');
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
   useEffect(() => {
     setSelectedVerbInfinitive(activeLanguage.verbs[0]?.infinitive ?? '');
@@ -41,8 +42,10 @@ export const useWordbook = (activeLanguage: Language) => {
 
   const filteredVerbs = useMemo(() => {
     const query = wordbookQuery.trim().toLowerCase();
-    return sortedEntries.filter(({ searchText }) => !query || searchText.includes(query)).map(({ verb }) => verb);
-  }, [sortedEntries, wordbookQuery]);
+    return sortedEntries
+      .filter(({ verb, searchText }) => (!showOnlyFavorites || favoriteVerbs.has(verb.infinitive)) && (!query || searchText.includes(query)))
+      .map(({ verb }) => verb);
+  }, [favoriteVerbs, showOnlyFavorites, sortedEntries, wordbookQuery]);
 
   const selectedVerb =
     verbIndex.get(selectedVerbInfinitive) ??
@@ -53,6 +56,7 @@ export const useWordbook = (activeLanguage: Language) => {
     setSelectedVerbInfinitive(prompt.verb.infinitive);
     setBookTense(prompt.tense);
     setWordbookQuery('');
+    if (!favoriteVerbs.has(prompt.verb.infinitive)) setShowOnlyFavorites(false);
     setWordbookView('detail');
   };
 
@@ -64,6 +68,8 @@ export const useWordbook = (activeLanguage: Language) => {
     selectedVerbInfinitive: selectedVerb?.infinitive ?? '',
     setBookTense,
     setSelectedVerbInfinitive,
+    setShowOnlyFavorites,
+    showOnlyFavorites,
     setWordbookQuery,
     setWordbookSort,
     wordbookQuery,

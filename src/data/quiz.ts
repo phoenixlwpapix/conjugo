@@ -1,5 +1,6 @@
 import { isCommandVariant, isImperative } from './imperative';
 import { getLocalizedTenseName, type Locale } from '../lib/i18n';
+import { defaultQuizQuestionCount, type PracticeQuestionCount } from '../lib/prompts';
 import { getConjugationPronouns, getConjugationPronounLabel, getLanguageTenses, languages, type Language, type PracticeTenseId, type Pronoun, type TenseId, type VerbEntry } from './verbs';
 import { quizScenes, quizVerbs } from './quizScenes';
 
@@ -60,12 +61,18 @@ export const createQuizBank = (language: Language, tense: TenseId): QuizQuestion
   });
 };
 
-export const createQuizQuestions = (language: Language, selectedTense: PracticeTenseId | readonly PracticeTenseId[]): QuizQuestion[] => {
+export const createQuizQuestions = (
+  language: Language,
+  selectedTense: PracticeTenseId | readonly PracticeTenseId[],
+  limit: PracticeQuestionCount = defaultQuizQuestionCount,
+): QuizQuestion[] => {
   const selections = typeof selectedTense === 'string' ? [selectedTense] : selectedTense;
   const tenses = getLanguageTenses(language.id).map(({ id }) => id).filter((tense) => selections.some((selection) => selection === 'mixed' ? !isImperative(tense) : selection === 'commands' ? isImperative(tense) : tense === selection));
-  const pool = tenses.flatMap((tense) => createQuizBank(language, tense));
-  if (selections.length === 1 && selections[0] === 'commands') return shuffle(tenses.flatMap((tense) => shuffle(pool.filter((question) => question.tense === tense)).slice(0, 5)));
-  if (tenses.length <= 1) return shuffle(pool).slice(0, 10);
-  const selected = tenses.flatMap((tense) => shuffle(pool.filter((question) => question.tense === tense)).slice(0, 1));
-  return shuffle([...selected, ...shuffle(pool.filter((question) => !selected.includes(question))).slice(0, 10 - selected.length)]);
+  const banks = tenses.map((tense) => shuffle(createQuizBank(language, tense)));
+  if (banks.length <= 1) return banks[0]?.slice(0, limit) ?? [];
+
+  const perTense = selections.length === 1 && selections[0] === 'commands' ? limit / 2 : 1;
+  const selected = banks.flatMap((bank) => bank.slice(0, perTense));
+  const remaining = banks.flatMap((bank) => bank.slice(perTense));
+  return shuffle([...selected, ...shuffle(remaining).slice(0, limit - selected.length)]);
 };

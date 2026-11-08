@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  getConjugationPronouns,
   getLanguagePronouns,
   isTenseAvailable,
   languages,
@@ -18,17 +19,21 @@ import {
   getAnswer,
   getChoices,
   getFallbackPrompt,
+  getPracticeTenses,
   timerSeconds,
+  type PracticeQuestionCount,
 } from '../lib/prompts';
 import { emptyStats, getAccuracy, getDailyStats, getSevenDayTrend, recordAnswer, recordQuizAnswer, type RecordedAnswer } from '../lib/scoring';
 import {
   readActiveView,
+  readFavoriteVerbs,
   readLanguageId,
   readPracticeStatsByLanguage,
   readPracticeTense,
   readStoredMisses,
   readTimerEnabled,
   writeActiveView,
+  writeFavoriteVerbs,
   writeLanguageId,
   writePracticeStatsByLanguage,
   writePracticeTense,
@@ -41,6 +46,7 @@ import { createPracticeClock } from '../lib/practiceClock';
 
 type PracticePreferences = {
   includeVosotros: boolean;
+  practiceQuestionCount: PracticeQuestionCount;
 };
 
 type Workspace =
@@ -48,12 +54,12 @@ type Workspace =
   | { view: 'wordbook'; returnTo: 'practice' | 'quiz' };
 
 /** Applies learner preferences that change which prompts a language can produce. */
-const resolveLanguage = (languageId: LanguageId, { includeVosotros }: PracticePreferences): Language => {
+const resolveLanguage = (languageId: LanguageId, includeVosotros: boolean): Language => {
   const language = languages.find((item) => item.id === languageId) ?? languages[0];
   return language.id === 'spanish' && !includeVosotros ? { ...language, excludedPronouns: ['you plural'] } : language;
 };
 
-export function usePractice({ includeVosotros }: PracticePreferences) {
+export function usePractice({ includeVosotros, practiceQuestionCount }: PracticePreferences) {
   const [languageId, setLanguageId] = useState<LanguageId>(readLanguageId);
   const [practiceTense, setPracticeTense] = useState<PracticeTenseId>(() =>
     clampEnglishTense(languageId, readPracticeTense()),
@@ -61,17 +67,17 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
   const [{ view: activeView, returnTo: wordbookReturnView }, setWorkspace] = useState<Workspace>(() => ({ view: readActiveView() }));
   const [storedMisses, setStoredMisses] = useState<StoredMiss[]>(readStoredMisses);
   const [statsByLanguage, setStatsByLanguage] = useState<PracticeStatsByLanguage>(readPracticeStatsByLanguage);
+  const [favoritesByLanguage, setFavoritesByLanguage] = useState(readFavoriteVerbs);
   const [sessionPrompts, setSessionPrompts] = useState(() => {
-    const language = resolveLanguage(languageId, { includeVosotros });
-    return createSessionPrompts(language, practiceTense, getReviewTargets(language, practiceTense, storedMisses));
+    const language = resolveLanguage(languageId, includeVosotros);
+    return createSessionPrompts(language, practiceTense, getReviewTargets(language, practiceTense, storedMisses), { limit: practiceQuestionCount });
   });
   const [promptIndex, setPromptIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [timedOut, setTimedOut] = useState(false);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [streak, setStreak] = useState(0);
-  const [showCelebration, setShowCelebration] = useState(false);
-  const [showCompletion, setShowCompletion] = useState(false);
+  const [reviewingLastAnswer, setReviewingLastAnswer] = useState(false);
   const [countdownClock] = useState(() => createPracticeClock(timerSeconds, -1));
   const [elapsedClock] = useState(() => createPracticeClock(0, 1));
   const [timerEnabled, setTimerEnabled] = useState(readTimerEnabled);
@@ -83,11 +89,19 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
   const selectedAnswerRef = useRef(selectedAnswer);
   const isSessionCompleteRef = useRef(false);
 
-  const activeLanguage = useMemo(() => resolveLanguage(languageId, { includeVosotros }), [includeVosotros, languageId]);
-  const wordbook = useWordbook(activeLanguage);
+  const activeLanguage = useMemo(() => resolveLanguage(languageId, includeVosotros), [includeVosotros, languageId]);
+  const activeFavorites = favoritesByLanguage[languageId];
+  const favoriteVerbs = useMemo(() => new Set(activeFavorites), [activeFavorites]);
+  const wordbook = useWordbook(activeLanguage, favoriteVerbs);
 
   const stats: PracticeStats = statsByLanguage[languageId] ?? emptyStats();
   const sessionLength = sessionPrompts.length;
+  const isEmptyFavoriteSession = sessionKind === 'favorites' && sessionLength === 0;
+  const canStartFavoriteSession = isEmptyFavoriteSession && getPracticeTenses(practiceTense, languageId).some((tense) =>
+    activeLanguage.verbs.some((verb) =>
+      favoriteVerbs.has(verb.infinitive) && getConjugationPronouns(activeLanguage, tense, verb).length > 0,
+    ),
+  );
   const prompt =
     sessionPrompts[Math.min(promptIndex, sessionPrompts.length - 1)] ?? getFallbackPrompt(activeLanguage, practiceTense);
   const choices = useMemo(() => getChoices(prompt, promptIndex), [prompt, promptIndex]);
@@ -138,6 +152,22 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
     writePracticeStatsByLanguage(statsByLanguage);
   }, [statsByLanguage]);
 
+  useEffect(() => {
+    writeFavoriteVerbs(favoritesByLanguage);
+  }, [favoritesByLanguage]);
+
+  const toggleFavorite = (infinitive: string) => {
+    setFavoritesByLanguage((current) => {
+      const favorites = current[languageId] ?? [];
+      return {
+        ...current,
+        [languageId]: favorites.includes(infinitive)
+          ? favorites.filter((verb) => verb !== infinitive)
+          : [...favorites, infinitive],
+      };
+    });
+  };
+
   const clearAutoAdvance = useCallback(() => {
     if (autoAdvanceTimer.current) {
       clearTimeout(autoAdvanceTimer.current);
@@ -163,8 +193,7 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
       setPromptIndex(0);
       setAttempts([]);
       setStreak(0);
-      setShowCelebration(false);
-      setShowCompletion(false);
+      setReviewingLastAnswer(false);
       setSelectedAnswer(null);
       setTimedOut(false);
       countdownClock.reset();
@@ -174,43 +203,62 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
   );
 
   const startSession = useCallback(
-    (language: Language = activeLanguage, tense: PracticeTenseId = practiceTense) => {
+    (language: Language, tense: PracticeTenseId, kind: 'standard' | 'favorites') => {
       const nextTense = clampEnglishTense(language.id, tense);
+      const verbInfinitives = kind === 'favorites' ? new Set(favoritesByLanguage[language.id]) : undefined;
       beginSession(
-        createSessionPrompts(language, nextTense, getReviewTargets(language, nextTense, storedMissesRef.current)),
-        'standard',
+        createSessionPrompts(language, nextTense, getReviewTargets(language, nextTense, storedMissesRef.current), {
+          limit: practiceQuestionCount,
+          verbInfinitives,
+        }),
+        kind,
       );
     },
-    [activeLanguage, beginSession, practiceTense],
+    [beginSession, favoritesByLanguage, practiceQuestionCount],
   );
+
+  const practiceScope = sessionKind === 'favorites' ? 'favorites' : 'standard';
+  const switchPracticeScope = (kind: 'standard' | 'favorites') => {
+    if (kind !== sessionKind) startSession(activeLanguage, practiceTense, kind);
+  };
 
   const startMissReview = useCallback(() => {
     // Explicit review includes misses that aren't due yet; only due ones get promoted.
     const targets = getReviewTargets(activeLanguage, 'mixed', storedMissesRef.current, { dueOnly: false });
-    beginSession(createMissSessionPrompts(activeLanguage, targets), 'review');
+    beginSession(createMissSessionPrompts(activeLanguage, targets, practiceQuestionCount), 'review');
     setActiveView('practice');
-  }, [activeLanguage, beginSession, setActiveView]);
+  }, [activeLanguage, beginSession, practiceQuestionCount, setActiveView]);
 
   const startVerbDrill = useCallback(
     (verbInfinitives: string[]) => {
       drillVerbsRef.current = verbInfinitives;
-      beginSession(createVerbSessionPrompts(activeLanguage, verbInfinitives), 'verbs');
+      beginSession(createVerbSessionPrompts(activeLanguage, verbInfinitives, practiceQuestionCount), 'verbs');
       setActiveView('practice');
     },
-    [activeLanguage, beginSession, setActiveView],
+    [activeLanguage, beginSession, practiceQuestionCount, setActiveView],
   );
 
   const resetSession = useCallback(() => {
     if (sessionKind === 'review') {
       const targets = getReviewTargets(activeLanguage, 'mixed', storedMissesRef.current, { dueOnly: false });
       // A mastered queue can still be repeated without silently changing modes.
-      beginSession(targets.length ? createMissSessionPrompts(activeLanguage, targets) : [...sessionPrompts], 'review');
+      beginSession(
+        targets.length ? createMissSessionPrompts(activeLanguage, targets, practiceQuestionCount) : sessionPrompts.slice(0, practiceQuestionCount),
+        'review',
+      );
     } else if (sessionKind === 'verbs') {
-      beginSession(createVerbSessionPrompts(activeLanguage, drillVerbsRef.current), 'verbs');
+      beginSession(createVerbSessionPrompts(activeLanguage, drillVerbsRef.current, practiceQuestionCount), 'verbs');
     } else {
-      startSession(activeLanguage, practiceTense);
+      startSession(activeLanguage, practiceTense, sessionKind);
     }
-  }, [activeLanguage, beginSession, practiceTense, sessionKind, sessionPrompts, startSession]);
+  }, [activeLanguage, beginSession, practiceQuestionCount, practiceTense, sessionKind, sessionPrompts, startSession]);
+
+  const previousPracticeQuestionCount = useRef(practiceQuestionCount);
+  useEffect(() => {
+    if (previousPracticeQuestionCount.current === practiceQuestionCount) return;
+    previousPracticeQuestionCount.current = practiceQuestionCount;
+    if (attempts.length === 0) resetSession();
+  }, [attempts.length, practiceQuestionCount, resetSession]);
 
   const moveNext = useCallback(() => {
     clearAutoAdvance();
@@ -243,9 +291,7 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
 
       const choiceIsCorrect = choice === correctAnswer;
       const nextAttemptTotal = attempts.length + 1;
-      const nextCorrectTotal = correctCount + (choiceIsCorrect ? 1 : 0);
       const nextStreak = choiceIsCorrect ? streak + 1 : 0;
-      const perfectSetComplete = choiceIsCorrect && nextAttemptTotal >= sessionLength && nextCorrectTotal >= sessionLength;
       const attempt: Attempt = { prompt, answer: choice, correct: choiceIsCorrect };
 
       setSelectedAnswer(choice);
@@ -265,20 +311,10 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
       } else {
         setStoredMisses((current) => upsertMiss(current, prompt));
       }
-
-      if (perfectSetComplete) {
-        setShowCelebration(true);
-        return;
-      }
-
-      if (nextAttemptTotal >= sessionLength) {
-        setShowCompletion(true);
-      }
     },
     [
       attempts.length,
       correctAnswer,
-      correctCount,
       isAnswered,
       isSessionComplete,
       languageId,
@@ -310,10 +346,6 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
       verbInfinitive: prompt.verb.infinitive,
     });
     setStoredMisses((current) => upsertMiss(current, prompt));
-
-    if (nextAttemptTotal >= sessionLength) {
-      setShowCompletion(true);
-    }
   }, [attempts.length, languageId, prompt, sessionKind, sessionLength, updateStats]);
 
   useEffect(() => {
@@ -323,21 +355,19 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
   }, [countdownClock, promptIndex, isAnswered, isSessionComplete]);
 
   useEffect(() => {
-    if (activeView !== 'practice' || isSessionComplete || showCelebration || showCompletion) {
+    if (activeView !== 'practice' || isSessionComplete) {
       return undefined;
     }
 
     elapsedClock.start();
     return elapsedClock.stop;
-  }, [activeView, elapsedClock, isSessionComplete, showCelebration, showCompletion]);
+  }, [activeView, elapsedClock, isSessionComplete]);
 
   useEffect(() => {
     if (
       !timerEnabled ||
       isAnswered ||
       isSessionComplete ||
-      showCelebration ||
-      showCompletion ||
       activeView !== 'practice'
     ) {
       return undefined;
@@ -345,19 +375,18 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
 
     countdownClock.start(handleTimeout);
     return countdownClock.stop;
-  }, [activeView, countdownClock, handleTimeout, isAnswered, isSessionComplete, showCelebration, showCompletion, timerEnabled]);
+  }, [activeView, countdownClock, handleTimeout, isAnswered, isSessionComplete, timerEnabled]);
 
-  const isReviewingPracticeAnswer = wordbookReturnView === 'practice';
   useEffect(() => {
-    if (isReviewingPracticeAnswer || !isCorrect || isSessionComplete) return;
+    if (activeView !== 'practice' || !isCorrect || isSessionComplete) return;
 
     autoAdvanceTimer.current = setTimeout(moveNext, autoAdvanceDelayMs);
     return clearAutoAdvance;
-  }, [clearAutoAdvance, isCorrect, isReviewingPracticeAnswer, isSessionComplete, moveNext]);
+  }, [activeView, clearAutoAdvance, isCorrect, isSessionComplete, moveNext]);
 
   const switchLanguage = useCallback(
     (nextLanguageId: LanguageId) => {
-      const nextLanguage = resolveLanguage(nextLanguageId, { includeVosotros });
+      const nextLanguage = resolveLanguage(nextLanguageId, includeVosotros);
       const nextTense = clampEnglishTense(nextLanguageId, practiceTense);
       setLanguageId(nextLanguageId);
       if (nextTense !== practiceTense) {
@@ -367,26 +396,28 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
         wordbook.setBookTense('present');
       }
       if (nextLanguageId !== languageId && wordbookReturnView) setActiveView('wordbook');
-      startSession(nextLanguage, nextTense);
+      startSession(nextLanguage, nextTense, practiceScope);
     },
-    [includeVosotros, languageId, practiceTense, setActiveView, startSession, wordbook, wordbookReturnView],
+    [includeVosotros, languageId, practiceScope, practiceTense, setActiveView, startSession, wordbook, wordbookReturnView],
   );
 
   const switchTense = useCallback(
     (nextTense: PracticeTenseId) => {
       const tense = clampEnglishTense(languageId, nextTense);
       setPracticeTense(tense);
-      startSession(activeLanguage, tense);
+      startSession(activeLanguage, tense, practiceScope);
     },
-    [activeLanguage, languageId, startSession],
+    [activeLanguage, languageId, practiceScope, startSession],
   );
 
   const drillTense = useCallback(
     (tense: TenseId) => {
-      switchTense(tense);
+      const nextTense = clampEnglishTense(languageId, tense);
+      setPracticeTense(nextTense);
+      startSession(activeLanguage, nextTense, 'standard');
       setActiveView('practice');
     },
-    [setActiveView, switchTense],
+    [activeLanguage, languageId, setActiveView, startSession],
   );
 
   // Toggling vosotros changes the Spanish prompt pool, so the running set would be stale.
@@ -398,12 +429,11 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
 
     previousIncludeVosotros.current = includeVosotros;
     if (activeLanguage.id === 'spanish') {
-      startSession(activeLanguage, practiceTense);
+      startSession(activeLanguage, practiceTense, practiceScope);
     }
-  }, [activeLanguage, includeVosotros, practiceTense, startSession]);
+  }, [activeLanguage, includeVosotros, practiceScope, practiceTense, startSession]);
 
-  const dismissCelebration = useCallback(() => setShowCelebration(false), []);
-  const dismissCompletion = useCallback(() => setShowCompletion(false), []);
+  const toggleResults = useCallback(() => setReviewingLastAnswer((current) => !current), []);
   const toggleTimer = useCallback(() => setTimerEnabled((prev) => !prev), []);
 
   return {
@@ -411,6 +441,11 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
     switchLanguage,
     practiceTense,
     switchTense,
+    switchPracticeScope,
+    favoriteVerbs,
+    toggleFavorite,
+    isEmptyFavoriteSession,
+    canStartFavoriteSession,
     activeView,
     setActiveView,
     bookTense: wordbook.bookTense,
@@ -425,14 +460,16 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
     selectedVerbInfinitive: wordbook.selectedVerbInfinitive,
     setSelectedVerbInfinitive: wordbook.setSelectedVerbInfinitive,
     filteredVerbs: wordbook.filteredVerbs,
+    showOnlyFavorites: wordbook.showOnlyFavorites,
+    setShowOnlyFavorites: wordbook.setShowOnlyFavorites,
     openPromptInWordbook,
     wordbookReturnView,
     selectedAnswer,
     timedOut,
     attempts,
     streak,
-    showCelebration,
-    showCompletion,
+    reviewingLastAnswer,
+    toggleResults,
     stats,
     storedMisses: languageMisses,
     allStoredMisses: storedMisses,
@@ -453,8 +490,6 @@ export function usePractice({ includeVosotros }: PracticePreferences) {
     startVerbDrill,
     drillTense,
     sessionKind,
-    dismissCelebration,
-    dismissCompletion,
     countdownClock,
     elapsedClock,
     timerEnabled,

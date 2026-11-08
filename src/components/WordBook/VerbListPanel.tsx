@@ -1,13 +1,18 @@
 import { getStudyLanguageTag } from '../../lib/i18n';
 import { useI18n } from '../../hooks/useI18n';
-import { ArrowDownAZ, List, Search } from 'lucide-react';
+import { ArrowDownAZ, List, Search, Star } from 'lucide-react';
 import { getVerbTranslation, type TranslationLanguage } from '../../data/translations';
 import type { Language, VerbEntry } from '../../data/verbs';
 import type { WordbookSort } from '../../hooks/useWordbook';
+import { FavoriteButton } from './FavoriteButton';
 
 type VerbListPanelProps = {
   activeLanguage: Language;
   filteredVerbs: VerbEntry[];
+  favoriteVerbs: ReadonlySet<string>;
+  showOnlyFavorites: boolean;
+  onToggleFavorite: (infinitive: string) => void;
+  onFavoritesFilterChange: (show: boolean) => void;
   onQueryChange: (query: string) => void;
   onSelectVerb: (infinitive: string) => void;
   onSortChange: (sort: WordbookSort) => void;
@@ -20,6 +25,10 @@ type VerbListPanelProps = {
 export function VerbListPanel({
   activeLanguage,
   filteredVerbs,
+  favoriteVerbs,
+  showOnlyFavorites,
+  onToggleFavorite,
+  onFavoritesFilterChange,
   onQueryChange,
   onSelectVerb,
   onSortChange,
@@ -36,7 +45,7 @@ export function VerbListPanel({
           <span className="eyebrow">{languageName(activeLanguage.id)}</span>
           <h1 className="workspace-title">{t("Verb Book")}</h1>
         </div>
-        <span>{t('{count} verbs', { count: activeLanguage.verbs.length })}</span>
+        <span>{t('{count} verbs', { count: showOnlyFavorites ? favoriteVerbs.size : activeLanguage.verbs.length })}</span>
       </div>
 
       <div className="wordbook-tools">
@@ -73,24 +82,32 @@ export function VerbListPanel({
             A–Z
           </button>
         </div>
+        <button className="favorites-filter" aria-pressed={showOnlyFavorites} onClick={() => onFavoritesFilterChange(!showOnlyFavorites)} type="button">
+          <Star size={15} fill={showOnlyFavorites ? 'currentColor' : 'none'} aria-hidden="true" />
+          {t('Favorites only')}
+        </button>
       </div>
 
       <div className="verb-list" aria-label={t('{language} verbs', { language: languageName(activeLanguage.id) })}>
         {filteredVerbs.length === 0 ? (
-          <p className="empty-state">{t("No verbs match this search.")}</p>
+          <p className="empty-state">
+            {t(showOnlyFavorites && favoriteVerbs.size === 0 ? 'No favorite verbs yet.' : 'No verbs match this search.')}
+          </p>
         ) : (
           filteredVerbs.map((verb) => (
-            <button
-              className="verb-list-item"
-              data-active={selectedVerbInfinitive === verb.infinitive}
-              aria-pressed={selectedVerbInfinitive === verb.infinitive}
-              key={verb.infinitive}
-              onClick={() => onSelectVerb(verb.infinitive)}
-              type="button"
-            >
-              <strong lang={getStudyLanguageTag(activeLanguage.id)}>{verb.infinitive}</strong>
-              <span>{getVerbTranslation(activeLanguage, verb, translationLanguage)}</span>
-            </button>
+            <div className="verb-list-row" key={verb.infinitive}>
+              <button
+                className="verb-list-item"
+                data-active={selectedVerbInfinitive === verb.infinitive}
+                aria-pressed={selectedVerbInfinitive === verb.infinitive}
+                onClick={() => onSelectVerb(verb.infinitive)}
+                type="button"
+              >
+                <strong lang={getStudyLanguageTag(activeLanguage.id)}>{verb.infinitive}</strong>
+                <span>{getVerbTranslation(activeLanguage, verb, translationLanguage)}</span>
+              </button>
+              <FavoriteButton infinitive={verb.infinitive} isFavorite={favoriteVerbs.has(verb.infinitive)} onToggle={onToggleFavorite} />
+            </div>
           ))
         )}
       </div>

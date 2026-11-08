@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { readPracticeTense, writePracticeTense, writePracticeStatsByLanguage, readPracticeStatsByLanguage, readStoredMisses, readTimerEnabled, readTranslationLanguage, writeStoredMisses } from '../storage';
+import {
+  readActiveView, readFavoriteVerbs, readPracticeQuestionCount, readPracticeStatsByLanguage, readPracticeTense, readQuizQuestionCount,
+  readStoredMisses, readTimerEnabled, readTranslationLanguage, writeActiveView, writeFavoriteVerbs,
+  writePracticeQuestionCount, writePracticeStatsByLanguage, writePracticeTense, writeQuizQuestionCount, writeStoredMisses,
+} from '../storage';
 
 const legacyMiss = {
   languageId: 'spanish',
@@ -70,6 +74,38 @@ describe('storage', () => {
     expect(readTimerEnabled()).toBe(false);
     store.set('conjugo.timerEnabled', 'true');
     expect(readTimerEnabled()).toBe(true);
+  });
+
+  it('persists the settings view and validates the practice question count', () => {
+    expect(readPracticeQuestionCount()).toBe(20);
+    writeActiveView('settings');
+    writePracticeQuestionCount(30);
+    expect(readActiveView()).toBe('settings');
+    expect(readPracticeQuestionCount()).toBe(30);
+    store.set('conjugo.practiceQuestionCount', '99');
+    expect(readPracticeQuestionCount()).toBe(20);
+  });
+
+  it('stores the quiz question count independently of the existing practice preference', () => {
+    store.set('conjugo.practiceQuestionCount', '30');
+    expect(readQuizQuestionCount()).toBe(10);
+    writeQuizQuestionCount(40);
+    expect(readQuizQuestionCount()).toBe(40);
+    expect(readPracticeQuestionCount()).toBe(30);
+    writePracticeQuestionCount(10);
+    expect(readQuizQuestionCount()).toBe(40);
+    store.set('conjugo.quizQuestionCount', '99');
+    expect(readQuizQuestionCount()).toBe(10);
+  });
+
+  it('stores favorites by learning language and ignores invalid or duplicate entries', () => {
+    expect(readFavoriteVerbs()).toEqual({});
+    writeFavoriteVerbs({ spanish: ['tener'], french: ['être'] });
+    expect(readFavoriteVerbs()).toEqual({ spanish: ['tener'], french: ['être'] });
+    store.set('conjugo.favoriteVerbs', JSON.stringify({ spanish: ['tener', 'tener', 'être', 4], french: false }));
+    expect(readFavoriteVerbs()).toEqual({ spanish: ['tener'] });
+    writeFavoriteVerbs({ spanish: [] });
+    expect(readFavoriteVerbs()).toEqual({ spanish: [] });
   });
 
   it('preserves the existing translation preference as the global interface locale', () => {

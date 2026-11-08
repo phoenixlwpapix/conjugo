@@ -2,11 +2,13 @@ import { getStudyLanguageTag } from '../lib/i18n';
 import { useI18n } from '../hooks/useI18n';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import type { PracticeClock } from '../lib/practiceClock';
-import { TimerReset, Check, X, RotateCcw, ArrowRight, BookOpenText } from 'lucide-react';
+import { TimerReset } from 'lucide-react';
 import { getPronounLabel, timerSeconds } from '../lib/prompts';
 import type { Attempt, Prompt, SessionKind } from '../types';
 import type { PracticeTenseId } from '../data/verbs';
 import { getVerbTranslation, type TranslationLanguage } from '../data/translations';
+import { SessionResult } from './SessionResult';
+import { AnswerChoices, AnswerFeedback, QuestionHeader, QuestionTense } from './PracticeQuestion';
 
 interface TrainerPanelProps {
   attempts: Attempt[];
@@ -19,7 +21,8 @@ interface TrainerPanelProps {
   isAnswered: boolean;
   isCorrect: boolean;
   isSessionComplete: boolean;
-  showCelebration: boolean;
+  reviewingLastAnswer: boolean;
+  toggleResults: () => void;
   selectChoice: (choice: string) => void;
   resetSession: () => void;
   moveNext: () => void;
@@ -37,15 +40,6 @@ export function TimedTrainerPanel({ clock, ...props }: Omit<TrainerPanelProps, '
   return <TrainerPanel {...props} timeLeft={timeLeft} />;
 }
 
-const getTenseColor = (tense: Prompt['tense']) => {
-  if (tense === 'present') return 'var(--green)';
-  if (tense === 'past') return 'var(--red)';
-  if (tense === 'imperfect') return 'var(--purple)';
-  if (tense === 'conditional') return 'var(--gold)';
-  if (tense === 'subjunctive' || tense === 'imperfectSubjunctive') return 'var(--teal)';
-  return 'var(--blue)';
-};
-
 export function TrainerPanel({
   attempts,
   prompt,
@@ -57,7 +51,8 @@ export function TrainerPanel({
   isAnswered,
   isCorrect,
   isSessionComplete,
-  showCelebration,
+  reviewingLastAnswer,
+  toggleResults,
   selectChoice,
   resetSession,
   moveNext,
@@ -69,17 +64,37 @@ export function TrainerPanel({
   sessionKind,
   translationLanguage,
 }: TrainerPanelProps) {
-  const { t, languageName, tenseName } = useI18n();
+  const { t, languageName } = useI18n();
   const actionButtonRef = useRef<HTMLButtonElement>(null);
+  const questionHeadingRef = useRef<HTMLHeadingElement>(null);
+  const wasComplete = useRef(isSessionComplete);
+  const showResults = isSessionComplete && attempts.length > 0 && !reviewingLastAnswer;
+  const panelLabel = t('Multiple choice verb conjugation drill');
+  const outcomes = attempts.map((attempt) => attempt.correct ? 'correct' : 'wrong');
 
   useEffect(() => {
-    if (isAnswered && !isCorrect) {
+    if (wasComplete.current && !isSessionComplete) {
+      questionHeadingRef.current?.focus();
+    } else if (isAnswered && !showResults && (isSessionComplete || !isCorrect)) {
       actionButtonRef.current?.focus();
     }
-  }, [isAnswered, isCorrect]);
+    wasComplete.current = isSessionComplete;
+  }, [isAnswered, isCorrect, isSessionComplete, showResults]);
+
+  if (showResults) {
+    return (
+      <section className="trainer-panel" data-stage="finished" aria-label={panelLabel}>
+        <SessionResult
+          mode="practice"
+          outcomes={outcomes}
+          onRestart={resetSession}
+          onReviewLastAnswer={toggleResults}
+        />
+      </section>
+    );
+  }
 
   const pronounLabel = getPronounLabel(prompt);
-  const tenseLabel = tenseName(prompt.language, prompt.tense);
   const translation = getVerbTranslation(prompt.language, prompt.verb, translationLanguage);
   const sessionTag = sessionKind === 'review' ? t('Review misses') : sessionKind === 'verbs' ? t('Hardest verbs') : practiceTense === 'mixed' ? t('Mixed practice') : null;
   const showAlertStyle = !isAnswered && timeLeft <= 3;
@@ -104,16 +119,14 @@ export function TrainerPanel({
   const iconColor = !timerEnabled ? 'var(--muted)' : timedOut || showAlertStyle ? 'var(--red)' : 'var(--ink)';
 
   return (
-    <section className="trainer-panel" aria-label={t("Multiple choice verb conjugation drill")}>
-      <div className="trainer-head">
-        <div>
-          <span className="eyebrow">
-            {t('Question {number}', { number: currentQuestion })}
-            <span className="question-total"> / {sessionTarget}</span>
-          </span>
-          <h1 className="workspace-title">{t('Select the correct verb form')}</h1>
-        </div>
-
+    <section className="trainer-panel" aria-label={panelLabel}>
+      <QuestionHeader
+        title={t('Select the correct verb form')}
+        current={currentQuestion}
+        total={sessionTarget}
+        outcomes={outcomes}
+        headingRef={questionHeadingRef}
+      >
         <button
           className="timer-ring-btn"
           onClick={toggleTimer}
@@ -166,13 +179,7 @@ export function TrainerPanel({
           />
           {showAlertStyle && timerEnabled && <span className="timer-pulse-ring" aria-hidden="true" />}
         </button>
-      </div>
-
-      <div className="question-progress" aria-hidden="true">
-        {Array.from({ length: sessionTarget }, (_, index) => (
-          <span key={index} data-state={attempts[index] ? (attempts[index].correct ? 'correct' : 'wrong') : !isAnswered && index === currentQuestion - 1 ? 'current' : 'pending'} />
-        ))}
-      </div>
+      </QuestionHeader>
 
       <div className="prompt-card">
         {!isAnswered && timerEnabled && (
@@ -185,9 +192,7 @@ export function TrainerPanel({
 
         <div className="prompt-main prompt-main-stack">
           <div className="prompt-context prompt-context-row">
-            <span className="tense-badge" data-tense={prompt.tense} style={{ background: getTenseColor(prompt.tense) }}>
-              {tenseLabel}
-            </span>
+            <QuestionTense language={prompt.language} tense={prompt.tense} />
             <div className="prompt-meta-tags">
               {sessionTag && <span className="mixed-mode-tag">{sessionTag}</span>}
               <span>{languageName(prompt.language.id)}</span>
@@ -207,68 +212,33 @@ export function TrainerPanel({
         </div>
       </div>
 
-      <div className="choice-grid" aria-label={t("Answer choices")}>
-        {choices.map((choice, index) => {
-          const isSelectedChoice = selectedAnswer === choice;
-          const isCorrectChoice = isAnswered && choice === correctAnswer;
-          const isWrongChoice = isAnswered && isSelectedChoice && choice !== correctAnswer;
+      <AnswerChoices
+        languageId={prompt.language.id}
+        choices={choices}
+        selected={selectedAnswer}
+        correctAnswer={correctAnswer}
+        answered={isAnswered}
+        onSelect={selectChoice}
+      />
 
-          return (
-            <button
-              aria-label={t('Option {letter}: {answer}', { letter: String.fromCharCode(65 + index), answer: choice })}
-              className="choice-card"
-              data-correct={isCorrectChoice}
-              data-wrong={isWrongChoice}
-              disabled={isAnswered}
-              key={`${index}-${choice}`}
-              onClick={() => selectChoice(choice)}
-              type="button"
-            >
-              <span className="choice-index">{String.fromCharCode(65 + index)}</span>
-              <strong lang={getStudyLanguageTag(prompt.language.id)}>{choice}</strong>
-              {isCorrectChoice && <Check size={18} aria-label={t("Correct answer")} />}
-              {isWrongChoice && <X size={18} aria-label={t("Wrong answer")} />}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="answer-dock" data-result={isAnswered ? (isCorrect ? 'correct' : 'wrong') : 'idle'}>
-        {isAnswered ? (
-          <>
-            <div>
-              <strong>{t(timedOut ? "Time's up!" : isCorrect ? 'Correct!' : 'Wrong answer')}</strong>
-              <span>
-                {isCorrect
-                  ? !showCelebration && !isSessionComplete
-                    ? t('next question loading')
-                    : ''
-                  : `${pronounLabel} → ${correctAnswer}`}
-              </span>
-            </div>
-            <button aria-label={t('View in verb book')} className="wordbook-link" onClick={onOpenWordbook} title={t('View in verb book')} type="button">
-              <BookOpenText size={16} aria-hidden="true" />
-            </button>
-            {(isSessionComplete || !isCorrect) &&
-              (isSessionComplete ? (
-                <button ref={actionButtonRef} className="next-button" onClick={resetSession} type="button">
-                  {t("New set")}
-                  <RotateCcw size={17} aria-hidden="true" />
-                </button>
-              ) : (
-                <button ref={actionButtonRef} className="next-button" onClick={moveNext} type="button">
-                  {t("Next")}
-                  <ArrowRight size={17} aria-hidden="true" />
-                </button>
-              ))}
-          </>
-        ) : (
-          <div>
+      {isAnswered ? (
+        <AnswerFeedback
+          result={isCorrect ? 'correct' : 'wrong'}
+          title={t(timedOut ? "Time's up!" : isCorrect ? 'Correct!' : 'Wrong answer')}
+          description={isCorrect ? (isSessionComplete ? undefined : t('next question loading')) : `${pronounLabel} → ${correctAnswer}`}
+          onOpenWordbook={onOpenWordbook}
+          onNext={isSessionComplete ? toggleResults : !isCorrect ? moveNext : undefined}
+          nextRef={actionButtonRef}
+          finalQuestion={isSessionComplete}
+        />
+      ) : (
+        <div className="answer-dock" data-result="idle">
+          <div className="answer-hint">
             <strong>{t("Choose one answer card.")}</strong>
             <span>{t("Use A–D or 1–4 on your keyboard.")}</span>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -20,7 +20,6 @@ export function SegmentedControl<OptionId extends string>({
     const container = containerRef.current;
     if (!container) return;
     const centerSelection = () => {
-      if (!window.matchMedia('(max-width: 980px)').matches) return;
       if (container.scrollWidth <= container.clientWidth) return;
       const activeButton = container.querySelector<HTMLButtonElement>('[aria-pressed="true"]');
       if (!activeButton || !container.clientWidth) return;

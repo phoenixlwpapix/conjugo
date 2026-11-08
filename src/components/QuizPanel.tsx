@@ -1,33 +1,38 @@
 import { isImperative } from '../data/imperative';
 import { useI18n } from '../hooks/useI18n';
 import { getStudyLanguageTag, type MessageKey } from '../lib/i18n';
-import { useCallback, useEffect, useState } from 'react';
-import { ArrowRight, BookOpenText, Check, Flame, RotateCcw, Target, Trophy, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowRight, Check } from 'lucide-react';
 import { createQuizQuestions, type QuizQuestion } from '../data/quiz';
 import { getConjugationPronounLabel, getLanguagePracticeTenses, type Language, type PracticeTenseId } from '../data/verbs';
 import { getAccuracy, type RecordedAnswer } from '../lib/scoring';
-import { isEditableElement } from '../lib/focusTrap';
+import { isEditableElement } from '../lib/keyboard';
+import type { PracticeQuestionCount } from '../lib/prompts';
 import type { Prompt } from '../types';
+import { SessionResult, type SessionOutcome } from './SessionResult';
+import { AnswerChoices, AnswerFeedback, QuestionHeader, QuestionTense } from './PracticeQuestion';
+import { SessionMetrics, SessionProgressCard } from './ProgressPanel';
 
 type QuizPanelProps = {
   active: boolean;
   language: Language;
+  questionCount: PracticeQuestionCount;
   onAnswer: (answer: RecordedAnswer, prompt: Prompt) => void;
   onOpenWordbook: (prompt: Prompt) => void;
 };
 
-type Outcome = 'correct' | 'wrong' | 'skipped';
 const difficultyLabels: Record<QuizQuestion['difficulty'], MessageKey> = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
-const outcomeLabels: Record<Outcome | 'current' | 'pending', MessageKey> = { correct: 'Correct', wrong: 'Missed', skipped: 'Skipped', current: 'Current question', pending: 'Not answered' };
 
-export function QuizPanel({ active, language, onAnswer, onOpenWordbook }: QuizPanelProps) {
-  const { t, locale, languageName, tenseName } = useI18n();
+export function QuizPanel({ active, language, questionCount, onAnswer, onOpenWordbook }: QuizPanelProps) {
+  const { t, locale, tenseName } = useI18n();
   const [selectedTenses, setSelectedTenses] = useState<PracticeTenseId[]>(() => getLanguagePracticeTenses(language.id).map(({ id }) => id));
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
-  const [outcomes, setOutcomes] = useState<Outcome[]>([]);
+  const [outcomes, setOutcomes] = useState<SessionOutcome[]>([]);
   const [streak, setStreak] = useState(0);
+  const quizHeadingRef = useRef<HTMLHeadingElement>(null);
+  const feedbackRef = useRef<HTMLDivElement>(null);
   const question = questions[index];
   const finished = questions.length > 0 && index === questions.length;
   const correctCount = outcomes.filter((outcome) => outcome === 'correct').length;
@@ -35,6 +40,7 @@ export function QuizPanel({ active, language, onAnswer, onOpenWordbook }: QuizPa
   const accuracy = getAccuracy(correctCount, answeredCount);
   const options = getLanguagePracticeTenses(language.id);
   const allSelected = selectedTenses.length === options.length;
+  const isAnswered = selected !== null;
   const selectionLabel = selectedTenses.length === 1
     ? tenseName(language, selectedTenses[0])
     : t('Selected {count} tenses or moods', { count: selectedTenses.length });
@@ -44,13 +50,16 @@ export function QuizPanel({ active, language, onAnswer, onOpenWordbook }: QuizPa
     ? { spanish: 'él', french: 'il', italian: 'lui', english: 'he' }[language.id]
     : question ? language.pronounLabels[question.pronoun] : '';
 
-  const start = () => {
-    if (selectedTenses.length === 0) return;
-    setQuestions(createQuizQuestions(language, selectedTenses));
+  const resetRound = (nextQuestions: QuizQuestion[]) => {
+    setQuestions(nextQuestions);
     setIndex(0);
     setSelected(null);
     setOutcomes([]);
     setStreak(0);
+  };
+
+  const start = () => {
+    if (selectedTenses.length > 0) resetRound(createQuizQuestions(language, selectedTenses, questionCount));
   };
 
   const answer = useCallback((choice: string) => {
@@ -75,9 +84,18 @@ export function QuizPanel({ active, language, onAnswer, onOpenWordbook }: QuizPa
   }, []);
 
   useEffect(() => {
+    if (!active || finished) return;
+    if (isAnswered) {
+      feedbackRef.current?.focus();
+    } else {
+      quizHeadingRef.current?.focus();
+    }
+  }, [active, finished, isAnswered, question]);
+
+  useEffect(() => {
     if (!active) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!question || finished || event.defaultPrevented || event.repeat || event.altKey || event.ctrlKey || event.metaKey || isEditableElement(event.target) || document.querySelector('[aria-modal="true"]')) return;
+      if (!question || finished || event.defaultPrevented || event.repeat || event.altKey || event.ctrlKey || event.metaKey || isEditableElement(event.target)) return;
       const key = event.key.toLowerCase();
       if (selected === null) {
         const choiceIndex = ['a', 'b', 'c', 'd'].indexOf(key);
@@ -99,12 +117,12 @@ export function QuizPanel({ active, language, onAnswer, onOpenWordbook }: QuizPa
 
   return (
     <section className="quiz-page" hidden={!active} data-stage={questions.length === 0 ? 'setup' : finished ? 'finished' : 'playing'} aria-label={t('Quiz mode')}>
-      <div className="quiz-layout">
+      <div className="practice-layout">
         {questions.length === 0 ? (
-          <div className="quiz-card quiz-setup-card">
+          <div className="trainer-panel" data-stage="setup">
             <div className="quiz-card-heading">
-              <h1 className="workspace-title">{t('Quiz')}</h1>
-              <p>{t('Select one or more tenses or moods. Each round has 10 questions with explanations after you answer.')}</p>
+              <h1 className="workspace-title" ref={quizHeadingRef} tabIndex={-1}>{t('Quiz')}</h1>
+              <p>{t('Select one or more tenses or moods. Each round has up to {count} questions with explanations after you answer.', { count: questionCount })}</p>
             </div>
             <div className="quiz-selection-toolbar">
               <span aria-live="polite">{selectionLabel}</span>
@@ -138,104 +156,80 @@ export function QuizPanel({ active, language, onAnswer, onOpenWordbook }: QuizPa
             </div>
           </div>
         ) : finished ? (
-          <div className="quiz-card quiz-finish">
-            <span className="quiz-step">{t('Round complete')}</span>
-            <strong>{correctCount}<span> / 10</span></strong>
-            <h2>{t(correctCount >= 8 ? 'Well mastered' : correctCount >= 5 ? 'Keep practicing' : 'Try another round')}</h2>
-            <p>{t('Your results have been added to your statistics and tense/mood breakdown. Try a new set of questions.')}</p>
-            <div className="quiz-actions">
-              <button className="quiz-primary" onClick={start} type="button"><RotateCcw size={17} aria-hidden="true" /> {t('New quiz')}</button>
-              <button className="quiz-secondary" onClick={() => setQuestions([])} type="button">{t('Change tense or mood')}</button>
-            </div>
+          <div className="trainer-panel" data-stage="finished">
+            <SessionResult
+              mode="quiz"
+              outcomes={outcomes}
+              streak={streak}
+              onRestart={start}
+              onChangeTenses={() => resetRound([])}
+            />
           </div>
         ) : question && displaySentence && (
-          <div className="quiz-card quiz-question-card">
-            <div className="quiz-topline">
-              <span className="quiz-step">{t('Question {number} / {count}', { number: index + 1, count: questions.length })}</span>
-              <span className="quiz-difficulty">{t(difficultyLabels[question.difficulty])}</span>
-            </div>
-            <div className="quiz-progress-track" aria-label={t('Completed {number} / {count} questions', { number: answeredCount, count: questions.length })}>
-              <span style={{ width: `${(answeredCount / questions.length) * 100}%` }} />
-            </div>
-            <div className="quiz-question">
-              <div className="quiz-question-meta">
-                <span className="quiz-tense-tag">{selectedTenses.length > 1 ? selectionLabel : tenseName(language, question.tense)}</span>
-                <span>{question.verb.infinitive} · {subjectHint}</span>
+          <div className="trainer-panel">
+            <QuestionHeader
+              title={t('Complete the sentence')}
+              current={index + 1}
+              total={questions.length}
+              outcomes={outcomes}
+              headingRef={quizHeadingRef}
+            />
+            <div className="prompt-card">
+              <div className="sentence-prompt">
+                <div className="prompt-context prompt-context-row">
+                  {isAnswered || selectedTenses.length === 1
+                    ? <QuestionTense language={language} tense={question.tense} />
+                    : <span className="mixed-mode-tag">{t('Mixed practice')}</span>}
+                  <div className="prompt-meta-tags">
+                    <span lang={getStudyLanguageTag(language.id)}>{subjectHint} / {question.verb.infinitive}</span>
+                    <span className="quiz-difficulty" data-level={question.difficulty}>
+                      {t('Difficulty: {level}', { level: t(difficultyLabels[question.difficulty]) })}
+                    </span>
+                  </div>
+                </div>
+                <div className="sentence-copy">
+                  <h2 lang={getStudyLanguageTag(language.id)}>
+                    {displaySentence[0]}<span className="quiz-blank" data-empty={!isAnswered} aria-label={!isAnswered ? t('Blank to fill') : undefined}>{isAnswered ? question.answer : '\u00a0'}</span>{displaySentence[1]}
+                  </h2>
+                  {!(language.id === 'english' && locale === 'en') && <p className="prompt-translation">{question.translation[locale]}</p>}
+                </div>
               </div>
-              <p className="quiz-instruction">{t('Complete the sentence with the correct verb form. Use the context to choose the tense or mood.')}</p>
-              <h2 lang={getStudyLanguageTag(language.id)}>
-                {displaySentence[0]}<span className="quiz-blank" data-empty={selected === null} aria-label={selected === null ? t('Blank to fill') : undefined}>{selected === null ? '\u00a0' : question.answer}</span>{displaySentence[1]}
-              </h2>
-              {!(language.id === 'english' && locale === 'en') && <p className="quiz-translation">{question.translation[locale]}</p>}
             </div>
-            <div className="quiz-choices" role="group" aria-label={t('Choose the correct conjugation')}>
-              {question.choices.map((choice, choiceIndex) => (
-                <button
-                  className="quiz-choice"
-                  aria-label={t('Option {letter}: {answer}', { letter: String.fromCharCode(65 + choiceIndex), answer: choice })}
-                  lang={getStudyLanguageTag(language.id)}
-                  data-result={selected === null ? undefined : choice === question.answer ? 'correct' : choice === selected ? 'wrong' : undefined}
-                  disabled={selected !== null}
-                  key={choice}
-                  onClick={() => answer(choice)}
-                  type="button"
-                >
-                  <span className="choice-index" aria-hidden="true">{String.fromCharCode(65 + choiceIndex)}</span>
-                  <span>{choice}</span>
-                  {selected !== null && choice === question.answer && <Check size={18} aria-hidden="true" />}
-                  {selected === choice && choice !== question.answer && <X size={18} aria-hidden="true" />}
-                </button>
-              ))}
-            </div>
-            {selected !== null && (
-              <div className="quiz-feedback" data-correct={selected === question.answer} role="status">
-                <strong>{selected === question.answer ? t('Correct!') : t('Target answer: {answer}', { answer: question.answer })}</strong>
-                <p>{question.explanation[locale]}</p>
-                <button className="quiz-wordbook-link" onClick={() => onOpenWordbook({ language, verb: question.verb, tense: question.tense, pronoun: question.pronoun })} type="button">
-                  <BookOpenText size={16} aria-hidden="true" />{t('View in verb book')}
-                </button>
+            <AnswerChoices
+              languageId={language.id}
+              choices={question.choices}
+              selected={selected}
+              correctAnswer={question.answer}
+              answered={isAnswered}
+              onSelect={answer}
+            />
+            {isAnswered ? (
+              <AnswerFeedback
+                result={outcomes[index]}
+                title={selected === question.answer ? t('Correct!') : t('Target answer: {answer}', { answer: question.answer })}
+                description={question.explanation[locale]}
+                feedbackRef={feedbackRef}
+                onOpenWordbook={() => onOpenWordbook({ language, verb: question.verb, tense: question.tense, pronoun: question.pronoun })}
+                onNext={next}
+                finalQuestion={index === questions.length - 1}
+              />
+            ) : (
+              <div className="answer-dock" data-result="idle">
+                <div className="answer-hint">
+                  <span>{t('Use A–D or 1–4 on your keyboard.')}</span>
+                </div>
+                <button className="quiz-skip" onClick={() => answer('')} type="button">{t('Skip and see answer')}</button>
               </div>
             )}
-            <div className="quiz-card-footer">
-              {selected === null ? (
-                <button className="quiz-skip" onClick={() => answer('')} type="button">{t('Skip and see answer')}</button>
-              ) : <span className="quiz-answer-state">{t(selected === question.answer ? 'Correct +1' : 'Explanation viewed')}</span>}
-              {selected !== null && (
-                <button className="quiz-primary" onClick={next} type="button">
-                  {t(index === questions.length - 1 ? 'View results' : 'Next question')} <ArrowRight size={17} aria-hidden="true" />
-                </button>
-              )}
-            </div>
           </div>
         )}
 
-        <aside className="quiz-sidebar" aria-label={t('Quiz progress')}>
-          <div className="quiz-sidebar-head">
-            <div className="panel-title"><Target size={18} aria-hidden="true" /><h2>{t('This round')}</h2></div>
-            <p>{languageName(language.id)} · {selectionLabel}</p>
-          </div>
-          <div className="quiz-sidebar-progress">
-            <span>{t('Completed')}</span>
-            <strong>{answeredCount}<small> / 10</small></strong>
-            <div className="quiz-progress-track" aria-hidden="true"><span style={{ width: `${answeredCount * 10}%` }} /></div>
-          </div>
-          <div className="quiz-sidebar-stats">
-            <div><Target size={18} aria-hidden="true" /><span>{t('Correct answers')}</span><strong>{correctCount}</strong></div>
-            <div><Trophy size={18} aria-hidden="true" /><span>{t('Accuracy')}</span><strong>{answeredCount ? `${accuracy}%` : '—'}</strong></div>
-            <div><Flame size={18} aria-hidden="true" /><span>{t('Streak')}</span><strong>{streak}</strong></div>
-          </div>
-          <div className="quiz-sidebar-history">
-            <h3>{t('Answer history')}</h3>
-            <div className="quiz-history-grid" aria-label={t('Question outcomes')}>
-              {Array.from({ length: 10 }, (_, position) => (
-                <span key={position} data-outcome={outcomes[position] ?? (position === index && questions.length ? 'current' : 'pending')} title={t('Question {number}: {outcome}', { number: position + 1, outcome: t(outcomeLabels[outcomes[position] ?? (position === index && questions.length ? 'current' : 'pending')]) })}>
-                  {position + 1}
-                </span>
-              ))}
-            </div>
-            <p>{t('See the context and grammar explanation after answering.')}</p>
-          </div>
-        </aside>
+        {question && (
+          <aside className="progress-panel quiz-progress-panel" aria-label={t('Quiz progress')}>
+            <SessionProgressCard progressPercent={Math.round(answeredCount / questions.length * 100)} remaining={questions.length - answeredCount} />
+            <SessionMetrics count={correctCount} countLabel="Correct answers" accuracy={answeredCount ? accuracy : null} streak={streak} />
+          </aside>
+        )}
       </div>
     </section>
   );

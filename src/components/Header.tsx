@@ -1,19 +1,17 @@
 import { useI18n } from '../hooks/useI18n';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { BarChart3, BookOpenText, Check, ClipboardList, Mail, Menu, Moon, Sun, Target, X } from 'lucide-react';
+import { BarChart3, BookOpenText, Check, ClipboardList, Mail, Menu, Settings, Target, X } from 'lucide-react';
 import { languages, type LanguageId } from '../data/verbs';
 import { type ThemeId } from '../data/themes';
 import type { MessageKey } from '../lib/i18n';
 import type { AppView } from '../types';
-import { PreferencesPanel, type PreferencesPanelProps } from './PreferencesPanel';
 
-interface HeaderProps extends Omit<PreferencesPanelProps, 'languageId'> {
+interface HeaderProps {
   languageId: LanguageId;
   switchLanguage: (id: LanguageId) => void;
   activeView: AppView;
   setActiveView: (view: AppView) => void;
   themeId: ThemeId;
-  setThemeId: (themeId: ThemeId) => void;
 }
 
 const viewLabels: Record<AppView, MessageKey> = {
@@ -21,6 +19,7 @@ const viewLabels: Record<AppView, MessageKey> = {
   quiz: 'Quiz',
   stats: 'Stats',
   wordbook: 'Verb Book',
+  settings: 'Settings',
 };
 
 const feedbackHref = 'mailto:phoenixlwp@gmail.com?subject=ConjuGO%20Feedback';
@@ -31,8 +30,6 @@ export function Header({
   activeView,
   setActiveView,
   themeId,
-  setThemeId,
-  ...preferences
 }: HeaderProps) {
   const { t, languageName } = useI18n();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -79,12 +76,6 @@ export function Header({
     setActiveView(nextView);
     setIsMenuOpen(false);
   };
-
-  const toggleTheme = () => {
-    setThemeId(themeId === 'dark' ? 'light' : 'dark');
-  };
-
-  const ThemeIcon = themeId === 'dark' ? Sun : Moon;
 
   return (
     <header ref={headerRef} className="app-topbar">
@@ -167,21 +158,23 @@ export function Header({
         </select>
       </div>
 
-      <PreferencesPanel languageId={languageId} {...preferences} />
-
       <div className="nav-footer">
-        <a className="view-button feedback-link" href={feedbackHref}>
-          <Mail size={16} aria-hidden="true" />
-          {t('Feedback')}
-        </a>
         <button
-          className="theme-toggle"
-          onClick={toggleTheme}
+          className="view-button settings-link"
+          data-active={activeView === 'settings'}
+          aria-current={activeView === 'settings' ? 'page' : undefined}
+          aria-label={t('Settings')}
+          title={t('Settings')}
+          onClick={() => setActiveView('settings')}
           type="button"
-          aria-label={t(themeId === 'dark' ? 'Switch to light mode' : 'Switch to dark mode')}
         >
-          <ThemeIcon size={18} aria-hidden="true" />
+          <Settings size={16} aria-hidden="true" />
+          <span>{t('Settings')}</span>
         </button>
+        <a className="view-button feedback-link" href={feedbackHref} aria-label={t('Feedback')} title={t('Feedback')}>
+          <Mail size={16} aria-hidden="true" />
+          <span>{t('Feedback')}</span>
+        </a>
       </div>
 
       <div className="mobile-status" aria-label={t("Current selection")}>
@@ -244,27 +237,16 @@ export function Header({
           </div>
         </div>
 
-        <div className="mobile-menu-section">
-          <PreferencesPanel languageId={languageId} {...preferences} />
+        <div className="mobile-menu-grid">
+          <button className="view-button" data-active={activeView === 'settings'} aria-current={activeView === 'settings' ? 'page' : undefined} onClick={() => chooseView('settings')} type="button">
+            <Settings size={16} aria-hidden="true" />
+            {t('Settings')}
+          </button>
+          <a className="view-button feedback-link" href={feedbackHref} onClick={() => setIsMenuOpen(false)}>
+            <Mail size={16} aria-hidden="true" />
+            {t('Feedback')}
+          </a>
         </div>
-
-        <div className="mobile-menu-section">
-          <div className="mobile-theme-row">
-            <span className="mobile-theme-label">{t("Theme")}</span>
-            <button
-              className="theme-toggle"
-              onClick={toggleTheme}
-              type="button"
-              aria-label={t(themeId === 'dark' ? 'Switch to light mode' : 'Switch to dark mode')}
-            >
-              <ThemeIcon size={18} aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-        <a className="view-button feedback-link" href={feedbackHref} onClick={() => setIsMenuOpen(false)}>
-          <Mail size={16} aria-hidden="true" />
-          {t('Feedback')}
-        </a>
       </div>
     </header>
   );

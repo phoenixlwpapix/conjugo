@@ -181,6 +181,26 @@ describe('authored quiz scenes', () => {
     expect(new Set(questions.map(({ tense }) => tense))).toEqual(new Set(['past', 'subjunctive', 'imperative', 'imperativeNegative']));
   });
 
+  it.each([20, 30, 40] as const)('builds %i-question rounds without repeats', (count) => {
+    const selectedTenses = ['past', 'subjunctive', 'commands'] as const;
+    const questions = createQuizQuestions(spanish, selectedTenses, count);
+    expect(questions).toHaveLength(count);
+    expect(new Set(questions.map(({ id }) => id)).size).toBe(count);
+    expect(new Set(questions.map(({ tense }) => tense))).toEqual(new Set(['past', 'subjunctive', 'imperative', 'imperativeNegative']));
+
+    const commands = createQuizQuestions(spanish, 'commands', count);
+    expect(commands.filter(({ tense }) => tense === 'imperative')).toHaveLength(count / 2);
+    expect(commands.filter(({ tense }) => tense === 'imperativeNegative')).toHaveLength(count / 2);
+  });
+
+  it('uses only eligible scenes when the requested round is larger than the bank', () => {
+    const language = { ...spanish, excludedPronouns: ['you plural' as const] };
+    const eligible = createQuizBank(language, 'present');
+    const questions = createQuizQuestions(language, 'present', 40);
+    expect(eligible.length).toBeLessThan(40);
+    expect(new Set(questions.map(({ id }) => id))).toEqual(new Set(eligible.map(({ id }) => id)));
+  });
+
   it('handles empty, single, and all available selections', () => {
     for (const language of languages) {
       expect(createQuizQuestions(language, [])).toEqual([]);

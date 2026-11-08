@@ -8,6 +8,7 @@ import {
   createSessionPrompts,
   createVerbSessionPrompts,
   getAnswer,
+  getPromptKey,
   getPronounLabel,
   isGenderAgreeingForm,
 } from '../prompts';
@@ -81,6 +82,38 @@ describe('prompts', () => {
     it('should generate a list of 20 prompts', () => {
       const session = createSessionPrompts(spanish, 'present');
       expect(session).toHaveLength(20);
+    });
+
+    it('caps large favorites lists at the configured count and uses every available prompt in small lists', () => {
+      const smallScope = new Set(['tener']);
+      const largeScope = new Set(spanish.verbs.slice(0, 40).map((verb) => verb.infinitive));
+      const targets = [
+        { verbInfinitive: 'tener', tense: 'present' as const, pronoun: 'I' as const },
+        { verbInfinitive: 'ser', tense: 'present' as const, pronoun: 'I' as const },
+      ];
+      const smallSet = createSessionPrompts(spanish, 'present', targets, { limit: 20, verbInfinitives: smallScope });
+      expect(smallSet).toHaveLength(6);
+      expect(new Set(smallSet.map(getPromptKey)).size).toBe(6);
+      expect(smallSet.every(({ verb, tense }) => verb.infinitive === 'tener' && tense === 'present')).toBe(true);
+
+      const largeSet = createSessionPrompts(spanish, 'present', [], { limit: 30, verbInfinitives: largeScope });
+      expect(largeSet).toHaveLength(30);
+      expect(largeSet.every(({ verb }) => largeScope.has(verb.infinitive))).toBe(true);
+      expect(createSessionPrompts(spanish, 'present', targets, { verbInfinitives: new Set() })).toEqual([]);
+    });
+
+    it('keeps configured command sets balanced and only uses eligible favorite command forms', () => {
+      const commands = createSessionPrompts(spanish, 'commands', [], { limit: 10 });
+      expect(commands).toHaveLength(10);
+      expect(commands.filter((prompt) => prompt.tense === 'imperative')).toHaveLength(5);
+
+      const scoped = createSessionPrompts(spanish, 'commands', [], { verbInfinitives: new Set(['tener']) });
+      expect(scoped).toHaveLength(10);
+      expect(scoped.every(({ verb }) => verb.infinitive === 'tener')).toBe(true);
+
+      const unsupported = spanish.verbs.find((verb) => !verb.forms.imperative.you)?.infinitive;
+      expect(unsupported).toBeDefined();
+      expect(createSessionPrompts(spanish, 'commands', [], { verbInfinitives: new Set([unsupported!]) })).toEqual([]);
     });
 
     it('should include up to 30% review targets if provided', () => {

@@ -2,7 +2,7 @@ import type { Language, LanguageId, TenseId, VerbEntry } from './data/verbs';
 
 export type Pronoun = 'I' | 'you' | 'he/she' | 'we' | 'you plural' | 'they';
 
-export type AppView = 'practice' | 'quiz' | 'stats' | 'wordbook';
+export type AppView = 'practice' | 'quiz' | 'stats' | 'wordbook' | 'settings';
 
 export type Prompt = {
   language: Language;
@@ -34,7 +34,9 @@ export type StoredMiss = {
   dueAt: number;
 };
 
-export type SessionKind = 'standard' | 'review' | 'verbs';
+export type SessionKind = 'standard' | 'review' | 'verbs' | 'favorites';
+
+export type FavoriteVerbsByLanguage = Partial<Record<LanguageId, string[]>>;
 
 export type DailyStats = {
   answered: number;

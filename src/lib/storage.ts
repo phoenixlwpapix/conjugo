@@ -1,8 +1,9 @@
 import { isImperative } from '../data/imperative';
 import { languages, type LanguageId, type PracticeTenseId, type Pronoun, type TenseId } from '../data/verbs';
 import { isTranslationLanguage, type TranslationLanguage } from '../data/translations';
-import type { AnswerTally, AppView, PracticeStats, PracticeStatsByLanguage, ReviewBox, StoredMiss } from '../types';
+import type { AnswerTally, AppView, FavoriteVerbsByLanguage, PracticeStats, PracticeStatsByLanguage, ReviewBox, StoredMiss } from '../types';
 import { capMissesPerLanguage } from './misses';
+import { defaultPracticeQuestionCount, defaultQuizQuestionCount, practiceQuestionCounts, type PracticeQuestionCount } from './prompts';
 import { emptyStats } from './scoring';
 
 const storageKeys = {
@@ -14,6 +15,9 @@ const storageKeys = {
   timerEnabled: 'conjugo.timerEnabled',
   translationLanguage: 'conjugo.translationLanguage',
   includeVosotros: 'conjugo.includeVosotros',
+  practiceQuestionCount: 'conjugo.practiceQuestionCount',
+  quizQuestionCount: 'conjugo.quizQuestionCount',
+  favoriteVerbs: 'conjugo.favoriteVerbs',
 } as const;
 
 /** Legacy keys from the pre-refactor live path. */
@@ -29,7 +33,7 @@ const legacyKeys = {
 
 const languageIds = languages.map((language) => language.id);
 const practiceTenses: PracticeTenseId[] = ['present', 'past', 'imperfect', 'future', 'conditional', 'subjunctive', 'imperfectSubjunctive', 'imperative', 'imperativeNegative', 'commands', 'mixed'];
-const appViews: AppView[] = ['practice', 'quiz', 'stats', 'wordbook'];
+const appViews: AppView[] = ['practice', 'quiz', 'stats', 'wordbook', 'settings'];
 const tenseIds: TenseId[] = ['present', 'past', 'imperfect', 'future', 'conditional', 'subjunctive', 'imperfectSubjunctive', 'imperative', 'imperativeNegative'];
 const pronounIds: Pronoun[] = ['I', 'you', 'he/she', 'we', 'you plural', 'they'];
 
@@ -289,6 +293,42 @@ export const readIncludeVosotros = (): boolean => safeGet(storageKeys.includeVos
 
 export const writeIncludeVosotros = (include: boolean) => {
   safeSet(storageKeys.includeVosotros, String(include));
+};
+
+const readQuestionCount = (key: string, defaultCount: PracticeQuestionCount): PracticeQuestionCount => {
+  const saved = safeGet(key);
+  return practiceQuestionCounts.find((count) => String(count) === saved) ?? defaultCount;
+};
+
+export const readPracticeQuestionCount = () => readQuestionCount(storageKeys.practiceQuestionCount, defaultPracticeQuestionCount);
+
+export const writePracticeQuestionCount = (count: PracticeQuestionCount) => {
+  safeSet(storageKeys.practiceQuestionCount, String(count));
+};
+
+export const readQuizQuestionCount = () => readQuestionCount(storageKeys.quizQuestionCount, defaultQuizQuestionCount);
+
+export const writeQuizQuestionCount = (count: PracticeQuestionCount) => {
+  safeSet(storageKeys.quizQuestionCount, String(count));
+};
+
+export const readFavoriteVerbs = (): FavoriteVerbsByLanguage => {
+  const saved = readJson<unknown>(storageKeys.favoriteVerbs, null);
+  if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return {};
+
+  const byLanguage: FavoriteVerbsByLanguage = {};
+  for (const { id, verbs } of languages) {
+    const entries = (saved as Record<string, unknown>)[id];
+    if (!Array.isArray(entries)) continue;
+
+    const infinitives = new Set<unknown>(entries);
+    byLanguage[id] = verbs.filter((verb) => infinitives.has(verb.infinitive)).map((verb) => verb.infinitive);
+  }
+  return byLanguage;
+};
+
+export const writeFavoriteVerbs = (favorites: FavoriteVerbsByLanguage) => {
+  writeJson(storageKeys.favoriteVerbs, favorites);
 };
 
 export const readStoredMisses = (): StoredMiss[] => {

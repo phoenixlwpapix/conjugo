@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { getStudyLanguageTag } from '../../lib/i18n';
 import { useI18n } from '../../hooks/useI18n';
 import { getVerbTranslation, type TranslationLanguage } from '../../data/translations';
@@ -12,6 +13,7 @@ type ConjugationPanelProps = {
   onTenseChange: (tense: TenseId) => void;
   selectedVerb: VerbEntry;
   translationLanguage: TranslationLanguage;
+  favoriteAction?: ReactNode;
 };
 
 export function ConjugationPanel({
@@ -20,6 +22,7 @@ export function ConjugationPanel({
   onTenseChange,
   selectedVerb,
   translationLanguage,
+  favoriteAction,
 }: ConjugationPanelProps) {
   const { t, locale, languageName, tenseName } = useI18n();
   const translation = getVerbTranslation(activeLanguage, selectedVerb, translationLanguage);
@@ -30,10 +33,13 @@ export function ConjugationPanel({
   return (
     <section className="conjugation-panel" aria-label={t('{verb} conjugation table', { verb: selectedVerb.infinitive })}>
       <div className="conjugation-head">
-        <div className="conjugation-title">
-          <span className="eyebrow">{languageName(activeLanguage.id)}</span>
-          <h2 lang={getStudyLanguageTag(activeLanguage.id)}>{selectedVerb.infinitive}</h2>
-          {translation && <p>{translation}</p>}
+        <div className="conjugation-summary">
+          <div className="conjugation-title">
+            <span className="eyebrow">{languageName(activeLanguage.id)}</span>
+            <h2 lang={getStudyLanguageTag(activeLanguage.id)}>{selectedVerb.infinitive}</h2>
+            {translation && <p>{translation}</p>}
+          </div>
+          {favoriteAction}
         </div>
 
         <SegmentedControl

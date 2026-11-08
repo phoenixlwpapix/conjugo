@@ -4,8 +4,9 @@ import { type Language } from '../data/verbs';
 import { getAccuracy } from '../lib/scoring';
 import type { Attempt, PracticeStats } from '../types';
 import { RingMeter } from './ui/RingMeter';
-import { useSyncExternalStore } from 'react';
+import { useSyncExternalStore, type ReactNode } from 'react';
 import type { PracticeClock } from '../lib/practiceClock';
+import type { MessageKey } from '../lib/i18n';
 
 interface ProgressPanelProps {
   activeLanguage: Language;
@@ -42,6 +43,57 @@ function SessionElapsed({ clock }: { clock: PracticeClock }) {
   );
 }
 
+export function SessionProgressCard({ progressPercent, remaining, children }: { progressPercent: number; remaining: number; children?: ReactNode }) {
+  const { t } = useI18n();
+  return (
+    <section className="progress-card session-progress-card">
+      <div className="panel-title">
+        <BarChart3 size={18} aria-hidden="true" />
+        <h2>{t('This set')}</h2>
+      </div>
+      <RingMeter progressPercent={progressPercent} />
+      {children}
+      <p>{remaining > 0 ? t('{count} more to complete this set', { count: remaining }) : t('Set complete. Reset or keep going.')}</p>
+    </section>
+  );
+}
+
+type SessionMetricsProps = {
+  count: number;
+  countLabel: Extract<MessageKey, 'Answered' | 'Correct answers'>;
+  accuracy: number | null;
+  streak: number;
+};
+
+export function SessionMetrics({ count, countLabel, accuracy, streak }: SessionMetricsProps) {
+  const { t } = useI18n();
+  return (
+    <section className="score-grid">
+      <div>
+        <span>{t(countLabel)}</span>
+        <strong>
+          <Target size={18} aria-hidden="true" />
+          {count}
+        </strong>
+      </div>
+      <div>
+        <span>{t('Accuracy')}</span>
+        <strong>
+          <Trophy size={18} aria-hidden="true" />
+          {accuracy === null ? '—' : `${accuracy}%`}
+        </strong>
+      </div>
+      <div>
+        <span>{t('Streak')}</span>
+        <strong>
+          <Flame size={18} aria-hidden="true" />
+          {streak}
+        </strong>
+      </div>
+    </section>
+  );
+}
+
 export function ProgressPanel({
   activeLanguage,
   progress,
@@ -59,39 +111,10 @@ export function ProgressPanel({
 
   return (
     <aside className="progress-panel" aria-label={t("Practice progress")}>
-      <section className="progress-card session-progress-card">
-        <div className="panel-title">
-          <BarChart3 size={18} aria-hidden="true" />
-          <h2>{t("This set")}</h2>
-        </div>
-        <RingMeter progressPercent={progressPercent} />
+      <SessionProgressCard progressPercent={progressPercent} remaining={remaining}>
         <SessionElapsed clock={elapsedClock} />
-        <p>{remaining > 0 ? t('{count} more to complete this set', { count: remaining }) : t('Set complete. Reset or keep going.')}</p>
-      </section>
-
-      <section className="score-grid">
-        <div>
-          <span>{t("Answered")}</span>
-          <strong>
-            <Target size={18} aria-hidden="true" />
-            {attempts.length}
-          </strong>
-        </div>
-        <div>
-          <span>{t("Accuracy")}</span>
-          <strong>
-            <Trophy size={18} aria-hidden="true" />
-            {accuracy}%
-          </strong>
-        </div>
-        <div>
-          <span>{t("Streak")}</span>
-          <strong>
-            <Flame size={18} aria-hidden="true" />
-            {streak}
-          </strong>
-        </div>
-      </section>
+      </SessionProgressCard>
+      <SessionMetrics count={attempts.length} countLabel="Answered" accuracy={accuracy} streak={streak} />
 
       <section className="progress-card alltime-card">
         <div className="panel-title-row">

@@ -6,6 +6,7 @@ import type { Language, TenseId, VerbEntry } from '../../data/verbs';
 import type { WordbookSort, WordbookView } from '../../hooks/useWordbook';
 import { ConjugationPanel } from './ConjugationPanel';
 import { VerbListPanel } from './VerbListPanel';
+import { FavoriteButton } from './FavoriteButton';
 
 type WordBookProps = {
   view: WordbookView;
@@ -13,6 +14,10 @@ type WordBookProps = {
   activeLanguage: Language;
   bookTense: TenseId;
   filteredVerbs: VerbEntry[];
+  favoriteVerbs: ReadonlySet<string>;
+  showOnlyFavorites: boolean;
+  onToggleFavorite: (infinitive: string) => void;
+  onFavoritesFilterChange: (show: boolean) => void;
   onQueryChange: (query: string) => void;
   onReturnToSession: (view: 'practice' | 'quiz') => void;
   onSelectVerb: (infinitive: string) => void;
@@ -32,6 +37,10 @@ export function WordBook({
   activeLanguage,
   bookTense,
   filteredVerbs,
+  favoriteVerbs,
+  showOnlyFavorites,
+  onToggleFavorite,
+  onFavoritesFilterChange,
   onQueryChange,
   onReturnToSession,
   onSelectVerb,
@@ -76,6 +85,10 @@ export function WordBook({
       <VerbListPanel
         activeLanguage={activeLanguage}
         filteredVerbs={filteredVerbs}
+        favoriteVerbs={favoriteVerbs}
+        showOnlyFavorites={showOnlyFavorites}
+        onToggleFavorite={onToggleFavorite}
+        onFavoritesFilterChange={onFavoritesFilterChange}
         onQueryChange={onQueryChange}
         onSelectVerb={selectVerb}
         onSortChange={onSortChange}
@@ -104,6 +117,13 @@ export function WordBook({
           onTenseChange={onTenseChange}
           selectedVerb={selectedVerb}
           translationLanguage={translationLanguage}
+          favoriteAction={
+            <FavoriteButton
+              infinitive={selectedVerb.infinitive}
+              isFavorite={favoriteVerbs.has(selectedVerb.infinitive)}
+              onToggle={onToggleFavorite}
+            />
+          }
         />
       </div>
     </section>

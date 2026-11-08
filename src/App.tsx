@@ -7,8 +7,8 @@ import { Header } from './components/Header';
 import { SessionBar } from './components/SessionBar';
 import { TimedTrainerPanel } from './components/TrainerPanel';
 import { ProgressPanel } from './components/ProgressPanel';
-import { SessionCompleteOverlay } from './components/SessionCompleteOverlay';
-import { isEditableElement } from './lib/focusTrap';
+import { SettingsPanel } from './components/SettingsPanel';
+import { isEditableElement } from './lib/keyboard';
 import { isThemeId, themeStorageKey, type ThemeId } from './data/themes';
 
 const StatsDashboard = lazy(() =>
@@ -48,6 +48,11 @@ export default function App() {
     switchLanguage,
     practiceTense,
     switchTense,
+    switchPracticeScope,
+    favoriteVerbs,
+    toggleFavorite,
+    isEmptyFavoriteSession,
+    canStartFavoriteSession,
     activeView,
     setActiveView,
     bookTense,
@@ -62,14 +67,16 @@ export default function App() {
     selectedVerbInfinitive,
     setSelectedVerbInfinitive,
     filteredVerbs,
+    showOnlyFavorites,
+    setShowOnlyFavorites,
     openPromptInWordbook,
     wordbookReturnView,
     selectedAnswer,
     timedOut,
     attempts,
     streak,
-    showCelebration,
-    showCompletion,
+    reviewingLastAnswer,
+    toggleResults,
     stats,
     storedMisses,
     activeLanguage,
@@ -89,8 +96,6 @@ export default function App() {
     startVerbDrill,
     drillTense,
     sessionKind,
-    dismissCelebration,
-    dismissCompletion,
     countdownClock,
     elapsedClock,
     timerEnabled,
@@ -100,7 +105,14 @@ export default function App() {
     trend,
     sessionTarget,
     recordQuizResult,
-  } = usePractice({ includeVosotros: preferences.includeVosotros });
+  } = usePractice(preferences);
+
+  const openWordbookList = () => {
+    setShowOnlyFavorites(false);
+    setWordbookQuery('');
+    setWordbookView('list');
+    setActiveView('wordbook');
+  };
 
   // Defer the quiz until its first visit, then keep the round mounted across views.
   const [hasOpenedQuiz, setHasOpenedQuiz] = useState(activeView === 'quiz');
@@ -129,7 +141,7 @@ export default function App() {
         return;
       }
 
-      if (activeView !== 'practice' || showCelebration || showCompletion) {
+      if (activeView !== 'practice') {
         return;
       }
 
@@ -141,13 +153,15 @@ export default function App() {
         return;
       }
 
+      if (isSessionComplete && !reviewingLastAnswer) return;
+
       if (isAnswered) {
         if (event.key === 'Enter' || event.key === ' ') {
           // Let focused controls, including the Verb Book shortcut, handle activation.
           if (event.target instanceof Element && event.target.closest('button:not(:disabled), a[href]')) return;
           event.preventDefault();
           if (isSessionComplete) {
-            resetSession();
+            toggleResults();
           } else if (!isCorrect) {
             moveNext();
           }
@@ -183,17 +197,9 @@ export default function App() {
     moveNext,
     resetSession,
     selectChoice,
-    showCelebration,
-    showCompletion,
+    reviewingLastAnswer,
+    toggleResults,
   ]);
-
-  const sessionCorrectCount = attempts.filter((attempt) => attempt.correct).length;
-
-  const returnHome = () => {
-    dismissCompletion();
-    dismissCelebration();
-    setActiveView('practice');
-  };
 
   return (
     <LocaleContext value={translationLanguage}>
@@ -202,38 +208,12 @@ export default function App() {
         data-theme={themeId}
         style={{ '--language-accent': themeId === 'dark' ? activeLanguage.darkAccent : activeLanguage.accent } as CSSProperties}
       >
-        {showCelebration && (
-          <SessionCompleteOverlay
-            mode="perfect"
-            accuracy={accuracy}
-            correctCount={sessionCorrectCount}
-            totalCount={attempts.length}
-            onDismiss={dismissCelebration}
-            onNewSet={resetSession}
-            onReturnHome={returnHome}
-          />
-        )}
-
-        {showCompletion && (
-          <SessionCompleteOverlay
-            mode="complete"
-            accuracy={accuracy}
-            correctCount={sessionCorrectCount}
-            totalCount={attempts.length}
-            onDismiss={dismissCompletion}
-            onNewSet={resetSession}
-            onReturnHome={returnHome}
-          />
-        )}
-
         <Header
           languageId={languageId}
           switchLanguage={switchLanguage}
           activeView={activeView}
           setActiveView={setActiveView}
           themeId={themeId}
-          setThemeId={setThemeId}
-          {...preferences}
         />
 
         <div className="app-content">
@@ -244,46 +224,79 @@ export default function App() {
                 practiceTense={practiceTense}
                 switchTense={switchTense}
                 resetSession={resetSession}
+                favoriteCount={favoriteVerbs.size}
+                sessionKind={sessionKind}
+                switchPracticeScope={switchPracticeScope}
               />
 
-              <section className="practice-layout">
-                <TimedTrainerPanel
-                  attempts={attempts}
-                  prompt={prompt}
-                  practiceTense={practiceTense}
-                  choices={choices}
-                  selectedAnswer={selectedAnswer}
-                  timedOut={timedOut}
-                  correctAnswer={correctAnswer}
-                  isAnswered={isAnswered}
-                  isCorrect={isCorrect}
-                  isSessionComplete={isSessionComplete}
-                  showCelebration={showCelebration}
-                  selectChoice={selectChoice}
-                  resetSession={resetSession}
-                  moveNext={moveNext}
-                  onOpenWordbook={() => openPromptInWordbook(prompt, 'practice')}
-                  clock={countdownClock}
-                  timerEnabled={timerEnabled}
-                  toggleTimer={toggleTimer}
-                  sessionTarget={sessionTarget}
-                  sessionKind={sessionKind}
-                  translationLanguage={translationLanguage}
-                />
+              {isEmptyFavoriteSession ? (
+                <section className="trainer-panel favorite-practice-empty">
+                  <h1 className="workspace-title">{t('Practice')}</h1>
+                  {favoriteVerbs.size === 0 ? (
+                    <>
+                      <p>{t('No favorite verbs yet.')}</p>
+                      <button className="quiz-primary" type="button" onClick={openWordbookList}>{t('Open the Verb Book')}</button>
+                    </>
+                  ) : canStartFavoriteSession ? (
+                    <>
+                      <p>{t('Start a set with your favorites.')}</p>
+                      <button className="quiz-primary" type="button" onClick={resetSession}>{t('Start practice')}</button>
+                    </>
+                  ) : (
+                    <p>{t('Your favorites have no questions for this tense or mood. Choose another one.')}</p>
+                  )}
+                </section>
+              ) : (
+                <section className="practice-layout">
+                  <TimedTrainerPanel
+                    attempts={attempts}
+                    prompt={prompt}
+                    practiceTense={practiceTense}
+                    choices={choices}
+                    selectedAnswer={selectedAnswer}
+                    timedOut={timedOut}
+                    correctAnswer={correctAnswer}
+                    isAnswered={isAnswered}
+                    isCorrect={isCorrect}
+                    isSessionComplete={isSessionComplete}
+                    reviewingLastAnswer={reviewingLastAnswer}
+                    toggleResults={toggleResults}
+                    selectChoice={selectChoice}
+                    resetSession={resetSession}
+                    moveNext={moveNext}
+                    onOpenWordbook={() => openPromptInWordbook(prompt, 'practice')}
+                    clock={countdownClock}
+                    timerEnabled={timerEnabled}
+                    toggleTimer={toggleTimer}
+                    sessionTarget={sessionTarget}
+                    sessionKind={sessionKind}
+                    translationLanguage={translationLanguage}
+                  />
 
-                <ProgressPanel
-                  activeLanguage={activeLanguage}
-                  progress={progress}
-                  progressPercent={progressPercent}
-                  attempts={attempts}
-                  accuracy={accuracy}
-                  streak={streak}
-                  cumulativeStats={stats}
-                  sessionTarget={sessionTarget}
-                  elapsedClock={elapsedClock}
-                />
-              </section>
+                  <ProgressPanel
+                    activeLanguage={activeLanguage}
+                    progress={progress}
+                    progressPercent={progressPercent}
+                    attempts={attempts}
+                    accuracy={accuracy}
+                    streak={streak}
+                    cumulativeStats={stats}
+                    sessionTarget={sessionTarget}
+                    elapsedClock={elapsedClock}
+                  />
+                </section>
+              )}
             </>
+          )}
+
+          {activeView === 'settings' && (
+            <SettingsPanel
+              {...preferences}
+              themeId={themeId}
+              setThemeId={setThemeId}
+              timerEnabled={timerEnabled}
+              toggleTimer={toggleTimer}
+            />
           )}
 
           {activeView === 'stats' && (
@@ -316,6 +329,7 @@ export default function App() {
                 key={`${languageId}-${languageId === 'spanish' && preferences.includeVosotros}`}
                 active={activeView === 'quiz'}
                 language={activeLanguage}
+                questionCount={preferences.quizQuestionCount}
                 onAnswer={recordQuizResult}
                 onOpenWordbook={(quizPrompt) => openPromptInWordbook(quizPrompt, 'quiz')}
               />
@@ -330,6 +344,10 @@ export default function App() {
                 activeLanguage={activeLanguage}
                 bookTense={bookTense}
                 filteredVerbs={filteredVerbs}
+                favoriteVerbs={favoriteVerbs}
+                showOnlyFavorites={showOnlyFavorites}
+                onToggleFavorite={toggleFavorite}
+                onFavoritesFilterChange={setShowOnlyFavorites}
                 onQueryChange={setWordbookQuery}
                 onReturnToSession={setActiveView}
                 onSortChange={setWordbookSort}

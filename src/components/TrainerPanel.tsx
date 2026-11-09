@@ -25,6 +25,7 @@ interface TrainerPanelProps {
   toggleResults: () => void;
   selectChoice: (choice: string) => void;
   resetSession: () => void;
+  onBackHome: () => void;
   moveNext: () => void;
   onOpenWordbook: () => void;
   timeLeft: number;
@@ -55,6 +56,7 @@ export function TrainerPanel({
   toggleResults,
   selectChoice,
   resetSession,
+  onBackHome,
   moveNext,
   onOpenWordbook,
   timeLeft,
@@ -89,6 +91,7 @@ export function TrainerPanel({
           outcomes={outcomes}
           onRestart={resetSession}
           onReviewLastAnswer={toggleResults}
+          onBackHome={sessionKind === 'review' ? onBackHome : undefined}
         />
       </section>
     );

@@ -83,6 +83,7 @@ export const chineseMessages = {
   "Max Streak": "最长连对",
   "Practice complete": "变位练习完成",
   "Review last answer": "回看最后一题",
+  "Back to home": "返回主页",
   "Correct": "答对",
   "Missed": "答错",
   "Back to practice": "返回练习",

@@ -14,7 +14,7 @@ type VerbListPanelProps = {
   onToggleFavorite: (infinitive: string) => void;
   onFavoritesFilterChange: (show: boolean) => void;
   onQueryChange: (query: string) => void;
-  onSelectVerb: (infinitive: string) => void;
+  onSelectVerb: (infinitive: string, button: HTMLButtonElement) => void;
   onSortChange: (sort: WordbookSort) => void;
   query: string;
   selectedVerbInfinitive: string;
@@ -100,7 +100,7 @@ export function VerbListPanel({
                 className="verb-list-item"
                 data-active={selectedVerbInfinitive === verb.infinitive}
                 aria-pressed={selectedVerbInfinitive === verb.infinitive}
-                onClick={() => onSelectVerb(verb.infinitive)}
+                onClick={(event) => onSelectVerb(verb.infinitive, event.currentTarget)}
                 type="button"
               >
                 <strong lang={getStudyLanguageTag(activeLanguage.id)}>{verb.infinitive}</strong>

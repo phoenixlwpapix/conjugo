@@ -24,6 +24,7 @@ const renderPanel = (overrides: Partial<ComponentProps<typeof TrainerPanel>> = {
     toggleResults={vi.fn()}
     selectChoice={vi.fn()}
     resetSession={vi.fn()}
+    onBackHome={vi.fn()}
     moveNext={vi.fn()}
     onOpenWordbook={vi.fn()}
     timeLeft={10}
@@ -75,5 +76,13 @@ describe('practice feedback', () => {
     expect(html).toContain("Time&#x27;s up!");
     expect(html).toContain('View in verb book');
     expect(html).toContain('View results');
+  });
+
+  it('offers a way back home after a miss review', () => {
+    const html = renderPanel({
+      attempts: [{ prompt, answer, correct: true }],
+      isSessionComplete: true, sessionTarget: 1, sessionKind: 'review',
+    });
+    expect(html).toMatch(/<div class="result-actions"><button[^>]*>.*New set<\/button><button[^>]*>.*Back to home<\/button><\/div>/);
   });
 });

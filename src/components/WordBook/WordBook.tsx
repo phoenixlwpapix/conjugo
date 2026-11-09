@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useI18n } from '../../hooks/useI18n';
 import type { TranslationLanguage } from '../../data/translations';
@@ -56,21 +56,29 @@ export function WordBook({
   const { t, languageName } = useI18n();
   const layoutRef = useRef<HTMLElement>(null);
   const detailRef = useRef<HTMLDivElement>(null);
+  const listPositionRef = useRef<{ button: HTMLButtonElement; languageId: Language['id']; scrollY: number } | null>(null);
   const selectedIndex = filteredVerbs.findIndex((verb) => verb.infinitive === selectedVerbInfinitive);
 
-  useEffect(() => {
-    if (!window.matchMedia('(max-width: 980px)').matches) return;
+  useLayoutEffect(() => {
+    const isCompact = window.matchMedia('(max-width: 980px)').matches;
     if (view === 'detail') {
+      if (!isCompact) return;
       layoutRef.current?.scrollIntoView({ block: 'start' });
       detailRef.current?.focus({ preventScroll: true });
-    } else {
-      const selectedButton = layoutRef.current?.querySelector<HTMLButtonElement>('.verb-list-item[data-active="true"]');
-      selectedButton?.focus({ preventScroll: true });
-      selectedButton?.scrollIntoView({ block: 'nearest' });
+      return;
     }
-  }, [view, selectedVerbInfinitive]);
 
-  const selectVerb = (infinitive: string) => {
+    const listPosition = listPositionRef.current;
+    listPositionRef.current = null;
+    if (!isCompact || listPosition?.languageId !== activeLanguage.id) return;
+    listPosition.button.focus({ preventScroll: true });
+    window.scrollTo({ top: listPosition.scrollY, behavior: 'instant' });
+  }, [activeLanguage.id, view, selectedVerbInfinitive]);
+
+  const selectVerb = (infinitive: string, button?: HTMLButtonElement) => {
+    if (button) {
+      listPositionRef.current = { button, languageId: activeLanguage.id, scrollY: window.scrollY };
+    }
     onSelectVerb(infinitive);
     onViewChange('detail');
   };

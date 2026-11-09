@@ -13,8 +13,8 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Interactive conjugation reference: search verbs, choose a verb, switch tense, and inspect every pronoun form.
 - Card-based multiple-choice drills with instant feedback and one-tap next-question flow.
 - Correct answers auto-advance after a short pause; wrong answers keep the correction visible.
-- Perfect practice sets trigger confetti at any set length.
-- Completed practice sets show the score, accuracy, and question outcomes inside the trainer card, with actions to start a new set or review the last answer.
+- Perfect practice sets and sentence quizzes trigger confetti at any round length.
+- Completed practice sets show the score, accuracy, and question outcomes inside the trainer card, with actions to start a new set and either review the last answer or return home from miss review.
 - Mixed practice rotates through the supported tenses for each language, including French passé simple and Spanish imperfect subjunctive. Commands have separate practice modes.
 - Language-specific pronoun prompts instead of English-only pronouns.
 - Answer choices are generated from the current verb's conjugation family, prioritizing the same tense and other pronouns.
@@ -30,7 +30,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 
 ## Current Features
 
-- Quiz and Word Book code load on first use; quiz rounds remain mounted when switching workspaces. Confetti loads only for a perfect practice set, stays inside the result card, and respects reduced motion.
+- Quiz and Word Book code load on first use; quiz rounds remain mounted when switching workspaces. Confetti loads only for a perfect round, stays inside the result card, and respects reduced motion.
 - Google Fonts load without blocking rendering, with preconnect hints and the existing offline runtime cache. The saved theme is applied before React mounts to avoid a light-theme flash.
 - Practice clocks update their subscribed displays without rerendering the app each second. Both clocks pause outside practice and reset with a new set; the countdown stops after answering.
 - Practice initialization reuses stored language, tense and review data. Word Book search text, alphabetical ordering and verb lookups are indexed; quiz generation also indexes its verb data.
@@ -44,6 +44,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Incorrect or skipped Quiz answers enter the shared Leitner review queue; correct answers use the same review promotion rules as practice.
 - Practice progress follows question order and keeps the current question number stable during feedback. The result card offers New set after any final answer and lets learners return to the last question and its Verb Book entry.
 - Restarting review or hardest-verb drills preserves the current mode and verb scope. If every review item is mastered, New set repeats the previous review prompts.
+- Back to home on the miss review results exits review and starts a fresh standard practice set with the current language and tense selection.
 - Answered practice prompts provide a shortcut to the matching verb and tense in the Verb Book. The detail page's Back to practice button restores the current question and answer, and correct-answer auto-advance resumes after returning.
 - Quiz answers count toward the existing seven-day accuracy chart and tense breakdown, with separate quiz totals and accuracy on the Stats dashboard.
 - Present, past, imperfect, future, conditional, present subjunctive, and affirmative/negative imperative. English drills present, past, and future only.
@@ -69,7 +70,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Interactive verb book with per-tense conjugation tables.
 - Review items can be opened directly in the Word Book with the matching tense selected.
 - Searchable compact verb list built for larger future vocabularies.
-- On phones and tablets (up to 980px), the Verb Book uses separate list and detail views. Selecting a verb or opening a practice/review reference goes straight to its conjugation; Back restores the filtered list, and previous/next follows its current order. Search and sorting share one row, verb entries use compact single rows, and the tense strip scrolls horizontally with the selected tense centered. Compact headings and conjugation rows keep the reference visible; desktop retains both panels.
+- On phones and tablets (up to 980px), the Verb Book uses separate list and detail views. Selecting a verb or opening a practice/review reference goes straight to its conjugation. Returning from a verb opened in the list restores the same scroll position and filters. Previous and next follow the current list order. Search and sorting share one row, verb entries use compact single rows, and the tense strip scrolls horizontally with the selected tense centered. Compact headings and conjugation rows keep the reference visible. Desktop retains both panels.
 - Card-style multiple-choice answer selection.
 - Multiple-choice answer cards now use randomized positions per prompt while keeping distractors relevant to the current verb family.
 - Auto-advance on correct answers and confetti for a perfect set.

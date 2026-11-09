@@ -263,6 +263,7 @@ export default function App() {
                     toggleResults={toggleResults}
                     selectChoice={selectChoice}
                     resetSession={resetSession}
+                    onBackHome={() => switchPracticeScope('standard')}
                     moveNext={moveNext}
                     onOpenWordbook={() => openPromptInWordbook(prompt, 'practice')}
                     clock={countdownClock}

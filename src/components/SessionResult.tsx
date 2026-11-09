@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { BookOpenText, Check, CircleCheck, Minus, RotateCcw, SlidersHorizontal, Trophy, X } from 'lucide-react';
+import { BookOpenText, Check, CircleCheck, House, Minus, RotateCcw, SlidersHorizontal, Trophy, X } from 'lucide-react';
 import { useI18n } from '../hooks/useI18n';
 import { getAccuracy } from '../lib/scoring';
 
@@ -15,7 +15,7 @@ type SessionResultProps = {
   outcomes: SessionOutcome[];
   onRestart: () => void;
 } & (
-  | { mode: 'practice'; onReviewLastAnswer: () => void }
+  | { mode: 'practice'; onReviewLastAnswer: () => void; onBackHome?: () => void }
   | { mode: 'quiz'; onChangeTenses: () => void; streak: number }
 );
 
@@ -113,8 +113,9 @@ export function SessionResult(props: SessionResultProps) {
           <RotateCcw size={16} aria-hidden="true" />{t(mode === 'practice' ? 'New set' : 'New quiz')}
         </button>
         {props.mode === 'practice' ? (
-          <button className="quiz-secondary" onClick={props.onReviewLastAnswer} type="button">
-            <BookOpenText size={16} aria-hidden="true" />{t('Review last answer')}
+          <button className="quiz-secondary" onClick={props.onBackHome ?? props.onReviewLastAnswer} type="button">
+            {props.onBackHome ? <House size={16} aria-hidden="true" /> : <BookOpenText size={16} aria-hidden="true" />}
+            {t(props.onBackHome ? 'Back to home' : 'Review last answer')}
           </button>
         ) : (
           <button className="quiz-secondary" onClick={props.onChangeTenses} type="button">
@@ -123,7 +124,7 @@ export function SessionResult(props: SessionResultProps) {
         )}
       </div>
 
-      {perfect && mode === 'practice' && <ResultConfetti />}
+      {perfect && <ResultConfetti />}
     </div>
   );
 }

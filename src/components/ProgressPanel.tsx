@@ -1,12 +1,13 @@
 import { useI18n } from '../hooks/useI18n';
-import { BarChart3, Clock3, Flame, Target, Trophy } from 'lucide-react';
+import { BarChart3, Flame, Target, Trophy } from 'lucide-react';
 import { type Language } from '../data/verbs';
 import { getAccuracy } from '../lib/scoring';
 import type { Attempt, PracticeStats } from '../types';
 import { RingMeter } from './ui/RingMeter';
-import { useSyncExternalStore, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import type { PracticeClock } from '../lib/practiceClock';
 import type { MessageKey } from '../lib/i18n';
+import { SessionElapsed } from './SessionElapsed';
 
 interface ProgressPanelProps {
   activeLanguage: Language;
@@ -18,29 +19,6 @@ interface ProgressPanelProps {
   cumulativeStats: PracticeStats;
   sessionTarget: number;
   elapsedClock: PracticeClock;
-}
-
-const formatElapsedTime = (totalSeconds: number) => {
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  const paddedMinutes = minutes.toString().padStart(2, '0');
-  const paddedSeconds = seconds.toString().padStart(2, '0');
-
-  return hours > 0 ? `${hours}:${paddedMinutes}:${paddedSeconds}` : `${paddedMinutes}:${paddedSeconds}`;
-};
-
-function SessionElapsed({ clock }: { clock: PracticeClock }) {
-  const { t } = useI18n();
-  const seconds = useSyncExternalStore(clock.subscribe, clock.getSnapshot, clock.getSnapshot);
-  const elapsedTime = formatElapsedTime(seconds);
-  return (
-    <div className="session-elapsed" aria-label={t('Training time {time}', { time: elapsedTime })}>
-      <Clock3 size={16} aria-hidden="true" />
-      <span>{t('Training time')}</span>
-      <strong>{elapsedTime}</strong>
-    </div>
-  );
 }
 
 export function SessionProgressCard({ progressPercent, remaining, children }: { progressPercent: number; remaining: number; children?: ReactNode }) {

@@ -8,6 +8,7 @@ import { SessionBar } from './components/SessionBar';
 import { TimedTrainerPanel } from './components/TrainerPanel';
 import { ProgressPanel } from './components/ProgressPanel';
 import { SettingsPanel } from './components/SettingsPanel';
+import { WorkspaceNavigation } from './components/WorkspaceNavigation';
 import { isEditableElement } from './lib/keyboard';
 import { isThemeId, themeStorageKey, type ThemeId } from './data/themes';
 
@@ -205,6 +206,7 @@ export default function App() {
     <LocaleContext value={translationLanguage}>
       <main
         className="app-shell"
+        data-view={activeView}
         data-theme={themeId}
         style={{ '--language-accent': themeId === 'dark' ? activeLanguage.darkAccent : activeLanguage.accent } as CSSProperties}
       >
@@ -267,6 +269,7 @@ export default function App() {
                     moveNext={moveNext}
                     onOpenWordbook={() => openPromptInWordbook(prompt, 'practice')}
                     clock={countdownClock}
+                    elapsedClock={elapsedClock}
                     timerEnabled={timerEnabled}
                     toggleTimer={toggleTimer}
                     sessionTarget={sessionTarget}
@@ -364,6 +367,7 @@ export default function App() {
             </Suspense>
           )}
         </div>
+        <WorkspaceNavigation activeView={activeView} onViewChange={setActiveView} placement="bottom" />
       </main>
     </LocaleContext>
   );

@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { languages } from '../../data/verbs';
 import { TrainerPanel } from '../TrainerPanel';
+import { createPracticeClock } from '../../lib/practiceClock';
 import type { Prompt } from '../../types';
 
 const language = languages[0];
@@ -28,6 +29,7 @@ const renderPanel = (overrides: Partial<ComponentProps<typeof TrainerPanel>> = {
     moveNext={vi.fn()}
     onOpenWordbook={vi.fn()}
     timeLeft={10}
+    elapsedClock={createPracticeClock(0, 1)}
     timerEnabled={false}
     toggleTimer={vi.fn()}
     sessionTarget={20}
@@ -44,6 +46,7 @@ describe('practice feedback', () => {
     });
     expect(html).toContain('Question 1<');
     expect(html).not.toContain('data-state="current"');
+    expect(html).toContain(correct ? 'Correct!' : `Correct answer: ${answer}`);
     expect(html).toContain('View in verb book');
   });
 
@@ -74,6 +77,7 @@ describe('practice feedback', () => {
       isAnswered: true, timedOut: true, isSessionComplete: true, reviewingLastAnswer: true, sessionTarget: 1,
     });
     expect(html).toContain("Time&#x27;s up!");
+    expect(html).toContain(`Correct answer: ${answer}`);
     expect(html).toContain('View in verb book');
     expect(html).toContain('View results');
   });

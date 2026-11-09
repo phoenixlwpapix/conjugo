@@ -8,6 +8,7 @@ import type { Attempt, Prompt, SessionKind } from '../types';
 import type { PracticeTenseId } from '../data/verbs';
 import { getVerbTranslation, type TranslationLanguage } from '../data/translations';
 import { SessionResult } from './SessionResult';
+import { SessionElapsed } from './SessionElapsed';
 import { AnswerChoices, AnswerFeedback, QuestionHeader, QuestionTense } from './PracticeQuestion';
 
 interface TrainerPanelProps {
@@ -29,6 +30,7 @@ interface TrainerPanelProps {
   moveNext: () => void;
   onOpenWordbook: () => void;
   timeLeft: number;
+  elapsedClock: PracticeClock;
   timerEnabled: boolean;
   toggleTimer: () => void;
   sessionTarget: number;
@@ -60,6 +62,7 @@ export function TrainerPanel({
   moveNext,
   onOpenWordbook,
   timeLeft,
+  elapsedClock,
   timerEnabled,
   toggleTimer,
   sessionTarget,
@@ -89,6 +92,7 @@ export function TrainerPanel({
         <SessionResult
           mode="practice"
           outcomes={outcomes}
+          elapsedClock={elapsedClock}
           onRestart={resetSession}
           onReviewLastAnswer={toggleResults}
           onBackHome={sessionKind === 'review' ? onBackHome : undefined}
@@ -120,6 +124,7 @@ export function TrainerPanel({
       : 'var(--language-accent, var(--green))';
 
   const iconColor = !timerEnabled ? 'var(--muted)' : timedOut || showAlertStyle ? 'var(--red)' : 'var(--ink)';
+  const correctAnswerLabel = t('Correct answer: {answer}', { answer: correctAnswer });
 
   return (
     <section className="trainer-panel" aria-label={panelLabel}>
@@ -198,7 +203,8 @@ export function TrainerPanel({
             <QuestionTense language={prompt.language} tense={prompt.tense} />
             <div className="prompt-meta-tags">
               {sessionTag && <span className="mixed-mode-tag">{sessionTag}</span>}
-              <span>{languageName(prompt.language.id)}</span>
+              <span className="prompt-language">{languageName(prompt.language.id)}</span>
+              <SessionElapsed clock={elapsedClock} compact />
             </div>
           </div>
 
@@ -227,8 +233,8 @@ export function TrainerPanel({
       {isAnswered ? (
         <AnswerFeedback
           result={isCorrect ? 'correct' : 'wrong'}
-          title={t(timedOut ? "Time's up!" : isCorrect ? 'Correct!' : 'Wrong answer')}
-          description={isCorrect ? (isSessionComplete ? undefined : t('next question loading')) : `${pronounLabel} → ${correctAnswer}`}
+          title={timedOut ? t("Time's up!") : isCorrect ? t('Correct!') : correctAnswerLabel}
+          description={timedOut ? correctAnswerLabel : isCorrect && !isSessionComplete ? t('next question loading') : undefined}
           onOpenWordbook={onOpenWordbook}
           onNext={isSessionComplete ? toggleResults : !isCorrect ? moveNext : undefined}
           nextRef={actionButtonRef}

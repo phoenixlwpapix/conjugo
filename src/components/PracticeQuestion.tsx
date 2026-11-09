@@ -123,6 +123,7 @@ export function AnswerFeedback({ result, title, description, feedbackRef, onOpen
       </div>
       <button aria-label={bookLabel} className="wordbook-link" onClick={onOpenWordbook} title={bookLabel} type="button">
         <BookOpenText size={16} aria-hidden="true" />
+        <span className="wordbook-link-label">{t('Verb Book')}</span>
       </button>
       {onNext && (
         <button ref={nextRef} className="next-button" onClick={onNext} type="button">

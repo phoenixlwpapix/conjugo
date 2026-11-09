@@ -206,7 +206,7 @@ export function QuizPanel({ active, language, questionCount, onAnswer, onOpenWor
             {isAnswered ? (
               <AnswerFeedback
                 result={outcomes[index]}
-                title={selected === question.answer ? t('Correct!') : t('Target answer: {answer}', { answer: question.answer })}
+                title={selected === question.answer ? t('Correct!') : t('Correct answer: {answer}', { answer: question.answer })}
                 description={question.explanation[locale]}
                 feedbackRef={feedbackRef}
                 onOpenWordbook={() => onOpenWordbook({ language, verb: question.verb, tense: question.tense, pronoun: question.pronoun })}

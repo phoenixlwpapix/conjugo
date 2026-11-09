@@ -1,4 +1,4 @@
-import { Moon, Sun } from 'lucide-react';
+import { ChevronRight, Mail, Moon, Sun } from 'lucide-react';
 import type { ThemeId } from '../data/themes';
 import { translationLanguageOptions } from '../data/translations';
 import { useI18n } from '../hooks/useI18n';
@@ -119,6 +119,12 @@ export function SettingsPanel({
           </div>
         </div>
       </section>
+
+      <a className="preference-row feedback-link" href="mailto:phoenixlwp@gmail.com?subject=ConjuGO%20Feedback">
+        <Mail size={16} aria-hidden="true" />
+        <span>{t('Feedback')}</span>
+        <ChevronRight size={16} aria-hidden="true" />
+      </a>
     </section>
   );
 }

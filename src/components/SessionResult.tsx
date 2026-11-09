@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { BookOpenText, Check, CircleCheck, House, Minus, RotateCcw, SlidersHorizontal, Trophy, X } from 'lucide-react';
 import { useI18n } from '../hooks/useI18n';
 import { getAccuracy } from '../lib/scoring';
+import type { PracticeClock } from '../lib/practiceClock';
+import { SessionElapsed } from './SessionElapsed';
 
 const outcomeDetails = {
   correct: { label: 'Correct', Icon: Check },
@@ -15,7 +17,7 @@ type SessionResultProps = {
   outcomes: SessionOutcome[];
   onRestart: () => void;
 } & (
-  | { mode: 'practice'; onReviewLastAnswer: () => void; onBackHome?: () => void }
+  | { mode: 'practice'; elapsedClock: PracticeClock; onReviewLastAnswer: () => void; onBackHome?: () => void }
   | { mode: 'quiz'; onChangeTenses: () => void; streak: number }
 );
 
@@ -83,7 +85,12 @@ export function SessionResult(props: SessionResultProps) {
       <dl className="result-metrics">
         <div><dt>{t('Accuracy')}</dt><dd>{getAccuracy(correct, total)}%</dd></div>
         <div><dt>{t('Missed')}</dt><dd>{total - correct - skipped}</dd></div>
-        {props.mode === 'quiz' && (
+        {props.mode === 'practice' ? (
+          <div className="result-elapsed">
+            <dt>{t('Training time')}</dt>
+            <dd><SessionElapsed clock={props.elapsedClock} compact /></dd>
+          </div>
+        ) : (
           <>
             <div><dt>{t('Skipped')}</dt><dd>{skipped}</dd></div>
             <div><dt>{t('Streak')}</dt><dd>{props.streak}</dd></div>

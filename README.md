@@ -20,7 +20,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Answer choices are generated from the current verb's conjugation family, prioritizing the same tense and other pronouns.
 - Answer card positions are shuffled per prompt so the correct conjugation does not stay tied to a predictable slot.
 - Session metrics for target progress, attempts, accuracy, and current streak.
-- Live session stopwatch in the practice progress card, paused outside the active drill and reset with each new set.
+- Live practice stopwatch in the phone question card and results, and in the progress panel on wider screens. It pauses outside the active drill and resets with each new set.
 - Missed prompts are retained for the Stats workspace and automatically fed back into future practice sessions.
 - Local persistence for selected language, active workspace, tense, missed prompts, and language-specific cumulative practice stats.
 - Keyboard shortcuts for faster drills: A/B/C/D answer choices, Enter/Space for next missed question, and R reset.
@@ -34,11 +34,11 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Google Fonts load without blocking rendering, with preconnect hints and the existing offline runtime cache. The saved theme is applied before React mounts to avoid a light-theme flash.
 - Practice clocks update their subscribed displays without rerendering the app each second. Both clocks pause outside practice and reset with a new set; the countdown stops after answering.
 - Practice initialization reuses stored language, tense and review data. Word Book search text, alphabetical ordering and verb lookups are indexed; quiz generation also indexes its verb data.
-- Feedback is available at the bottom of the desktop sidebar and in the mobile menu. It opens the user's email app with `phoenixlwp@gmail.com` as recipient and `ConjuGO Feedback` as subject.
+- Feedback is at the bottom of Settings. It opens the user's email app with `phoenixlwp@gmail.com` as recipient and `ConjuGO Feedback` as subject.
 - Four languages: English, French, Spanish, Italian.
 - Quiz mode below Practice offers randomly selected full-sentence questions, with a multi-select picker for available tenses and moods, including Imperative. All options are selected initially; Select all / Deselect all sits above the cards, and starting is disabled when none are selected. Rounds use only the selected range and include each selected tense. Each tense or mood has 40 individually authored situations in its supported languages (1,160 supported language/tense/mood questions), with varied subjects and verbs across three difficulty levels. Complete sentences, translations, and explanations are kept together in `src/data/quizScenes.ts`; contexts are never randomly combined with unrelated actions. Scenes include commuting, family meals, travel, interrupted past actions, and realistic hypothetical decisions. Every question has four distinct choices, prioritizing the same subject across tenses and filling remaining slots from the same verb’s conjugation family. Each question shows a Chinese or English translation matching the interface language, and explains the specific scene after answering. Redundant English translations are hidden when learning English in the English interface.
 - Conjugation practice and sentence quizzes share the question card, segmented answer history, answer choices, feedback, and session progress layout. Sentence prompts put difficulty beside the verb and subject, and mixed rounds reveal the question's tense or mood after answering.
-- Quiz explanations stay visible until the learner advances and link directly to the matching Verb Book entry and tense. The detail page's Back to quiz button restores the current question and answer. Hidden quizzes do not receive answer shortcuts. The progress panel appears during a round and moves below the question on narrower screens. On phones, the tense picker and answer choices use one column, and start and next actions are full width.
+- Quiz explanations stay visible until the learner advances and link directly to the matching Verb Book entry and tense. The detail page's Back to quiz button restores the current question and answer. Hidden quizzes do not receive answer shortcuts. The progress panel sits below the question on tablets.
 - After the last explanation, the shared result card shows the score, accuracy, final streak, and an ordered record of correct, missed, and skipped questions. Learners can start a new round with the same selection or change tenses and moods.
 - Quiz supports A–D / 1–4 to answer and Enter / Space to continue. Spanish vosotros preference changes reset the quiz pool; interface-language changes preserve the current round.
 - Incorrect or skipped Quiz answers enter the shared Leitner review queue; correct answers use the same review promotion rules as practice.
@@ -58,7 +58,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - The Spanish imperfect subjunctive participates in Mixed practice, mixed quizzes, review, and persistent tense/mood statistics. Its 40 authored scenes cover past requests (pidió que), past wishes (quería que), purpose clauses, emotional reactions, and hypothetical present/future conditions. Other languages do not expose this tense.
 - Imperfect subjunctive forms derive from the existing third-person plural preterite, retaining irregular stems and nosotros accents. Grammar references: [University of Kansas](https://acceso.ku.edu/gramatica/unidad6/imperfecto_del_subjuntivo.shtml) and [RAE conjugation tables](https://www.rae.es/diccionario-estudiante/docs/conjugaciones-verbales.pdf).
 - 100 verbs per language, combining high-frequency irregular verbs with regular conjugation families.
-- Settings has its own workspace, accessible from the desktop sidebar and mobile menu. It groups conjugation practice, sentence quiz, and display options.
+- Settings has its own workspace, accessible from the desktop sidebar, tablet header, and mobile bottom tab bar. It groups conjugation practice, sentence quiz, and display options.
 - Settings stores separate counts for conjugation practice (20 by default) and sentence quizzes (10 by default). Both offer 10, 20, 30, or 40 questions. Counts apply to new rounds, and an untouched conjugation set can also resize. Sentence quizzes use fewer questions when the selected tenses and pronouns have fewer distinct scenes available.
 - Star verbs in the Verb Book list or detail view, and use Favorites only to browse them. Favorites are saved locally for each learning language.
 - Use the star beside the tense selector in Practice to toggle favorite-only sets. Favorite sets use only the selected language, tense range, and saved verbs, including eligible review questions. The set uses the configured count or all available questions when the pool is smaller. Changing favorites takes effect with the next set.
@@ -81,10 +81,10 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - The Stats workspace is lazy-loaded so it does not inflate the initial practice bundle.
 - The prompt card no longer repeats the same build information in a side rail, giving the question more room.
 - Desktop navigation now uses a sticky left sidebar for brand, language, and workspace switching.
-- Mobile navigation now collapses language and workspace tabs behind a hamburger menu so the current drill stays visible first.
-- Tablet workspace navigation stays on one row. The mobile menu closes on outside clicks or focus, and language choices show codes and a selection check. Scrollable practice tense controls keep the active tense visible, while phones omit idle keyboard hints.
+- On screens up to 640px wide, a fixed bottom tab bar switches between Practice, Quiz, Stats, Verb Book, and Settings. The active workspace is highlighted, and the bar leaves space for the iPhone home indicator.
+- On phones and tablets, the header shows the current learning language in a native dropdown. Tablet workspace navigation stays on one row. Scrollable practice tense controls keep the active tense visible, while phones omit idle keyboard hints.
 - On phones, saved misses use compact two-line review cards with full-width review/drill actions.
-- Theme switching now supports Light and Dark tones from the sidebar and mobile menu, with the choice persisted locally.
+- Settings offers Light and Dark themes, with the choice persisted locally.
 - Mid-width practice layouts now move the progress rail below the drill and stack the prompt as pronoun, plus, and verb before words can wrap awkwardly.
 - Mobile practice controls use a compact horizontal tense selector, with the pronoun prompt prioritized above metadata tags.
 - Modern responsive interface using React 19, TypeScript, Vite, and lucide-react icons.
@@ -108,7 +108,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Stats uses neutral metric surfaces, quieter chart summaries, lighter supporting text, consistent review buttons and a scrollable missed-answer table. The Word Book uses navigation-style verb selection, the same inset active tense control as Practice, and compact ruled conjugation rows that retain two columns on phones.
 - Practice and Quiz share an in-card result layout with a large score, compact metrics, and numbered answer markers. Both themes and the Chinese and English interfaces use the same layout.
 - The trail above each practice prompt has one segment per question and shows completed correct/incorrect answers and the current question. The progress ring, timer, and cumulative metrics remain available.
-- At narrow widths, short prompts keep the pronoun and infinitive on one line; longer prompts wrap only when space runs out, keeping the separator with the pronoun. Answer choices become full-width rows, and session progress becomes a compact summary. Navigation stays in the mobile menu. Both color themes and reduced-motion preferences are supported.
+- On phones, practice and quiz feedback place the explanation above the Verb Book and Next actions. Short practice screens use a compact feedback row. The question trail shows set progress, and cumulative metrics are available in Stats. Longer prompts can wrap, keeping the separator with the pronoun.
 
 ## Bilingual interface
 

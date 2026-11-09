@@ -9,6 +9,7 @@ import { TimedTrainerPanel } from './components/TrainerPanel';
 import { ProgressPanel } from './components/ProgressPanel';
 import { SettingsPanel } from './components/SettingsPanel';
 import { WorkspaceNavigation } from './components/WorkspaceNavigation';
+import { ConjugationModal } from './components/WordBook/ConjugationPanel';
 import { isEditableElement } from './lib/keyboard';
 import { isThemeId, themeStorageKey, type ThemeId } from './data/themes';
 
@@ -71,6 +72,9 @@ export default function App() {
     showOnlyFavorites,
     setShowOnlyFavorites,
     openPromptInWordbook,
+    conjugationPrompt,
+    closeConjugationModal,
+    autoAdvanceStopped,
     wordbookReturnView,
     selectedAnswer,
     timedOut,
@@ -142,7 +146,7 @@ export default function App() {
         return;
       }
 
-      if (activeView !== 'practice') {
+      if (activeView !== 'practice' || conjugationPrompt) {
         return;
       }
 
@@ -163,7 +167,7 @@ export default function App() {
           event.preventDefault();
           if (isSessionComplete) {
             toggleResults();
-          } else if (!isCorrect) {
+          } else if (!isCorrect || autoAdvanceStopped) {
             moveNext();
           }
         }
@@ -191,7 +195,9 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
     activeView,
+    autoAdvanceStopped,
     choices,
+    conjugationPrompt,
     isAnswered,
     isCorrect,
     isSessionComplete,
@@ -274,6 +280,8 @@ export default function App() {
                     toggleTimer={toggleTimer}
                     sessionTarget={sessionTarget}
                     sessionKind={sessionKind}
+                    streak={streak}
+                    autoAdvanceStopped={autoAdvanceStopped}
                     translationLanguage={translationLanguage}
                   />
 
@@ -367,6 +375,15 @@ export default function App() {
             </Suspense>
           )}
         </div>
+        {conjugationPrompt && (
+          <ConjugationModal
+            prompt={conjugationPrompt}
+            isFavorite={favoriteVerbs.has(conjugationPrompt.verb.infinitive)}
+            onToggleFavorite={toggleFavorite}
+            onClose={closeConjugationModal}
+            translationLanguage={translationLanguage}
+          />
+        )}
         <WorkspaceNavigation activeView={activeView} onViewChange={setActiveView} placement="bottom" />
       </main>
     </LocaleContext>

@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpenText, Check, X } from 'lucide-react';
+import { ArrowRight, BookOpenText, Check, Flame, X } from 'lucide-react';
 import type { ReactNode, Ref } from 'react';
 import { useI18n } from '../hooks/useI18n';
 import { getStudyLanguageTag } from '../lib/i18n';
@@ -18,12 +18,14 @@ type QuestionHeaderProps = {
   current: number;
   total: number;
   outcomes: readonly SessionOutcome[];
+  streak?: number;
   headingRef?: Ref<HTMLHeadingElement>;
   children?: ReactNode;
 };
 
-export function QuestionHeader({ title, current, total, outcomes, headingRef, children }: QuestionHeaderProps) {
+export function QuestionHeader({ title, current, total, outcomes, streak = 0, headingRef, children }: QuestionHeaderProps) {
   const { t } = useI18n();
+  const hasActions = streak >= 2 || Boolean(children);
   return (
     <>
       <div className="trainer-head">
@@ -34,7 +36,17 @@ export function QuestionHeader({ title, current, total, outcomes, headingRef, ch
           </span>
           <h1 className="workspace-title" ref={headingRef} tabIndex={-1}>{title}</h1>
         </div>
-        {children}
+        {hasActions && (
+          <div className="trainer-head-actions">
+            {streak >= 2 && (
+              <span className="header-streak-badge" title={`${t('Streak')}: ${streak}`} aria-label={`${t('Streak')}: ${streak}`}>
+                <Flame size={13} aria-hidden="true" />
+                <span>{streak}</span>
+              </span>
+            )}
+            {children}
+          </div>
+        )}
       </div>
       <ol className="question-progress" role="list" aria-label={t('Question outcomes')}>
         {Array.from({ length: total }, (_, index) => {
@@ -114,7 +126,7 @@ type AnswerFeedbackProps = {
 
 export function AnswerFeedback({ result, title, description, feedbackRef, onOpenWordbook, onNext, nextRef, finalQuestion }: AnswerFeedbackProps) {
   const { t } = useI18n();
-  const bookLabel = t('View in verb book');
+  const bookLabel = t('View conjugations');
   return (
     <div className="answer-dock" data-result={result}>
       <div className="answer-feedback" ref={feedbackRef} role="status" tabIndex={feedbackRef ? -1 : undefined}>
@@ -123,7 +135,7 @@ export function AnswerFeedback({ result, title, description, feedbackRef, onOpen
       </div>
       <button aria-label={bookLabel} className="wordbook-link" onClick={onOpenWordbook} title={bookLabel} type="button">
         <BookOpenText size={16} aria-hidden="true" />
-        <span className="wordbook-link-label">{t('Verb Book')}</span>
+        <span className="wordbook-link-label">{bookLabel}</span>
       </button>
       {onNext && (
         <button ref={nextRef} className="next-button" onClick={onNext} type="button">

@@ -14,6 +14,13 @@ interface HeaderProps {
   themeId: ThemeId;
 }
 
+const languageCodes: Record<LanguageId, string> = {
+  english: 'EN',
+  french: 'FR',
+  spanish: 'ES',
+  italian: 'IT',
+};
+
 export function Header({
   languageId,
   switchLanguage,
@@ -47,7 +54,7 @@ export function Header({
             style={{ '--accent': themeId === 'dark' ? language.darkAccent : language.accent } as CSSProperties}
             type="button"
           >
-            <span className="language-code" aria-hidden="true">{language.id === 'english' ? 'EN' : language.id === 'french' ? 'FR' : language.id === 'spanish' ? 'ES' : 'IT'}</span>
+            <span className="language-code" aria-hidden="true">{languageCodes[language.id]}</span>
             <span>{languageName(language.id)}</span>
             {language.id === languageId && <Check className="language-selected" size={14} aria-hidden="true" />}
           </button>
@@ -55,7 +62,10 @@ export function Header({
       </nav>
 
       <div className="language-select-wrapper">
-        <span className="language-select-label" aria-hidden="true">{languageName(languageId)}</span>
+        <span className="language-select-label" aria-hidden="true">
+          <span className="language-code">{languageCodes[languageId]}</span>
+          <span>{languageName(languageId)}</span>
+        </span>
         <select
           value={languageId}
           onChange={(event) => switchLanguage(event.target.value as LanguageId)}

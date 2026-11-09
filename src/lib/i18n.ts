@@ -178,6 +178,8 @@ export const chineseMessages = {
   "Correct +1": "答对 +1",
   "Explanation viewed": "已查看解析",
   "View in verb book": "在动词本中查看",
+  "View conjugations": "查看变位",
+  "Close": "关闭",
   "View results": "查看成绩",
   "Next question": "下一题",
   "This round": "本轮进度",

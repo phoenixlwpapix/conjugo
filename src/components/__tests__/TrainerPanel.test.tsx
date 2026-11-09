@@ -47,7 +47,7 @@ describe('practice feedback', () => {
     expect(html).toContain('Question 1<');
     expect(html).not.toContain('data-state="current"');
     expect(html).toContain(correct ? 'Correct!' : `Correct answer: ${answer}`);
-    expect(html).toContain('View in verb book');
+    expect(html).toContain('View conjugations');
   });
 
   it('preserves outcomes in question order and highlights the next unanswered question', () => {
@@ -55,6 +55,13 @@ describe('practice feedback', () => {
     expect(html).toContain('Question 3<');
     expect(Array.from(html.matchAll(/data-state="([^"]+)"/g), (match) => match[1]).slice(0, 3))
       .toEqual(['correct', 'wrong', 'current']);
+  });
+
+  it('renders a compact header streak badge when streak is at least 2', () => {
+    expect(renderPanel({ streak: 1 })).not.toContain('class="header-streak-badge"');
+    const html = renderPanel({ streak: 4 });
+    expect(html).toContain('class="header-streak-badge"');
+    expect(html).toContain('aria-label="Streak: 4"');
   });
 
   it.each([true, false])('shows results inside the trainer after completion (correct: %s)', (correct) => {
@@ -78,7 +85,7 @@ describe('practice feedback', () => {
     });
     expect(html).toContain("Time&#x27;s up!");
     expect(html).toContain(`Correct answer: ${answer}`);
-    expect(html).toContain('View in verb book');
+    expect(html).toContain('View conjugations');
     expect(html).toContain('View results');
   });
 

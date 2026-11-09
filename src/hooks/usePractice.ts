@@ -82,6 +82,8 @@ export function usePractice({ includeVosotros, practiceQuestionCount }: Practice
   const [elapsedClock] = useState(() => createPracticeClock(0, 1));
   const [timerEnabled, setTimerEnabled] = useState(readTimerEnabled);
   const [sessionKind, setSessionKind] = useState<SessionKind>('standard');
+  const [conjugationPrompt, setConjugationPrompt] = useState<Prompt | null>(null);
+  const [autoAdvanceStopped, setAutoAdvanceStopped] = useState(false);
 
   const drillVerbsRef = useRef<string[]>([]);
   const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -176,18 +178,27 @@ export function usePractice({ includeVosotros, practiceQuestionCount }: Practice
   }, []);
 
   const setActiveView = useCallback((view: AppView) => {
+    setConjugationPrompt(null);
     setWorkspace({ view });
   }, []);
 
-  const openPromptInWordbook = (prompt: Prompt, returnTo: 'practice' | 'quiz') => {
-    if (returnTo === 'practice') clearAutoAdvance();
-    wordbook.openPromptInWordbook(prompt);
-    setWorkspace({ view: 'wordbook', returnTo });
-  };
+  const openPromptInWordbook = useCallback((targetPrompt: Prompt, returnTo?: 'practice' | 'quiz') => {
+    if (returnTo === 'practice') {
+      clearAutoAdvance();
+      setAutoAdvanceStopped(true);
+    }
+    setConjugationPrompt(targetPrompt);
+  }, [clearAutoAdvance]);
+
+  const closeConjugationModal = useCallback(() => {
+    setConjugationPrompt(null);
+  }, []);
 
   const beginSession = useCallback(
     (prompts: Prompt[], kind: SessionKind) => {
       clearAutoAdvance();
+      setConjugationPrompt(null);
+      setAutoAdvanceStopped(false);
       setSessionKind(kind);
       setSessionPrompts(prompts);
       setPromptIndex(0);
@@ -262,6 +273,8 @@ export function usePractice({ includeVosotros, practiceQuestionCount }: Practice
 
   const moveNext = useCallback(() => {
     clearAutoAdvance();
+    setConjugationPrompt(null);
+    setAutoAdvanceStopped(false);
     setPromptIndex((current) => Math.min(current + 1, sessionLength - 1));
     setSelectedAnswer(null);
     setTimedOut(false);
@@ -378,17 +391,18 @@ export function usePractice({ includeVosotros, practiceQuestionCount }: Practice
   }, [activeView, countdownClock, handleTimeout, isAnswered, isSessionComplete, timerEnabled]);
 
   useEffect(() => {
-    if (activeView !== 'practice' || !isCorrect || isSessionComplete) return;
+    if (activeView !== 'practice' || !isCorrect || isSessionComplete || autoAdvanceStopped || conjugationPrompt) return;
 
     autoAdvanceTimer.current = setTimeout(moveNext, autoAdvanceDelayMs);
     return clearAutoAdvance;
-  }, [activeView, clearAutoAdvance, isCorrect, isSessionComplete, moveNext]);
+  }, [activeView, autoAdvanceStopped, clearAutoAdvance, conjugationPrompt, isCorrect, isSessionComplete, moveNext]);
 
   const switchLanguage = useCallback(
     (nextLanguageId: LanguageId) => {
       const nextLanguage = resolveLanguage(nextLanguageId, includeVosotros);
       const nextTense = clampEnglishTense(nextLanguageId, practiceTense);
       setLanguageId(nextLanguageId);
+      setConjugationPrompt(null);
       if (nextTense !== practiceTense) {
         setPracticeTense(nextTense);
       }
@@ -463,6 +477,9 @@ export function usePractice({ includeVosotros, practiceQuestionCount }: Practice
     showOnlyFavorites: wordbook.showOnlyFavorites,
     setShowOnlyFavorites: wordbook.setShowOnlyFavorites,
     openPromptInWordbook,
+    conjugationPrompt,
+    closeConjugationModal,
+    autoAdvanceStopped,
     wordbookReturnView,
     selectedAnswer,
     timedOut,

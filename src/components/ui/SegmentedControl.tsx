@@ -19,19 +19,31 @@ export function SegmentedControl<OptionId extends string>({
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+    const updateScrollState = () => {
+      const maxScrollLeft = container.scrollWidth - container.clientWidth;
+      container.dataset.scrollLeft = container.scrollLeft > 4 ? 'true' : 'false';
+      container.dataset.scrollRight = maxScrollLeft - container.scrollLeft > 4 ? 'true' : 'false';
+    };
     const centerSelection = () => {
-      if (container.scrollWidth <= container.clientWidth) return;
-      const activeButton = container.querySelector<HTMLButtonElement>('[aria-pressed="true"]');
-      if (!activeButton || !container.clientWidth) return;
-      // Scroll only the tense strip so selection never moves the page vertically.
-      const containerBounds = container.getBoundingClientRect();
-      const activeBounds = activeButton.getBoundingClientRect();
-      container.scrollTo({ left: container.scrollLeft + activeBounds.left - containerBounds.left - (container.clientWidth - activeButton.clientWidth) / 2 });
+      if (container.scrollWidth > container.clientWidth) {
+        const activeButton = container.querySelector<HTMLButtonElement>('[aria-pressed="true"]');
+        if (activeButton && container.clientWidth) {
+          // Scroll only the tense strip so selection never moves the page vertically.
+          const containerBounds = container.getBoundingClientRect();
+          const activeBounds = activeButton.getBoundingClientRect();
+          container.scrollTo({ left: container.scrollLeft + activeBounds.left - containerBounds.left - (container.clientWidth - activeButton.clientWidth) / 2 });
+        }
+      }
+      updateScrollState();
     };
     centerSelection();
+    container.addEventListener('scroll', updateScrollState, { passive: true });
     const observer = new ResizeObserver(centerSelection);
     observer.observe(container);
-    return () => observer.disconnect();
+    return () => {
+      container.removeEventListener('scroll', updateScrollState);
+      observer.disconnect();
+    };
   }, [className, value]);
   return (
     <div ref={containerRef} className={className} aria-label={ariaLabel}>

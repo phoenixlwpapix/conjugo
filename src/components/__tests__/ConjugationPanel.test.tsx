@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { languages } from '../../data/verbs';
-import { ConjugationPanel } from '../WordBook/ConjugationPanel';
+import { ConjugationModal, ConjugationPanel } from '../WordBook/ConjugationPanel';
 
 describe('imperfect subjunctive reference', () => {
   it('shows both variants for visible pronouns, and respects the vosotros preference', () => {
@@ -60,5 +60,26 @@ describe('command comparison', () => {
     const html = renderToStaticMarkup(<ConjugationPanel activeLanguage={french} bookTense="imperative" selectedVerb={verb} onTenseChange={() => {}} translationLanguage="en" />);
     expect(html).toContain('Command forms for this verb are not included yet.');
     expect(html).not.toContain('class="conjugation-comparison"');
+  });
+});
+
+describe('conjugation modal sheet', () => {
+  it('renders current verb and tense conjugations in a dialog and highlights the prompted pronoun', () => {
+    const spanish = languages.find((language) => language.id === 'spanish')!;
+    const verb = spanish.verbs.find((entry) => entry.infinitive === 'hablar')!;
+    const html = renderToStaticMarkup(
+      <ConjugationModal
+        prompt={{ language: spanish, verb, tense: 'present', pronoun: 'we' }}
+        isFavorite={false}
+        onToggleFavorite={() => {}}
+        onClose={() => {}}
+        translationLanguage="en"
+      />,
+    );
+    expect(html).toContain('role="dialog"');
+    expect(html).toContain('aria-label="hablar conjugation table"');
+    expect(html).toContain('aria-label="Close"');
+    expect(html).toContain('data-highlighted="true"><span>nosotros</span><strong>hablamos</strong>');
+    expect(html).not.toContain('Choose tense or mood');
   });
 });

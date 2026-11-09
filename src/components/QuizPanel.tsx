@@ -95,7 +95,7 @@ export function QuizPanel({ active, language, questionCount, onAnswer, onOpenWor
   useEffect(() => {
     if (!active) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!question || finished || event.defaultPrevented || event.repeat || event.altKey || event.ctrlKey || event.metaKey || isEditableElement(event.target)) return;
+      if (!question || finished || event.defaultPrevented || event.repeat || event.altKey || event.ctrlKey || event.metaKey || isEditableElement(event.target) || document.querySelector('[role="dialog"]')) return;
       const key = event.key.toLowerCase();
       if (selected === null) {
         const choiceIndex = ['a', 'b', 'c', 'd'].indexOf(key);
@@ -172,6 +172,7 @@ export function QuizPanel({ active, language, questionCount, onAnswer, onOpenWor
               current={index + 1}
               total={questions.length}
               outcomes={outcomes}
+              streak={streak}
               headingRef={quizHeadingRef}
             />
             <div className="prompt-card">

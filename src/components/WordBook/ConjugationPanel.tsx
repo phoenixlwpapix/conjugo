@@ -1,11 +1,75 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { X } from 'lucide-react';
 import { getStudyLanguageTag } from '../../lib/i18n';
 import { useI18n } from '../../hooks/useI18n';
 import { getVerbTranslation, type TranslationLanguage } from '../../data/translations';
-import { getConjugationPronouns, getConjugationPronounLabel, getLanguageTenses, type Language, type TenseId, type VerbEntry } from '../../data/verbs';
+import {
+  getConjugationPronouns,
+  getConjugationPronounLabel,
+  getLanguageTenses,
+  type Language,
+  type Pronoun,
+  type TenseId,
+  type VerbEntry,
+} from '../../data/verbs';
+import type { Prompt } from '../../types';
 import { withMoodMarker } from '../../lib/prompts';
 import { SegmentedControl } from '../ui/SegmentedControl';
+import { QuestionTense } from '../PracticeQuestion';
+import { FavoriteButton } from './FavoriteButton';
 import { isImperative } from '../../data/imperative';
+
+type ConjugationTableProps = {
+  activeLanguage: Language;
+  bookTense: TenseId;
+  selectedVerb: VerbEntry;
+  highlightPronoun?: Pronoun;
+};
+
+export function ConjugationTable({
+  activeLanguage,
+  bookTense,
+  selectedVerb,
+  highlightPronoun,
+}: ConjugationTableProps) {
+  const { t, locale, tenseName } = useI18n();
+  const showCommands = isImperative(bookTense);
+  const showVariants = bookTense === 'imperfectSubjunctive' && Boolean(selectedVerb.imperfectSubjunctiveSe);
+  const pronouns = getConjugationPronouns(activeLanguage, bookTense, selectedVerb);
+
+  return (
+    <>
+      {pronouns.length === 0 && <p>{t('Command forms for this verb are not included yet.')}</p>}
+      {showCommands || showVariants ? pronouns.length > 0 && (
+        <table className="conjugation-comparison" data-variants={showVariants || undefined} aria-label={showCommands ? t('Imperative comparison') : tenseName(activeLanguage, bookTense)}>
+          <thead lang={locale}>
+            <tr><th scope="col">{t('Pronoun')}</th><th scope="col">{showCommands ? t('Affirmative') : '-ra'}</th><th scope="col">{showCommands ? t('Negative') : '-se'}</th></tr>
+          </thead>
+          <tbody lang={getStudyLanguageTag(activeLanguage.id)}>
+            {pronouns.map((pronoun) => (
+              <tr key={pronoun} data-highlighted={pronoun === highlightPronoun || undefined}>
+                <th scope="row">{withMoodMarker(activeLanguage.id, bookTense, getConjugationPronounLabel(activeLanguage, bookTense, pronoun))}</th>
+                <td>{selectedVerb.forms[showCommands ? 'imperative' : bookTense][pronoun]}</td>
+                <td>{showCommands ? selectedVerb.forms.imperativeNegative[pronoun] : selectedVerb.imperfectSubjunctiveSe?.[pronoun]}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <div className="conjugation-table" lang={getStudyLanguageTag(activeLanguage.id)}>
+          {pronouns.map((pronoun) => (
+            <div className="conjugation-row" key={pronoun} data-highlighted={pronoun === highlightPronoun || undefined}>
+              <span>{withMoodMarker(activeLanguage.id, bookTense, getConjugationPronounLabel(activeLanguage, bookTense, pronoun))}</span>
+              <strong>
+                {selectedVerb.forms[bookTense][pronoun]}
+              </strong>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
 
 type ConjugationPanelProps = {
   activeLanguage: Language;
@@ -24,11 +88,9 @@ export function ConjugationPanel({
   translationLanguage,
   favoriteAction,
 }: ConjugationPanelProps) {
-  const { t, locale, languageName, tenseName } = useI18n();
+  const { t, languageName, tenseName } = useI18n();
   const translation = getVerbTranslation(activeLanguage, selectedVerb, translationLanguage);
   const showCommands = isImperative(bookTense);
-  const showVariants = bookTense === 'imperfectSubjunctive' && Boolean(selectedVerb.imperfectSubjunctiveSe);
-  const pronouns = getConjugationPronouns(activeLanguage, bookTense, selectedVerb);
 
   return (
     <section className="conjugation-panel" aria-label={t('{verb} conjugation table', { verb: selectedVerb.infinitive })}>
@@ -56,32 +118,104 @@ export function ConjugationPanel({
         />
       </div>
 
-      {pronouns.length === 0 && <p>{t('Command forms for this verb are not included yet.')}</p>}
-      {showCommands || showVariants ? pronouns.length > 0 && (
-        <table className="conjugation-comparison" data-variants={showVariants || undefined} aria-label={showCommands ? t('Imperative comparison') : tenseName(activeLanguage, bookTense)}>
-          <thead lang={locale}>
-            <tr><th scope="col">{t('Pronoun')}</th><th scope="col">{showCommands ? t('Affirmative') : '-ra'}</th><th scope="col">{showCommands ? t('Negative') : '-se'}</th></tr>
-          </thead>
-          <tbody lang={getStudyLanguageTag(activeLanguage.id)}>
-            {pronouns.map((pronoun) => (
-              <tr key={pronoun}>
-                <th scope="row">{withMoodMarker(activeLanguage.id, bookTense, getConjugationPronounLabel(activeLanguage, bookTense, pronoun))}</th>
-                <td>{selectedVerb.forms[showCommands ? 'imperative' : bookTense][pronoun]}</td>
-                <td>{showCommands ? selectedVerb.forms.imperativeNegative[pronoun] : selectedVerb.imperfectSubjunctiveSe?.[pronoun]}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : <div className="conjugation-table" lang={getStudyLanguageTag(activeLanguage.id)}>
-        {pronouns.map((pronoun) => (
-          <div className="conjugation-row" key={pronoun}>
-            <span>{withMoodMarker(activeLanguage.id, bookTense, getConjugationPronounLabel(activeLanguage, bookTense, pronoun))}</span>
-            <strong>
-              {selectedVerb.forms[bookTense][pronoun]}
-            </strong>
-          </div>
-        ))}
-      </div>}
+      <ConjugationTable
+        activeLanguage={activeLanguage}
+        bookTense={bookTense}
+        selectedVerb={selectedVerb}
+      />
     </section>
+  );
+}
+
+type ConjugationModalProps = {
+  prompt: Prompt;
+  isFavorite: boolean;
+  onToggleFavorite: (infinitive: string) => void;
+  onClose: () => void;
+  translationLanguage: TranslationLanguage;
+};
+
+export function ConjugationModal({
+  prompt,
+  isFavorite,
+  onToggleFavorite,
+  onClose,
+  translationLanguage,
+}: ConjugationModalProps) {
+  const { t } = useI18n();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const { language: activeLanguage, verb: selectedVerb, tense, pronoun } = prompt;
+  const translation = getVerbTranslation(activeLanguage, selectedVerb, translationLanguage);
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="conjugation-modal-backdrop"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      role="presentation"
+    >
+      <section
+        className="conjugation-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('{verb} conjugation table', { verb: selectedVerb.infinitive })}
+      >
+        <div className="conjugation-modal-handle" aria-hidden="true" />
+        <div className="conjugation-modal-head">
+          <div className="conjugation-modal-title">
+            <div className="conjugation-modal-verb">
+              <h2 lang={getStudyLanguageTag(activeLanguage.id)}>{selectedVerb.infinitive}</h2>
+              <QuestionTense language={activeLanguage} tense={tense} />
+            </div>
+            {translation && <p lang={translationLanguage}>{translation}</p>}
+          </div>
+          <div className="conjugation-modal-actions">
+            <FavoriteButton
+              infinitive={selectedVerb.infinitive}
+              isFavorite={isFavorite}
+              onToggle={onToggleFavorite}
+            />
+            <button
+              ref={closeButtonRef}
+              type="button"
+              className="conjugation-modal-close"
+              onClick={onClose}
+              aria-label={t('Close')}
+              title={t('Close')}
+            >
+              <X size={18} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+
+        <ConjugationTable
+          activeLanguage={activeLanguage}
+          bookTense={tense}
+          selectedVerb={selectedVerb}
+          highlightPronoun={pronoun}
+        />
+      </section>
+    </div>
   );
 }

@@ -35,6 +35,8 @@ interface TrainerPanelProps {
   toggleTimer: () => void;
   sessionTarget: number;
   sessionKind: SessionKind;
+  streak?: number;
+  autoAdvanceStopped?: boolean;
   translationLanguage: TranslationLanguage;
 }
 
@@ -67,6 +69,8 @@ export function TrainerPanel({
   toggleTimer,
   sessionTarget,
   sessionKind,
+  streak = 0,
+  autoAdvanceStopped = false,
   translationLanguage,
 }: TrainerPanelProps) {
   const { t, languageName } = useI18n();
@@ -76,15 +80,16 @@ export function TrainerPanel({
   const showResults = isSessionComplete && attempts.length > 0 && !reviewingLastAnswer;
   const panelLabel = t('Multiple choice verb conjugation drill');
   const outcomes = attempts.map((attempt) => attempt.correct ? 'correct' : 'wrong');
+  const canManualAdvance = !isCorrect || autoAdvanceStopped;
 
   useEffect(() => {
     if (wasComplete.current && !isSessionComplete) {
       questionHeadingRef.current?.focus();
-    } else if (isAnswered && !showResults && (isSessionComplete || !isCorrect)) {
+    } else if (isAnswered && !showResults && (isSessionComplete || canManualAdvance)) {
       actionButtonRef.current?.focus();
     }
     wasComplete.current = isSessionComplete;
-  }, [isAnswered, isCorrect, isSessionComplete, showResults]);
+  }, [canManualAdvance, isAnswered, isSessionComplete, showResults]);
 
   if (showResults) {
     return (
@@ -133,6 +138,7 @@ export function TrainerPanel({
         current={currentQuestion}
         total={sessionTarget}
         outcomes={outcomes}
+        streak={streak}
         headingRef={questionHeadingRef}
       >
         <button
@@ -234,9 +240,9 @@ export function TrainerPanel({
         <AnswerFeedback
           result={isCorrect ? 'correct' : 'wrong'}
           title={timedOut ? t("Time's up!") : isCorrect ? t('Correct!') : correctAnswerLabel}
-          description={timedOut ? correctAnswerLabel : isCorrect && !isSessionComplete ? t('next question loading') : undefined}
+          description={timedOut ? correctAnswerLabel : !canManualAdvance && !isSessionComplete ? t('next question loading') : undefined}
           onOpenWordbook={onOpenWordbook}
-          onNext={isSessionComplete ? toggleResults : !isCorrect ? moveNext : undefined}
+          onNext={isSessionComplete ? toggleResults : canManualAdvance ? moveNext : undefined}
           nextRef={actionButtonRef}
           finalQuestion={isSessionComplete}
         />

@@ -214,6 +214,10 @@ export default function App() {
         className="app-shell"
         data-view={activeView}
         data-theme={themeId}
+        onPointerDownCapture={(event) => {
+          event.currentTarget.toggleAttribute('data-touch-input', event.pointerType === 'touch');
+        }}
+        onKeyDownCapture={(event) => event.currentTarget.removeAttribute('data-touch-input')}
         style={{ '--language-accent': themeId === 'dark' ? activeLanguage.darkAccent : activeLanguage.accent } as CSSProperties}
       >
         <Header

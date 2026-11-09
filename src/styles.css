@@ -2406,6 +2406,7 @@ button {
 .alltime-card .score-grid strong svg { display: none; }
 .answer-dock:not([data-result='idle']) { padding: 14px; border: 0; border-radius: 8px; }
 button:focus-visible, select:focus-visible { outline: 2px solid var(--language-accent, var(--green)); outline-offset: 3px; }
+.app-shell[data-touch-input] :is(.wordbook-link, .conjugation-modal-close):focus { outline: none; }
 .conjugation-panel { background: var(--paper-strong); border-radius: var(--radius-panel); }
 .verb-list-panel { box-shadow: none; }
 .quiz-tense-option { border-radius: 10px; }
@@ -2610,7 +2611,6 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
   color: var(--ink);
   background: var(--paper-strong);
 }
-.wordbook-link:hover { color: var(--ink); border-color: var(--language-accent, var(--green)); }
 .wordbook-link .wordbook-link-label { display: block; margin: 0; color: inherit; font-size: var(--text-caption); font-weight: 600; }
 
 @keyframes conjugation-backdrop-in {
@@ -2737,7 +2737,7 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
   transition: color 160ms ease, border-color 160ms ease;
 }
 
-.conjugation-modal-close:hover {
+:where(.app-shell:not([data-touch-input])) :is(.wordbook-link, .conjugation-modal-close):hover {
   color: var(--ink);
   border-color: var(--language-accent, var(--green));
 }

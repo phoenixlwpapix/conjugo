@@ -143,44 +143,56 @@ export function ConjugationModal({
   translationLanguage,
 }: ConjugationModalProps) {
   const { t } = useI18n();
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const { language: activeLanguage, verb: selectedVerb, tense, pronoun } = prompt;
   const translation = getVerbTranslation(activeLanguage, selectedVerb, translationLanguage);
 
   useEffect(() => {
-    closeButtonRef.current?.focus();
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const opener = document.activeElement;
     const previousOverflow = document.body.style.overflow;
+    dialog.showModal();
+    closeButtonRef.current?.focus();
     document.body.style.overflow = 'hidden';
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        event.stopPropagation();
-        onClose();
+    return () => {
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+      if (opener instanceof HTMLElement && opener.isConnected) {
+        opener.focus({ preventScroll: true });
       }
     };
-
-    window.addEventListener('keydown', handleKeyDown, true);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', handleKeyDown, true);
-    };
-  }, [onClose]);
+  }, []);
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
       className="conjugation-modal-backdrop"
+      aria-label={t('{verb} conjugation table', { verb: selectedVerb.infinitive })}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
-      role="presentation"
+      onKeyDown={(event) => {
+        if (event.key !== 'Tab') return;
+        const buttons = event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)');
+        const first = buttons[0];
+        const last = buttons[buttons.length - 1];
+        const from = event.shiftKey ? first : last;
+        const to = event.shiftKey ? last : first;
+        if (event.target === from && to) {
+          event.preventDefault();
+          to.focus();
+        }
+      }}
     >
-      <section
-        className="conjugation-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label={t('{verb} conjugation table', { verb: selectedVerb.infinitive })}
-      >
+      <section className="conjugation-modal">
         <div className="conjugation-modal-handle" aria-hidden="true" />
         <div className="conjugation-modal-head">
           <div className="conjugation-modal-title">
@@ -216,6 +228,6 @@ export function ConjugationModal({
           highlightPronoun={pronoun}
         />
       </section>
-    </div>
+    </dialog>
   );
 }

@@ -2626,21 +2626,31 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
 .conjugation-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 60;
-  display: flex;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  overflow: hidden;
   align-items: flex-end;
   justify-content: center;
   padding: 18vh 16px 0;
+  color: inherit;
   background: rgb(15 18 26 / 44%);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   animation: conjugation-backdrop-in 180ms ease-out;
 }
 
+.conjugation-modal-backdrop[open] { display: flex; }
+.conjugation-modal-backdrop::backdrop { background: transparent; }
+
 .conjugation-modal {
   width: min(500px, 100%);
   max-height: min(82svh, 580px);
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 10px 20px 22px;
   border: 1px solid var(--panel-border);
   border-bottom: 0;
@@ -2749,7 +2759,7 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
 
 .conjugation-modal .conjugation-row[data-highlighted='true'] strong,
 .conjugation-modal .conjugation-comparison tr[data-highlighted='true'] td {
-  color: var(--language-accent, var(--green));
+  color: color-mix(in srgb, var(--language-accent, var(--green)) 55%, var(--ink));
 }
 
 .conjugation-modal .conjugation-comparison tbody tr {
@@ -2931,6 +2941,7 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
 @media (max-width: 640px) {
   :root {
     --mobile-tab-bar-height: calc(60px + env(safe-area-inset-bottom, 0px));
+    --mobile-header-top: calc(8px + env(safe-area-inset-top, 0px));
     --workspace-padding: 20px 16px;
     --workspace-gap: 16px;
     --radius-panel: 14px;
@@ -2953,7 +2964,7 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
 
   .app-topbar {
     position: sticky;
-    top: 8px;
+    top: var(--mobile-header-top);
     z-index: 20;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 8px;
@@ -3090,6 +3101,7 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
   .practice-layout .choice-grid { gap: 8px; margin-top: 12px; }
   .practice-layout .choice-card { min-height: 54px; padding: 10px 12px; }
   .practice-layout .choice-card strong { font-size: 1.02rem; }
+  .app-content > .practice-layout .choice-card { min-height: 50px; padding-block: 8px; }
 
   .answer-hint, .answer-dock[data-result='idle']:not(:has(.quiz-skip)) { display: none; }
   .answer-dock:has(.quiz-skip) { min-height: 0; margin-top: 12px; padding-top: 0; }
@@ -3103,6 +3115,11 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
     margin-top: 12px;
     padding: 12px 14px;
     border-radius: 10px;
+  }
+  .app-shell[data-view='practice'] .answer-dock:not([data-result='idle']) {
+    row-gap: 4px;
+    margin-top: 8px;
+    padding-block: 8px;
   }
   .answer-feedback {
     grid-column: 1 / -1;
@@ -3181,7 +3198,7 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
   .stats-review-table td:nth-child(4)::before { content: '→ '; color: var(--muted); }
   .stats-review-table td:last-child { grid-column: 4; grid-row: 1 / 3; align-self: center; text-align: right; font-size: var(--text-caption); }
 
-  .wordbook-tools { top: 64px; }
+  .wordbook-tools { top: calc(var(--mobile-header-top) + 62px); }
   .conjugation-row { grid-template-columns: minmax(0, .8fr) minmax(0, 1fr); min-height: 54px; padding: 10px 0; gap: 10px; }
   .conjugation-row span { font-size: var(--text-body); }
   .conjugation-row strong { font-size: 1.05rem; }
@@ -3219,7 +3236,8 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
   .practice-layout > .trainer-panel { padding-block: 8px; }
   .practice-layout .question-progress { margin-top: 8px; }
   .practice-layout .choice-grid { gap: 6px; margin-top: 10px; }
-  .practice-layout .choice-card { min-height: 44px; padding-block: 6px; }
+  .practice-layout .choice-card,
+  .app-content > .practice-layout .choice-card { min-height: 44px; padding-block: 6px; }
   .practice-layout .choice-card strong { font-size: 0.875rem; }
   .practice-layout .prompt-card { min-height: 0; margin-top: 10px; padding: 8px 12px; }
   .practice-layout .prompt-display { gap: 4px 8px; }
@@ -3248,6 +3266,8 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
   .practice-layout .result-header { gap: 8px 12px; padding: 12px; }
   .practice-layout .result-metrics { padding-bottom: 10px; }
   .practice-layout .result-trail li { min-height: 28px; }
+  .app-content > .practice-layout .result-trail { grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; }
+  .app-content > .practice-layout .result-trail li { flex-direction: column; gap: 1px; line-height: 1; }
   .practice-layout .result-actions button { flex: 1 1 auto; width: auto; padding-inline: 8px; font-size: var(--text-body); }
 }
 

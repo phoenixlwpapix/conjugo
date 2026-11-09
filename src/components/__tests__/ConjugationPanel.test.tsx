@@ -76,7 +76,7 @@ describe('conjugation modal sheet', () => {
         translationLanguage="en"
       />,
     );
-    expect(html).toContain('role="dialog"');
+    expect(html).toContain('<dialog class="conjugation-modal-backdrop"');
     expect(html).toContain('aria-label="hablar conjugation table"');
     expect(html).toContain('aria-label="Close"');
     expect(html).toContain('data-highlighted="true"><span>nosotros</span><strong>hablamos</strong>');

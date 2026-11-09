@@ -133,7 +133,17 @@ export function AnswerFeedback({ result, title, description, feedbackRef, onOpen
         <strong>{title}</strong>
         {description && <span>{description}</span>}
       </div>
-      <button aria-label={bookLabel} className="wordbook-link" onClick={onOpenWordbook} title={bookLabel} type="button">
+      <button
+        aria-label={bookLabel}
+        aria-haspopup="dialog"
+        className="wordbook-link"
+        onClick={(event) => {
+          event.currentTarget.focus({ preventScroll: true });
+          onOpenWordbook();
+        }}
+        title={bookLabel}
+        type="button"
+      >
         <BookOpenText size={16} aria-hidden="true" />
         <span className="wordbook-link-label">{bookLabel}</span>
       </button>

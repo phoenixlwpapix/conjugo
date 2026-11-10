@@ -1,7 +1,7 @@
 import { isImperative } from '../data/imperative';
 import { concreteTenses, languages, type LanguageId, type PracticeTenseId, type Pronoun, type TenseId } from '../data/verbs';
 import { isTranslationLanguage, type TranslationLanguage } from '../data/translations';
-import type { AnswerTally, AppView, FavoriteVerbsByLanguage, PracticeStats, PracticeStatsByLanguage, ReviewBox, StoredMiss } from '../types';
+import type { AnswerTally, AppView, FavoriteVerbsByLanguage, PracticeAnswerMode, PracticeStats, PracticeStatsByLanguage, ReviewBox, StoredMiss } from '../types';
 import { capMissesPerLanguage } from './misses';
 import { defaultPracticeQuestionCount, defaultQuizQuestionCount, practiceQuestionCounts, type PracticeQuestionCount } from './prompts';
 import { emptyStats } from './scoring';
@@ -16,6 +16,8 @@ const storageKeys = {
   translationLanguage: 'conjugo.translationLanguage',
   includeVosotros: 'conjugo.includeVosotros',
   practiceQuestionCount: 'conjugo.practiceQuestionCount',
+  practiceAnswerMode: 'conjugo.practiceAnswerMode',
+  practiceAccentRetry: 'conjugo.practiceAccentRetry',
   quizQuestionCount: 'conjugo.quizQuestionCount',
   favoriteVerbs: 'conjugo.favoriteVerbs',
 } as const;
@@ -290,6 +292,18 @@ export const writeTranslationLanguage = (translationLanguage: TranslationLanguag
 };
 
 export const readIncludeVosotros = (): boolean => safeGet(storageKeys.includeVosotros) !== 'false';
+
+export const readPracticeAnswerMode = (): PracticeAnswerMode => safeGet(storageKeys.practiceAnswerMode) === 'typing' ? 'typing' : 'choice';
+
+export const writePracticeAnswerMode = (mode: PracticeAnswerMode) => {
+  safeSet(storageKeys.practiceAnswerMode, mode);
+};
+
+export const readPracticeAccentRetry = () => safeGet(storageKeys.practiceAccentRetry) === 'true';
+
+export const writePracticeAccentRetry = (enabled: boolean) => {
+  safeSet(storageKeys.practiceAccentRetry, String(enabled));
+};
 
 export const writeIncludeVosotros = (include: boolean) => {
   safeSet(storageKeys.includeVosotros, String(include));

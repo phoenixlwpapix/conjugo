@@ -40,12 +40,15 @@ import {
   writeStoredMisses,
   writeTimerEnabled,
 } from '../lib/storage';
-import type { AppView, Attempt, PracticeStats, PracticeStatsByLanguage, Prompt, SessionKind, StoredMiss } from '../types';
+import type { AppView, Attempt, PracticeAnswerMode, PracticeStats, PracticeStatsByLanguage, Prompt, SessionKind, StoredMiss } from '../types';
 import { useWordbook } from './useWordbook';
 import { createPracticeClock } from '../lib/practiceClock';
+import { gradeTypedAnswer } from '../lib/typing';
 
 type PracticePreferences = {
   includeVosotros: boolean;
+  practiceAnswerMode: PracticeAnswerMode;
+  practiceAccentRetry: boolean;
   practiceQuestionCount: PracticeQuestionCount;
 };
 
@@ -59,7 +62,7 @@ const resolveLanguage = (languageId: LanguageId, includeVosotros: boolean): Lang
   return language.id === 'spanish' && !includeVosotros ? { ...language, excludedPronouns: ['you plural'] } : language;
 };
 
-export function usePractice({ includeVosotros, practiceQuestionCount }: PracticePreferences) {
+export function usePractice({ includeVosotros, practiceAnswerMode, practiceAccentRetry, practiceQuestionCount }: PracticePreferences) {
   const [languageId, setLanguageId] = useState<LanguageId>(readLanguageId);
   const [practiceTense, setPracticeTense] = useState<PracticeTenseId>(() =>
     clampEnglishTense(languageId, readPracticeTense()),
@@ -73,6 +76,9 @@ export function usePractice({ includeVosotros, practiceQuestionCount }: Practice
     return createSessionPrompts(language, practiceTense, getReviewTargets(language, practiceTense, storedMisses), { limit: practiceQuestionCount });
   });
   const [promptIndex, setPromptIndex] = useState(0);
+  const [sessionVersion, setSessionVersion] = useState(0);
+  const [startedAnswerMode, setStartedAnswerMode] = useState<PracticeAnswerMode | null>(null);
+  const [showAccentHint, setShowAccentHint] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [timedOut, setTimedOut] = useState(false);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
@@ -88,8 +94,7 @@ export function usePractice({ includeVosotros, practiceQuestionCount }: Practice
   const drillVerbsRef = useRef<string[]>([]);
   const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const storedMissesRef = useRef(storedMisses);
-  const selectedAnswerRef = useRef(selectedAnswer);
-  const isSessionCompleteRef = useRef(false);
+  const hasRecordedAttempt = useRef(false);
 
   const activeLanguage = useMemo(() => resolveLanguage(languageId, includeVosotros), [includeVosotros, languageId]);
   const activeFavorites = favoritesByLanguage[languageId];
@@ -106,10 +111,11 @@ export function usePractice({ includeVosotros, practiceQuestionCount }: Practice
   );
   const prompt =
     sessionPrompts[Math.min(promptIndex, sessionPrompts.length - 1)] ?? getFallbackPrompt(activeLanguage, practiceTense);
-  const choices = useMemo(() => getChoices(prompt, promptIndex), [prompt, promptIndex]);
+  const answerMode = startedAnswerMode ?? practiceAnswerMode;
+  const choices = useMemo(() => answerMode === 'choice' ? getChoices(prompt, promptIndex) : [], [answerMode, prompt, promptIndex]);
   const correctAnswer = getAnswer(prompt);
   const isAnswered = selectedAnswer !== null || timedOut;
-  const isCorrect = !timedOut && selectedAnswer === correctAnswer;
+  const isCorrect = isAnswered && attempts[attempts.length - 1]?.correct === true;
   const correctCount = attempts.filter((attempt) => attempt.correct).length;
   const accuracy = getAccuracy(correctCount, attempts.length);
   const progress = Math.min(attempts.length, sessionLength);
@@ -122,9 +128,6 @@ export function usePractice({ includeVosotros, practiceQuestionCount }: Practice
     const activePronouns = new Set(getLanguagePronouns(activeLanguage));
     return storedMisses.filter((miss) => miss.languageId === activeLanguage.id && activePronouns.has(miss.pronoun));
   }, [activeLanguage, storedMisses]);
-
-  selectedAnswerRef.current = selectedAnswer;
-  isSessionCompleteRef.current = isSessionComplete;
 
   useEffect(() => {
     storedMissesRef.current = storedMisses;
@@ -201,12 +204,16 @@ export function usePractice({ includeVosotros, practiceQuestionCount }: Practice
       setAutoAdvanceStopped(false);
       setSessionKind(kind);
       setSessionPrompts(prompts);
+      setSessionVersion((current) => current + 1);
+      setStartedAnswerMode(null);
+      setShowAccentHint(false);
       setPromptIndex(0);
       setAttempts([]);
       setStreak(0);
       setReviewingLastAnswer(false);
       setSelectedAnswer(null);
       setTimedOut(false);
+      hasRecordedAttempt.current = false;
       countdownClock.reset();
       elapsedClock.reset();
     },
@@ -278,6 +285,8 @@ export function usePractice({ includeVosotros, practiceQuestionCount }: Practice
     setPromptIndex((current) => Math.min(current + 1, sessionLength - 1));
     setSelectedAnswer(null);
     setTimedOut(false);
+    setShowAccentHint(false);
+    hasRecordedAttempt.current = false;
     countdownClock.reset();
   }, [clearAutoAdvance, countdownClock, sessionLength]);
 
@@ -296,39 +305,34 @@ export function usePractice({ includeVosotros, practiceQuestionCount }: Practice
     }));
   }, [languageId]);
 
-  const selectChoice = useCallback(
-    (choice: string) => {
-      if (isAnswered || isSessionComplete) {
-        return;
-      }
-
-      const choiceIsCorrect = choice === correctAnswer;
+  const recordAttempt = useCallback(
+    (answer: string, correct: boolean, didTimeOut = false) => {
+      if (hasRecordedAttempt.current || isSessionComplete) return;
+      hasRecordedAttempt.current = true;
+      countdownClock.stop();
+      setStartedAnswerMode(answerMode);
       const nextAttemptTotal = attempts.length + 1;
-      const nextStreak = choiceIsCorrect ? streak + 1 : 0;
-      const attempt: Attempt = { prompt, answer: choice, correct: choiceIsCorrect };
+      const nextStreak = correct ? streak + 1 : 0;
+      const attempt: Attempt = { prompt, answer, correct, timedOut: didTimeOut };
 
-      setSelectedAnswer(choice);
-      setTimedOut(false);
+      setSelectedAnswer(didTimeOut ? null : answer);
+      setTimedOut(didTimeOut);
       setAttempts((current) => [...current, attempt]);
       setStreak(nextStreak);
       updateStats(languageId, {
-        correct: choiceIsCorrect,
+        correct,
         streak: nextStreak,
         completedSet: nextAttemptTotal >= sessionLength && sessionKind !== 'review',
         tense: prompt.tense,
         verbInfinitive: prompt.verb.infinitive,
       });
 
-      if (choiceIsCorrect) {
-        setStoredMisses((current) => recordCorrectReview(current, prompt));
-      } else {
-        setStoredMisses((current) => upsertMiss(current, prompt));
-      }
+      setStoredMisses((current) => correct ? recordCorrectReview(current, prompt) : upsertMiss(current, prompt));
     },
     [
+      answerMode,
       attempts.length,
-      correctAnswer,
-      isAnswered,
+      countdownClock,
       isSessionComplete,
       languageId,
       prompt,
@@ -339,27 +343,23 @@ export function usePractice({ includeVosotros, practiceQuestionCount }: Practice
     ],
   );
 
-  const handleTimeout = useCallback(() => {
-    if (selectedAnswerRef.current !== null || isSessionCompleteRef.current) {
+  const submitAnswer = useCallback((input: string) => {
+    if (hasRecordedAttempt.current || isSessionComplete) return;
+    if (answerMode === 'choice') {
+      recordAttempt(input, input === correctAnswer);
       return;
     }
+    const answer = input.trim();
+    if (!answer) return;
+    const grade = gradeTypedAnswer(answer, prompt);
+    if (grade === 'accent' && practiceAccentRetry && !showAccentHint) {
+      setShowAccentHint(true);
+      return;
+    }
+    recordAttempt(answer, grade === 'correct');
+  }, [answerMode, correctAnswer, isSessionComplete, practiceAccentRetry, prompt, recordAttempt, showAccentHint]);
 
-    const attempt: Attempt = { prompt, answer: '', correct: false, timedOut: true };
-    const nextAttemptTotal = attempts.length + 1;
-
-    setTimedOut(true);
-    setSelectedAnswer(null);
-    setAttempts((current) => [...current, attempt]);
-    setStreak(0);
-    updateStats(languageId, {
-      correct: false,
-      streak: 0,
-      completedSet: nextAttemptTotal >= sessionLength && sessionKind !== 'review',
-      tense: prompt.tense,
-      verbInfinitive: prompt.verb.infinitive,
-    });
-    setStoredMisses((current) => upsertMiss(current, prompt));
-  }, [attempts.length, languageId, prompt, sessionKind, sessionLength, updateStats]);
+  const handleTimeout = useCallback(() => recordAttempt('', false, true), [recordAttempt]);
 
   useEffect(() => {
     if (!isAnswered && !isSessionComplete) {
@@ -391,11 +391,11 @@ export function usePractice({ includeVosotros, practiceQuestionCount }: Practice
   }, [activeView, countdownClock, handleTimeout, isAnswered, isSessionComplete, timerEnabled]);
 
   useEffect(() => {
-    if (activeView !== 'practice' || !isCorrect || isSessionComplete || autoAdvanceStopped || conjugationPrompt) return;
+    if (activeView !== 'practice' || answerMode === 'typing' || !isCorrect || isSessionComplete || autoAdvanceStopped || conjugationPrompt) return;
 
     autoAdvanceTimer.current = setTimeout(moveNext, autoAdvanceDelayMs);
     return clearAutoAdvance;
-  }, [activeView, autoAdvanceStopped, clearAutoAdvance, conjugationPrompt, isCorrect, isSessionComplete, moveNext]);
+  }, [activeView, answerMode, autoAdvanceStopped, clearAutoAdvance, conjugationPrompt, isCorrect, isSessionComplete, moveNext]);
 
   const switchLanguage = useCallback(
     (nextLanguageId: LanguageId) => {
@@ -492,6 +492,9 @@ export function usePractice({ includeVosotros, practiceQuestionCount }: Practice
     allStoredMisses: storedMisses,
     activeLanguage,
     prompt,
+    answerMode,
+    sessionVersion,
+    showAccentHint,
     choices,
     correctAnswer,
     isAnswered,
@@ -500,7 +503,7 @@ export function usePractice({ includeVosotros, practiceQuestionCount }: Practice
     progress,
     progressPercent,
     isSessionComplete,
-    selectChoice,
+    submitAnswer,
     resetSession,
     moveNext,
     startMissReview,

@@ -2,10 +2,14 @@ import { useEffect, useState } from 'react';
 import type { TranslationLanguage } from '../data/translations';
 import {
   readIncludeVosotros,
+  readPracticeAccentRetry,
+  readPracticeAnswerMode,
   readPracticeQuestionCount,
   readQuizQuestionCount,
   readTranslationLanguage,
   writeIncludeVosotros,
+  writePracticeAccentRetry,
+  writePracticeAnswerMode,
   writePracticeQuestionCount,
   writeQuizQuestionCount,
   writeTranslationLanguage,
@@ -14,6 +18,8 @@ import {
 export function usePreferences() {
   const [translationLanguage, setTranslationLanguage] = useState<TranslationLanguage>(readTranslationLanguage);
   const [includeVosotros, setIncludeVosotros] = useState(readIncludeVosotros);
+  const [practiceAnswerMode, setPracticeAnswerMode] = useState(readPracticeAnswerMode);
+  const [practiceAccentRetry, setPracticeAccentRetry] = useState(readPracticeAccentRetry);
   const [practiceQuestionCount, setPracticeQuestionCount] = useState(readPracticeQuestionCount);
   const [quizQuestionCount, setQuizQuestionCount] = useState(readQuizQuestionCount);
 
@@ -24,6 +30,14 @@ export function usePreferences() {
   useEffect(() => {
     writeIncludeVosotros(includeVosotros);
   }, [includeVosotros]);
+
+  useEffect(() => {
+    writePracticeAnswerMode(practiceAnswerMode);
+  }, [practiceAnswerMode]);
+
+  useEffect(() => {
+    writePracticeAccentRetry(practiceAccentRetry);
+  }, [practiceAccentRetry]);
 
   useEffect(() => {
     writePracticeQuestionCount(practiceQuestionCount);
@@ -38,6 +52,10 @@ export function usePreferences() {
     setTranslationLanguage,
     includeVosotros,
     setIncludeVosotros,
+    practiceAnswerMode,
+    setPracticeAnswerMode,
+    practiceAccentRetry,
+    setPracticeAccentRetry,
     practiceQuestionCount,
     setPracticeQuestionCount,
     quizQuestionCount,

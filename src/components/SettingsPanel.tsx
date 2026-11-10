@@ -4,8 +4,10 @@ import { translationLanguageOptions } from '../data/translations';
 import { useI18n } from '../hooks/useI18n';
 import type { usePreferences } from '../hooks/usePreferences';
 import { defaultPracticeQuestionCount, defaultQuizQuestionCount, practiceQuestionCounts, type PracticeQuestionCount } from '../lib/prompts';
+import type { PracticeAnswerMode } from '../types';
 
 type SettingsPanelProps = ReturnType<typeof usePreferences> & {
+  activePracticeAnswerMode: PracticeAnswerMode;
   themeId: ThemeId;
   setThemeId: (themeId: ThemeId) => void;
   timerEnabled: boolean;
@@ -48,6 +50,11 @@ export function SettingsPanel({
   setTranslationLanguage,
   includeVosotros,
   setIncludeVosotros,
+  practiceAnswerMode,
+  activePracticeAnswerMode,
+  setPracticeAnswerMode,
+  practiceAccentRetry,
+  setPracticeAccentRetry,
   practiceQuestionCount,
   setPracticeQuestionCount,
   quizQuestionCount,
@@ -63,6 +70,31 @@ export function SettingsPanel({
 
       <section className="settings-section" aria-labelledby="practice-settings-title">
         <h2 id="practice-settings-title">{t('Practice')}</h2>
+        <div className="preference-row">
+          <span>
+            {t('Answer format')}
+            {activePracticeAnswerMode !== practiceAnswerMode && <small id="practice-answer-mode-note" className="preference-note">{t('Applies to the next set.')}</small>}
+          </span>
+          <div
+            className="preference-toggle"
+            role="group"
+            aria-label={t('Answer format')}
+            aria-describedby={activePracticeAnswerMode !== practiceAnswerMode ? 'practice-answer-mode-note' : undefined}
+          >
+            <button aria-pressed={practiceAnswerMode === 'choice'} data-active={practiceAnswerMode === 'choice'} onClick={() => setPracticeAnswerMode('choice')} type="button">
+              {t('Multiple choice')}
+            </button>
+            <button aria-pressed={practiceAnswerMode === 'typing'} data-active={practiceAnswerMode === 'typing'} onClick={() => setPracticeAnswerMode('typing')} type="button">
+              {t('Typing')}
+            </button>
+          </div>
+        </div>
+        {practiceAnswerMode === 'typing' && (
+          <label className="preference-row preference-switch">
+            <span>{t('Allow one accent retry')}</span>
+            <input checked={practiceAccentRetry} onChange={(event) => setPracticeAccentRetry(event.target.checked)} role="switch" type="checkbox" />
+          </label>
+        )}
         <QuestionCountSetting
           label={t('Questions per set')}
           value={practiceQuestionCount}

@@ -4,17 +4,21 @@ import { useEffect, useRef, useSyncExternalStore } from 'react';
 import type { PracticeClock } from '../lib/practiceClock';
 import { TimerReset } from 'lucide-react';
 import { getPronounLabel, timerSeconds } from '../lib/prompts';
-import type { Attempt, Prompt, SessionKind } from '../types';
+import type { Attempt, PracticeAnswerMode, Prompt, SessionKind } from '../types';
 import type { PracticeTenseId } from '../data/verbs';
 import { getVerbTranslation, type TranslationLanguage } from '../data/translations';
 import { SessionResult } from './SessionResult';
 import { SessionElapsed } from './SessionElapsed';
 import { AnswerChoices, AnswerFeedback, QuestionHeader, QuestionTense } from './PracticeQuestion';
+import { TypingAnswer } from './TypingAnswer';
 
 interface TrainerPanelProps {
   attempts: Attempt[];
   prompt: Prompt;
   practiceTense: PracticeTenseId;
+  answerMode: PracticeAnswerMode;
+  sessionVersion: number;
+  showAccentHint: boolean;
   choices: string[];
   selectedAnswer: string | null;
   timedOut: boolean;
@@ -24,7 +28,7 @@ interface TrainerPanelProps {
   isSessionComplete: boolean;
   reviewingLastAnswer: boolean;
   toggleResults: () => void;
-  selectChoice: (choice: string) => void;
+  submitAnswer: (answer: string) => void;
   resetSession: () => void;
   onBackHome: () => void;
   moveNext: () => void;
@@ -49,6 +53,9 @@ export function TrainerPanel({
   attempts,
   prompt,
   practiceTense,
+  answerMode,
+  sessionVersion,
+  showAccentHint,
   choices,
   selectedAnswer,
   timedOut,
@@ -58,7 +65,7 @@ export function TrainerPanel({
   isSessionComplete,
   reviewingLastAnswer,
   toggleResults,
-  selectChoice,
+  submitAnswer,
   resetSession,
   onBackHome,
   moveNext,
@@ -76,20 +83,26 @@ export function TrainerPanel({
   const { t, languageName } = useI18n();
   const actionButtonRef = useRef<HTMLButtonElement>(null);
   const questionHeadingRef = useRef<HTMLHeadingElement>(null);
+  const answerInputRef = useRef<HTMLInputElement>(null);
   const wasComplete = useRef(isSessionComplete);
+  const wasAnswered = useRef(isAnswered);
   const showResults = isSessionComplete && attempts.length > 0 && !reviewingLastAnswer;
-  const panelLabel = t('Multiple choice verb conjugation drill');
+  const isTyping = answerMode === 'typing';
+  const panelLabel = t(isTyping ? 'Typing verb conjugation drill' : 'Multiple choice verb conjugation drill');
   const outcomes = attempts.map((attempt) => attempt.correct ? 'correct' : 'wrong');
-  const canManualAdvance = !isCorrect || autoAdvanceStopped;
+  const canManualAdvance = isTyping || !isCorrect || autoAdvanceStopped;
 
   useEffect(() => {
-    if (wasComplete.current && !isSessionComplete) {
+    if (isTyping && wasAnswered.current && !isAnswered) {
+      answerInputRef.current?.focus();
+    } else if (wasComplete.current && !isSessionComplete) {
       questionHeadingRef.current?.focus();
     } else if (isAnswered && !showResults && (isSessionComplete || canManualAdvance)) {
       actionButtonRef.current?.focus();
     }
     wasComplete.current = isSessionComplete;
-  }, [canManualAdvance, isAnswered, isSessionComplete, showResults]);
+    wasAnswered.current = isAnswered;
+  }, [canManualAdvance, isAnswered, isSessionComplete, isTyping, showResults]);
 
   if (showResults) {
     return (
@@ -134,7 +147,7 @@ export function TrainerPanel({
   return (
     <section className="trainer-panel" aria-label={panelLabel}>
       <QuestionHeader
-        title={t('Select the correct verb form')}
+        title={t(isTyping ? 'Type the correct verb form' : 'Select the correct verb form')}
         current={currentQuestion}
         total={sessionTarget}
         outcomes={outcomes}
@@ -227,14 +240,28 @@ export function TrainerPanel({
         </div>
       </div>
 
-      <AnswerChoices
-        languageId={prompt.language.id}
-        choices={choices}
-        selected={selectedAnswer}
-        correctAnswer={correctAnswer}
-        answered={isAnswered}
-        onSelect={selectChoice}
-      />
+      {!isTyping ? (
+        <AnswerChoices
+          languageId={prompt.language.id}
+          choices={choices}
+          selected={selectedAnswer}
+          correctAnswer={correctAnswer}
+          answered={isAnswered}
+          onSelect={submitAnswer}
+        />
+      ) : isAnswered ? (
+        selectedAnswer !== null && (
+          <p className="typing-submission">{t('Your answer')} <strong lang={getStudyLanguageTag(prompt.language.id)}>{selectedAnswer}</strong></p>
+        )
+      ) : (
+        <TypingAnswer
+          key={`${sessionVersion}-${currentQuestion}`}
+          inputRef={answerInputRef}
+          languageId={prompt.language.id}
+          showAccentHint={showAccentHint}
+          onSubmit={submitAnswer}
+        />
+      )}
 
       {isAnswered ? (
         <AnswerFeedback
@@ -246,7 +273,7 @@ export function TrainerPanel({
           nextRef={actionButtonRef}
           finalQuestion={isSessionComplete}
         />
-      ) : (
+      ) : !isTyping && (
         <div className="answer-dock" data-result="idle">
           <div className="answer-hint">
             <strong>{t("Choose one answer card.")}</strong>

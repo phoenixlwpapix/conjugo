@@ -14,6 +14,9 @@ const renderPanel = (overrides: Partial<ComponentProps<typeof TrainerPanel>> = {
     attempts={[]}
     prompt={prompt}
     practiceTense="present"
+    answerMode="choice"
+    sessionVersion={0}
+    showAccentHint={false}
     choices={[answer, 'incorrect']}
     selectedAnswer={null}
     timedOut={false}
@@ -23,7 +26,7 @@ const renderPanel = (overrides: Partial<ComponentProps<typeof TrainerPanel>> = {
     isSessionComplete={false}
     reviewingLastAnswer={false}
     toggleResults={vi.fn()}
-    selectChoice={vi.fn()}
+    submitAnswer={vi.fn()}
     resetSession={vi.fn()}
     onBackHome={vi.fn()}
     moveNext={vi.fn()}
@@ -40,6 +43,15 @@ const renderPanel = (overrides: Partial<ComponentProps<typeof TrainerPanel>> = {
 );
 
 describe('practice feedback', () => {
+  it('replaces the choices with a text field and study-language characters in Typing', () => {
+    const french = languages.find(({ id }) => id === 'french')!;
+    const html = renderPanel({ prompt: { ...prompt, language: french, verb: french.verbs[0] }, answerMode: 'typing', showAccentHint: true });
+    expect(html).toContain('aria-label="Your answer"');
+    expect(html).toContain('aria-label="Accent characters"');
+    expect(html).toContain('Check the accent marks and try again.');
+    expect(html).not.toContain('Answer choices');
+  });
+
   it.each([true, false])('keeps the first question number during feedback (correct: %s)', (correct) => {
     const html = renderPanel({
       attempts: [{ prompt, answer, correct }], isAnswered: true, isCorrect: correct, selectedAnswer: answer,

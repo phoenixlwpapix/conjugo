@@ -87,6 +87,9 @@ export default function App() {
     storedMisses,
     activeLanguage,
     prompt,
+    answerMode,
+    sessionVersion,
+    showAccentHint,
     choices,
     correctAnswer,
     isAnswered,
@@ -95,7 +98,7 @@ export default function App() {
     progress,
     progressPercent,
     isSessionComplete,
-    selectChoice,
+    submitAnswer,
     resetSession,
     moveNext,
     startMissReview,
@@ -143,7 +146,7 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (isEditableElement(event.target) || event.defaultPrevented) {
+      if (isEditableElement(event.target) || event.defaultPrevented || event.isComposing) {
         return;
       }
 
@@ -168,26 +171,26 @@ export default function App() {
           event.preventDefault();
           if (isSessionComplete) {
             toggleResults();
-          } else if (!isCorrect || autoAdvanceStopped) {
+          } else if (answerMode === 'typing' || !isCorrect || autoAdvanceStopped) {
             moveNext();
           }
         }
         return;
       }
 
-      if (!isSessionComplete) {
+      if (!isSessionComplete && answerMode === 'choice') {
         if (key === '1' || key === 'a') {
           event.preventDefault();
-          if (choices[0]) selectChoice(choices[0]);
+          if (choices[0]) submitAnswer(choices[0]);
         } else if (key === '2' || key === 'b') {
           event.preventDefault();
-          if (choices[1]) selectChoice(choices[1]);
+          if (choices[1]) submitAnswer(choices[1]);
         } else if (key === '3' || key === 'c') {
           event.preventDefault();
-          if (choices[2]) selectChoice(choices[2]);
+          if (choices[2]) submitAnswer(choices[2]);
         } else if (key === '4' || key === 'd') {
           event.preventDefault();
-          if (choices[3]) selectChoice(choices[3]);
+          if (choices[3]) submitAnswer(choices[3]);
         }
       }
     };
@@ -196,6 +199,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
     activeView,
+    answerMode,
     autoAdvanceStopped,
     choices,
     conjugationPrompt,
@@ -204,7 +208,7 @@ export default function App() {
     isSessionComplete,
     moveNext,
     resetSession,
-    selectChoice,
+    submitAnswer,
     reviewingLastAnswer,
     toggleResults,
   ]);
@@ -265,6 +269,9 @@ export default function App() {
                     attempts={attempts}
                     prompt={prompt}
                     practiceTense={practiceTense}
+                    answerMode={answerMode}
+                    sessionVersion={sessionVersion}
+                    showAccentHint={showAccentHint}
                     choices={choices}
                     selectedAnswer={selectedAnswer}
                     timedOut={timedOut}
@@ -274,7 +281,7 @@ export default function App() {
                     isSessionComplete={isSessionComplete}
                     reviewingLastAnswer={reviewingLastAnswer}
                     toggleResults={toggleResults}
-                    selectChoice={selectChoice}
+                    submitAnswer={submitAnswer}
                     resetSession={resetSession}
                     onBackHome={() => switchPracticeScope('standard')}
                     moveNext={moveNext}
@@ -309,6 +316,7 @@ export default function App() {
           {activeView === 'settings' && (
             <SettingsPanel
               {...preferences}
+              activePracticeAnswerMode={answerMode}
               themeId={themeId}
               setThemeId={setThemeId}
               timerEnabled={timerEnabled}

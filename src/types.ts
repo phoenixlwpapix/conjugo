@@ -4,6 +4,8 @@ export type Pronoun = 'I' | 'you' | 'he/she' | 'we' | 'you plural' | 'they';
 
 export type AppView = 'practice' | 'quiz' | 'stats' | 'wordbook' | 'settings';
 
+export type PracticeAnswerMode = 'choice' | 'typing';
+
 export type Prompt = {
   language: Language;
   verb: VerbEntry;

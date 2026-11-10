@@ -128,6 +128,26 @@ button {
   min-width: 0;
 }
 
+.app-update-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-block: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-control);
+  background: var(--active-bg);
+  font-size: var(--text-body);
+}
+
+.app-update-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .timer-ring-btn {
   cursor: pointer;
   position: relative;
@@ -2773,6 +2793,26 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
 
 .conjugation-modal .conjugation-comparison tr[data-highlighted='true'] > * {
   background: var(--active-bg);
+}
+
+@media (width > 640px) {
+  .conjugation-modal-backdrop {
+    align-items: center;
+    padding: 24px;
+  }
+
+  .conjugation-modal {
+    max-height: min(100%, 580px);
+    padding: 20px;
+    border-bottom: 1px solid var(--panel-border);
+    border-radius: var(--radius-panel);
+    box-shadow: 0 12px 40px rgb(15 18 26 / 20%);
+    animation: none;
+  }
+
+  .conjugation-modal-handle {
+    display: none;
+  }
 }
 
 @media (max-width: 640px) {

@@ -4,6 +4,7 @@ import { lazy, Suspense, useEffect, useState, type CSSProperties } from 'react';
 import { usePractice } from './hooks/usePractice';
 import { usePreferences } from './hooks/usePreferences';
 import { Header } from './components/Header';
+import { AppUpdateNotice } from './components/AppUpdateNotice';
 import { SessionBar } from './components/SessionBar';
 import { TimedTrainerPanel } from './components/TrainerPanel';
 import { ProgressPanel } from './components/ProgressPanel';
@@ -229,6 +230,7 @@ export default function App() {
         />
 
         <div className="app-content">
+          <AppUpdateNotice />
           {activeView === 'practice' && (
             <>
               <SessionBar

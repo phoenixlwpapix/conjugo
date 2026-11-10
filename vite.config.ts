@@ -8,8 +8,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      // All progress lives in localStorage, so a silent update never loses user state.
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'conjugo-logo.webp'],
       manifest: {
         name: 'ConjuGO Verb Trainer',
@@ -26,6 +25,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,png,webp,svg,ico}'],
         // Cache the fonts linked from index.html for subsequent offline visits.
         runtimeCaching: [

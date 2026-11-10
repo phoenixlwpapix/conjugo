@@ -42,7 +42,6 @@ export const chineseMessages = {
   "Start a set with your favorites.": "可以用收藏的动词开始练习了。",
   "Start practice": "开始练习",
   "Open the Verb Book": "打开动词本",
-  "Reset session": "重新开始本轮",
   "Multiple choice verb conjugation drill": "动词变位选择练习",
   "Select the correct verb form": "选择正确的动词变位",
   "Question {number}": "第 {number} 题",

@@ -235,7 +235,6 @@ export default function App() {
                 language={activeLanguage}
                 practiceTense={practiceTense}
                 switchTense={switchTense}
-                resetSession={resetSession}
                 favoriteCount={favoriteVerbs.size}
                 sessionKind={sessionKind}
                 switchPracticeScope={switchPracticeScope}

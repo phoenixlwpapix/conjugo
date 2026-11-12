@@ -13,6 +13,8 @@ const renderPanel = (overrides: Partial<ComponentProps<typeof TrainerPanel>> = {
   <TrainerPanel
     attempts={[]}
     prompt={prompt}
+    isFavorite={false}
+    onToggleFavorite={vi.fn()}
     practiceTense="present"
     answerMode="choice"
     sessionVersion={0}
@@ -43,6 +45,12 @@ const renderPanel = (overrides: Partial<ComponentProps<typeof TrainerPanel>> = {
 );
 
 describe('practice feedback', () => {
+  it.each([false, true])('shows the verb favorite button with pressed state %s', (isFavorite) => {
+    const html = renderPanel({ isFavorite });
+    expect(html).toContain(`aria-label="Favorite ${prompt.verb.infinitive}" aria-pressed="${isFavorite}"`);
+    expect(html).toContain(`fill="${isFavorite ? 'currentColor' : 'none'}"`);
+  });
+
   it('replaces the choices with a text field and study-language characters in Typing', () => {
     const french = languages.find(({ id }) => id === 'french')!;
     const html = renderPanel({ prompt: { ...prompt, language: french, verb: french.verbs[0] }, answerMode: 'typing', showAccentHint: true });

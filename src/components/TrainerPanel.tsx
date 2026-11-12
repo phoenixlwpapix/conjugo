@@ -11,10 +11,13 @@ import { SessionResult } from './SessionResult';
 import { SessionElapsed } from './SessionElapsed';
 import { AnswerChoices, AnswerFeedback, QuestionHeader, QuestionTense } from './PracticeQuestion';
 import { TypingAnswer } from './TypingAnswer';
+import { FavoriteButton } from './WordBook/FavoriteButton';
 
 interface TrainerPanelProps {
   attempts: Attempt[];
   prompt: Prompt;
+  isFavorite: boolean;
+  onToggleFavorite: (infinitive: string) => void;
   practiceTense: PracticeTenseId;
   answerMode: PracticeAnswerMode;
   sessionVersion: number;
@@ -52,6 +55,8 @@ export function TimedTrainerPanel({ clock, ...props }: Omit<TrainerPanelProps, '
 export function TrainerPanel({
   attempts,
   prompt,
+  isFavorite,
+  onToggleFavorite,
   practiceTense,
   answerMode,
   sessionVersion,
@@ -120,6 +125,7 @@ export function TrainerPanel({
   }
 
   const pronounLabel = getPronounLabel(prompt);
+  const studyLanguageTag = getStudyLanguageTag(prompt.language.id);
   const translation = getVerbTranslation(prompt.language, prompt.verb, translationLanguage);
   const sessionTag = sessionKind === 'review' ? t('Review misses') : sessionKind === 'verbs' ? t('Hardest verbs') : practiceTense === 'mixed' ? t('Mixed practice') : null;
   const showAlertStyle = !isAnswered && timeLeft <= 3;
@@ -227,13 +233,16 @@ export function TrainerPanel({
             </div>
           </div>
 
-          <div className="prompt-display" data-density={promptDensity} lang={getStudyLanguageTag(prompt.language.id)}>
-            <span className="prompt-subject">
+          <div className="prompt-display" data-density={promptDensity}>
+            <span className="prompt-subject" lang={studyLanguageTag}>
               <span className="prompt-pronoun">{pronounLabel}</span>
               <span className="prompt-divider" aria-hidden="true">/</span>
             </span>
             <div className="prompt-verb-block">
-              <strong className="prompt-infinitive">{prompt.verb.infinitive}</strong>
+              <div className="prompt-verb-row">
+                <strong className="prompt-infinitive" lang={studyLanguageTag}>{prompt.verb.infinitive}</strong>
+                <FavoriteButton infinitive={prompt.verb.infinitive} isFavorite={isFavorite} onToggle={onToggleFavorite} />
+              </div>
               {translation && <em className="prompt-translation" lang={translationLanguage}>{translation}</em>}
             </div>
           </div>

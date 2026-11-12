@@ -1057,6 +1057,11 @@ button {
   gap: 5px;
 }
 
+.prompt-verb-row {
+  display: flex;
+  align-items: center;
+}
+
 .prompt-infinitive {
   min-width: 0;
   font-family: 'Lora', serif;

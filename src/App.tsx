@@ -268,6 +268,8 @@ export default function App() {
                   <TimedTrainerPanel
                     attempts={attempts}
                     prompt={prompt}
+                    isFavorite={favoriteVerbs.has(prompt.verb.infinitive)}
+                    onToggleFavorite={toggleFavorite}
                     practiceTense={practiceTense}
                     answerMode={answerMode}
                     sessionVersion={sessionVersion}

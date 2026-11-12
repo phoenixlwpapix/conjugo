@@ -63,6 +63,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Settings stores separate counts for conjugation practice (20 by default) and sentence quizzes (10 by default). Both offer 10, 20, 30, or 40 questions. Counts apply to new rounds, and an untouched conjugation set can also resize. Sentence quizzes use fewer questions when the selected tenses and pronouns have fewer distinct scenes available.
 - Star verbs in the Verb Book list or detail view, and use Favorites only to browse them. Favorites are saved locally for each learning language.
 - Use the star beside the tense selector in Practice to toggle favorite-only sets. Favorite sets use only the selected language, tense range, and saved verbs, including eligible review questions. The set uses the configured count or all available questions when the pool is smaller. Changing favorites takes effect with the next set.
+- Click the star beside the verb in a conjugation practice card to add or remove it from favorites. The star is filled when the verb is saved, and its state is shared with the Verb Book.
 - New sessions reserve roughly 30% of prompts for recent missed items when matching review prompts are available.
 - Verb and conjugation datasets live in `src/data/verbs.ts` instead of the main app component.
 - Practice state is managed through focused hooks and prompt/scoring/storage helpers instead of one monolithic component.

@@ -49,6 +49,7 @@ type PracticePreferences = {
   includeVosotros: boolean;
   practiceAnswerMode: PracticeAnswerMode;
   practiceAccentRetry: boolean;
+  practiceAutoAdvance: boolean;
   practiceQuestionCount: PracticeQuestionCount;
 };
 
@@ -62,7 +63,7 @@ const resolveLanguage = (languageId: LanguageId, includeVosotros: boolean): Lang
   return language.id === 'spanish' && !includeVosotros ? { ...language, excludedPronouns: ['you plural'] } : language;
 };
 
-export function usePractice({ includeVosotros, practiceAnswerMode, practiceAccentRetry, practiceQuestionCount }: PracticePreferences) {
+export function usePractice({ includeVosotros, practiceAnswerMode, practiceAccentRetry, practiceAutoAdvance, practiceQuestionCount }: PracticePreferences) {
   const [languageId, setLanguageId] = useState<LanguageId>(readLanguageId);
   const [practiceTense, setPracticeTense] = useState<PracticeTenseId>(() =>
     clampEnglishTense(languageId, readPracticeTense()),
@@ -391,11 +392,11 @@ export function usePractice({ includeVosotros, practiceAnswerMode, practiceAccen
   }, [activeView, countdownClock, handleTimeout, isAnswered, isSessionComplete, timerEnabled]);
 
   useEffect(() => {
-    if (activeView !== 'practice' || answerMode === 'typing' || !isCorrect || isSessionComplete || autoAdvanceStopped || conjugationPrompt) return;
+    if (activeView !== 'practice' || !practiceAutoAdvance || answerMode === 'typing' || !isCorrect || isSessionComplete || autoAdvanceStopped || conjugationPrompt) return;
 
     autoAdvanceTimer.current = setTimeout(moveNext, autoAdvanceDelayMs);
     return clearAutoAdvance;
-  }, [activeView, answerMode, autoAdvanceStopped, clearAutoAdvance, conjugationPrompt, isCorrect, isSessionComplete, moveNext]);
+  }, [activeView, answerMode, autoAdvanceStopped, clearAutoAdvance, conjugationPrompt, isCorrect, isSessionComplete, moveNext, practiceAutoAdvance]);
 
   const switchLanguage = useCallback(
     (nextLanguageId: LanguageId) => {

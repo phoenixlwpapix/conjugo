@@ -3,10 +3,10 @@ import { useI18n } from '../hooks/useI18n';
 import { getStudyLanguageTag, type MessageKey } from '../lib/i18n';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowRight, Check } from 'lucide-react';
-import { createQuizQuestions, type QuizQuestion } from '../data/quiz';
+import type { QuizQuestion } from '../data/quiz';
 import { getConjugationPronounLabel, getLanguagePracticeTenses, type Language, type PracticeTenseId } from '../data/verbs';
 import { getAccuracy, type RecordedAnswer } from '../lib/scoring';
-import { isEditableElement } from '../lib/keyboard';
+import { shouldIgnoreDrillKey } from '../lib/keyboard';
 import type { PracticeQuestionCount } from '../lib/prompts';
 import type { Prompt } from '../types';
 import { SessionResult, type SessionOutcome } from './SessionResult';
@@ -16,6 +16,7 @@ import { SessionMetrics, SessionProgressCard } from './ProgressPanel';
 type QuizPanelProps = {
   active: boolean;
   language: Language;
+  shortcutsEnabled: boolean;
   questionCount: PracticeQuestionCount;
   onAnswer: (answer: RecordedAnswer, prompt: Prompt) => void;
   onOpenWordbook: (prompt: Prompt) => void;
@@ -23,7 +24,7 @@ type QuizPanelProps = {
 
 const difficultyLabels: Record<QuizQuestion['difficulty'], MessageKey> = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
 
-export function QuizPanel({ active, language, questionCount, onAnswer, onOpenWordbook }: QuizPanelProps) {
+export function QuizPanel({ active, language, shortcutsEnabled, questionCount, onAnswer, onOpenWordbook }: QuizPanelProps) {
   const { t, locale, tenseName } = useI18n();
   const [selectedTenses, setSelectedTenses] = useState<PracticeTenseId[]>(() => getLanguagePracticeTenses(language.id).map(({ id }) => id));
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -31,6 +32,7 @@ export function QuizPanel({ active, language, questionCount, onAnswer, onOpenWor
   const [selected, setSelected] = useState<string | null>(null);
   const [outcomes, setOutcomes] = useState<SessionOutcome[]>([]);
   const [streak, setStreak] = useState(0);
+  const [quizLoadState, setQuizLoadState] = useState<'idle' | 'loading' | 'error'>('idle');
   const quizHeadingRef = useRef<HTMLHeadingElement>(null);
   const feedbackRef = useRef<HTMLDivElement>(null);
   const question = questions[index];
@@ -58,8 +60,16 @@ export function QuizPanel({ active, language, questionCount, onAnswer, onOpenWor
     setStreak(0);
   };
 
-  const start = () => {
-    if (selectedTenses.length > 0) resetRound(createQuizQuestions(language, selectedTenses, questionCount));
+  const start = async () => {
+    if (selectedTenses.length === 0 || quizLoadState === 'loading') return;
+    setQuizLoadState('loading');
+    try {
+      const { createQuizQuestions } = await import('../data/quiz');
+      resetRound(createQuizQuestions(language, selectedTenses, questionCount));
+      setQuizLoadState('idle');
+    } catch {
+      setQuizLoadState('error');
+    }
   };
 
   const answer = useCallback((choice: string) => {
@@ -93,9 +103,9 @@ export function QuizPanel({ active, language, questionCount, onAnswer, onOpenWor
   }, [active, finished, isAnswered, question]);
 
   useEffect(() => {
-    if (!active) return;
+    if (!active || !shortcutsEnabled) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!question || finished || event.defaultPrevented || event.repeat || event.altKey || event.ctrlKey || event.metaKey || isEditableElement(event.target) || document.querySelector('dialog[open]')) return;
+      if (!question || finished || shouldIgnoreDrillKey(event) || document.querySelector('dialog[open]')) return;
       const key = event.key.toLowerCase();
       if (selected === null) {
         const choiceIndex = ['a', 'b', 'c', 'd'].indexOf(key);
@@ -111,7 +121,7 @@ export function QuizPanel({ active, language, questionCount, onAnswer, onOpenWor
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [active, answer, finished, next, question, selected]);
+  }, [active, answer, finished, next, question, selected, shortcutsEnabled]);
 
   const displaySentence = question?.sentence.split('____');
 
@@ -126,7 +136,7 @@ export function QuizPanel({ active, language, questionCount, onAnswer, onOpenWor
             </div>
             <div className="quiz-selection-toolbar">
               <span aria-live="polite">{selectionLabel}</span>
-              <button type="button" onClick={() => setSelectedTenses(allSelected ? [] : options.map(({ id }) => id))}>
+              <button type="button" disabled={quizLoadState === 'loading'} onClick={() => setSelectedTenses(allSelected ? [] : options.map(({ id }) => id))}>
                 {t(allSelected ? 'Deselect all' : 'Select all')}
               </button>
             </div>
@@ -135,6 +145,7 @@ export function QuizPanel({ active, language, questionCount, onAnswer, onOpenWor
                 <button
                   className="quiz-tense-option"
                   data-active={selectedTenses.includes(option.id)}
+                  disabled={quizLoadState === 'loading'}
                   role="checkbox"
                   aria-checked={selectedTenses.includes(option.id)}
                   key={option.id}
@@ -152,8 +163,9 @@ export function QuizPanel({ active, language, questionCount, onAnswer, onOpenWor
               ))}
             </div>
             <div className="quiz-setup-footer">
-              <button className="quiz-primary" disabled={selectedTenses.length === 0} onClick={start} type="button">{t('Start quiz')} <ArrowRight size={16} aria-hidden="true" /></button>
+                <button className="quiz-primary" disabled={selectedTenses.length === 0} aria-disabled={quizLoadState === 'loading' || undefined} onClick={start} type="button">{t('Start quiz')} <ArrowRight size={16} aria-hidden="true" /></button>
             </div>
+              <p className="quiz-load-status" role="status">{quizLoadState === 'loading' ? t('Loading quiz questions…') : quizLoadState === 'error' ? t('Quiz questions couldn’t load. Reconnect and reload the page.') : ''}</p>
           </div>
         ) : finished ? (
           <div className="trainer-panel" data-stage="finished">
@@ -216,9 +228,7 @@ export function QuizPanel({ active, language, questionCount, onAnswer, onOpenWor
               />
             ) : (
               <div className="answer-dock" data-result="idle">
-                <div className="answer-hint">
-                  <span>{t('Use A–D or 1–4 on your keyboard.')}</span>
-                </div>
+                {shortcutsEnabled && <div className="answer-hint"><span>{t('Use A–D or 1–4 on your keyboard.')}</span></div>}
                 <button className="quiz-skip" onClick={() => answer('')} type="button">{t('Skip and see answer')}</button>
               </div>
             )}

@@ -29,15 +29,16 @@ export function AppUpdateNotice() {
 
     const handleControllerChange = () => {
       const nextController = workers.controller;
-      if (controller && nextController && controller !== nextController) {
+      if (nextController && controller !== nextController) {
         if (reloadOnUpdate.current) window.location.reload();
-        else setUpdateReady(true);
+        else if (controller) setUpdateReady(true);
       }
       controller = nextController;
     };
 
     const checkForUpdate = () => {
       if (document.visibilityState === 'visible' && navigator.onLine) {
+        showWaitingUpdate();
         // The current release remains usable if an update check fails.
         void registration.current?.update().catch(() => {});
       }
@@ -45,6 +46,7 @@ export function AppUpdateNotice() {
 
     workers.addEventListener('controllerchange', handleControllerChange);
     document.addEventListener('visibilitychange', checkForUpdate);
+    window.addEventListener('focus', checkForUpdate);
     window.addEventListener('online', checkForUpdate);
 
     void workers.ready.then((readyRegistration) => {
@@ -62,6 +64,7 @@ export function AppUpdateNotice() {
       installing?.removeEventListener('statechange', showWaitingUpdate);
       workers.removeEventListener('controllerchange', handleControllerChange);
       document.removeEventListener('visibilitychange', checkForUpdate);
+      window.removeEventListener('focus', checkForUpdate);
       window.removeEventListener('online', checkForUpdate);
     };
   }, []);

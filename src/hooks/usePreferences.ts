@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
 import type { TranslationLanguage } from '../data/translations';
 import {
+  readDrillShortcuts,
   readIncludeVosotros,
   readPracticeAccentRetry,
   readPracticeAnswerMode,
+  readPracticeAutoAdvance,
   readPracticeQuestionCount,
   readQuizQuestionCount,
   readTranslationLanguage,
+  writeDrillShortcuts,
   writeIncludeVosotros,
   writePracticeAccentRetry,
   writePracticeAnswerMode,
+  writePracticeAutoAdvance,
   writePracticeQuestionCount,
   writeQuizQuestionCount,
   writeTranslationLanguage,
@@ -20,6 +24,8 @@ export function usePreferences() {
   const [includeVosotros, setIncludeVosotros] = useState(readIncludeVosotros);
   const [practiceAnswerMode, setPracticeAnswerMode] = useState(readPracticeAnswerMode);
   const [practiceAccentRetry, setPracticeAccentRetry] = useState(readPracticeAccentRetry);
+  const [practiceAutoAdvance, setPracticeAutoAdvance] = useState(readPracticeAutoAdvance);
+  const [drillShortcuts, setDrillShortcuts] = useState(readDrillShortcuts);
   const [practiceQuestionCount, setPracticeQuestionCount] = useState(readPracticeQuestionCount);
   const [quizQuestionCount, setQuizQuestionCount] = useState(readQuizQuestionCount);
 
@@ -40,6 +46,14 @@ export function usePreferences() {
   }, [practiceAccentRetry]);
 
   useEffect(() => {
+    writePracticeAutoAdvance(practiceAutoAdvance);
+  }, [practiceAutoAdvance]);
+
+  useEffect(() => {
+    writeDrillShortcuts(drillShortcuts);
+  }, [drillShortcuts]);
+
+  useEffect(() => {
     writePracticeQuestionCount(practiceQuestionCount);
   }, [practiceQuestionCount]);
 
@@ -56,6 +70,10 @@ export function usePreferences() {
     setPracticeAnswerMode,
     practiceAccentRetry,
     setPracticeAccentRetry,
+    practiceAutoAdvance,
+    setPracticeAutoAdvance,
+    drillShortcuts,
+    setDrillShortcuts,
     practiceQuestionCount,
     setPracticeQuestionCount,
     quizQuestionCount,

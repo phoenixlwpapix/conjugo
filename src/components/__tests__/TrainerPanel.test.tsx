@@ -45,6 +45,15 @@ const renderPanel = (overrides: Partial<ComponentProps<typeof TrainerPanel>> = {
 );
 
 describe('practice feedback', () => {
+  it('keeps a live region ready before answering and shows Next when auto-advance is off', () => {
+    expect(renderPanel()).toContain('<div class="sr-only" role="status"></div>');
+    const html = renderPanel({
+      autoAdvanceStopped: true, attempts: [{ prompt, answer, correct: true }],
+      isAnswered: true, isCorrect: true, selectedAnswer: answer,
+    });
+    expect(html).toContain('<div class="sr-only" role="status">Correct!</div>');
+    expect(html).toContain('class="next-button"');
+  });
   it.each([false, true])('shows the verb favorite button with pressed state %s', (isFavorite) => {
     const html = renderPanel({ isFavorite });
     expect(html).toContain(`aria-label="Favorite ${prompt.verb.infinitive}" aria-pressed="${isFavorite}"`);

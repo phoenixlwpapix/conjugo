@@ -11,7 +11,7 @@ import { ProgressPanel } from './components/ProgressPanel';
 import { SettingsPanel } from './components/SettingsPanel';
 import { WorkspaceNavigation } from './components/WorkspaceNavigation';
 import { ConjugationModal } from './components/WordBook/ConjugationPanel';
-import { isEditableElement } from './lib/keyboard';
+import { shouldIgnoreDrillKey } from './lib/keyboard';
 import { isThemeId, themeStorageKey, type ThemeId } from './data/themes';
 
 const StatsDashboard = lazy(() =>
@@ -39,7 +39,7 @@ export default function App() {
   });
 
   const preferences = usePreferences();
-  const { translationLanguage } = preferences;
+  const { drillShortcuts, practiceAutoAdvance, translationLanguage } = preferences;
   const t = (key: MessageKey) => translate(translationLanguage, key);
 
   useEffect(() => {
@@ -115,6 +115,7 @@ export default function App() {
     sessionTarget,
     recordQuizResult,
   } = usePractice(preferences);
+  const canAutoAdvance = practiceAutoAdvance && !autoAdvanceStopped;
 
   const openWordbookList = () => {
     setShowOnlyFavorites(false);
@@ -145,14 +146,9 @@ export default function App() {
   }, [themeId]);
 
   useEffect(() => {
+    if (!drillShortcuts || activeView !== 'practice' || conjugationPrompt || isEmptyFavoriteSession) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (isEditableElement(event.target) || event.defaultPrevented || event.isComposing) {
-        return;
-      }
-
-      if (activeView !== 'practice' || conjugationPrompt) {
-        return;
-      }
+      if (shouldIgnoreDrillKey(event)) return;
 
       const key = event.key.toLowerCase();
 
@@ -171,7 +167,7 @@ export default function App() {
           event.preventDefault();
           if (isSessionComplete) {
             toggleResults();
-          } else if (answerMode === 'typing' || !isCorrect || autoAdvanceStopped) {
+          } else if (answerMode === 'typing' || !isCorrect || !canAutoAdvance) {
             moveNext();
           }
         }
@@ -200,11 +196,13 @@ export default function App() {
   }, [
     activeView,
     answerMode,
-    autoAdvanceStopped,
+    canAutoAdvance,
     choices,
     conjugationPrompt,
+    drillShortcuts,
     isAnswered,
     isCorrect,
+    isEmptyFavoriteSession,
     isSessionComplete,
     moveNext,
     resetSession,
@@ -295,7 +293,8 @@ export default function App() {
                     sessionTarget={sessionTarget}
                     sessionKind={sessionKind}
                     streak={streak}
-                    autoAdvanceStopped={autoAdvanceStopped}
+                    autoAdvanceStopped={!canAutoAdvance}
+                    shortcutsEnabled={drillShortcuts}
                     translationLanguage={translationLanguage}
                   />
 
@@ -356,6 +355,7 @@ export default function App() {
                 key={`${languageId}-${languageId === 'spanish' && preferences.includeVosotros}`}
                 active={activeView === 'quiz'}
                 language={activeLanguage}
+                shortcutsEnabled={drillShortcuts}
                 questionCount={preferences.quizQuestionCount}
                 onAnswer={recordQuizResult}
                 onOpenWordbook={(quizPrompt) => openPromptInWordbook(quizPrompt, 'quiz')}

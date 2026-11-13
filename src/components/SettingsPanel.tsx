@@ -55,6 +55,10 @@ export function SettingsPanel({
   setPracticeAnswerMode,
   practiceAccentRetry,
   setPracticeAccentRetry,
+  practiceAutoAdvance,
+  setPracticeAutoAdvance,
+  drillShortcuts,
+  setDrillShortcuts,
   practiceQuestionCount,
   setPracticeQuestionCount,
   quizQuestionCount,
@@ -106,6 +110,10 @@ export function SettingsPanel({
           <input checked={timerEnabled} onChange={toggleTimer} role="switch" type="checkbox" />
         </label>
         <label className="preference-row preference-switch">
+          <span>{t('Auto-advance after correct choices')}</span>
+          <input checked={practiceAutoAdvance} onChange={(event) => setPracticeAutoAdvance(event.target.checked)} role="switch" type="checkbox" />
+        </label>
+        <label className="preference-row preference-switch">
           <span>{t('Include Spanish vosotros')}</span>
           <input checked={includeVosotros} onChange={(event) => setIncludeVosotros(event.target.checked)} role="switch" type="checkbox" />
         </label>
@@ -150,6 +158,14 @@ export function SettingsPanel({
             </button>
           </div>
         </div>
+      </section>
+
+      <section className="settings-section" aria-labelledby="keyboard-settings-title">
+        <h2 id="keyboard-settings-title">{t('Keyboard')}</h2>
+        <label className="preference-row preference-switch">
+          <span>{t('Practice and quiz shortcuts')}</span>
+          <input checked={drillShortcuts} onChange={(event) => setDrillShortcuts(event.target.checked)} role="switch" type="checkbox" />
+        </label>
       </section>
 
       <a className="preference-row feedback-link" href="mailto:phoenixlwp@gmail.com?subject=ConjuGO%20Feedback">

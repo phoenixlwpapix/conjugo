@@ -129,7 +129,7 @@ export function AnswerFeedback({ result, title, description, feedbackRef, onOpen
   const bookLabel = t('View conjugations');
   return (
     <div className="answer-dock" data-result={result}>
-      <div className="answer-feedback" ref={feedbackRef} role="status" tabIndex={feedbackRef ? -1 : undefined}>
+      <div className="answer-feedback" ref={feedbackRef} tabIndex={feedbackRef ? -1 : undefined}>
         <strong>{title}</strong>
         {description && <span>{description}</span>}
       </div>

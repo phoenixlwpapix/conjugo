@@ -18,6 +18,8 @@ const storageKeys = {
   practiceQuestionCount: 'conjugo.practiceQuestionCount',
   practiceAnswerMode: 'conjugo.practiceAnswerMode',
   practiceAccentRetry: 'conjugo.practiceAccentRetry',
+  practiceAutoAdvance: 'conjugo.practiceAutoAdvance',
+  drillShortcuts: 'conjugo.drillShortcuts',
   quizQuestionCount: 'conjugo.quizQuestionCount',
   favoriteVerbs: 'conjugo.favoriteVerbs',
 } as const;
@@ -303,6 +305,18 @@ export const readPracticeAccentRetry = () => safeGet(storageKeys.practiceAccentR
 
 export const writePracticeAccentRetry = (enabled: boolean) => {
   safeSet(storageKeys.practiceAccentRetry, String(enabled));
+};
+
+export const readPracticeAutoAdvance = () => safeGet(storageKeys.practiceAutoAdvance) !== 'false';
+
+export const writePracticeAutoAdvance = (enabled: boolean) => {
+  safeSet(storageKeys.practiceAutoAdvance, String(enabled));
+};
+
+export const readDrillShortcuts = () => safeGet(storageKeys.drillShortcuts) !== 'false';
+
+export const writeDrillShortcuts = (enabled: boolean) => {
+  safeSet(storageKeys.drillShortcuts, String(enabled));
 };
 
 export const writeIncludeVosotros = (include: boolean) => {

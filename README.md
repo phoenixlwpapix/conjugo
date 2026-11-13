@@ -12,7 +12,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Word Book verbs can be browsed in their curated current order or alphabetically, without display numbering.
 - Interactive conjugation reference: search verbs, choose a verb, switch tense, and inspect every pronoun form.
 - Card-based multiple-choice drills with instant feedback and one-tap next-question flow.
-- Correct answers auto-advance after a short pause; wrong answers keep the correction visible.
+- Correct multiple-choice answers auto-advance after a short pause by default. Turn this off in Settings → Practice to keep feedback visible until you choose Next.
 - Perfect practice sets and sentence quizzes trigger confetti at any round length.
 - Completed practice sets show the score, accuracy, and question outcomes inside the trainer card, with actions to start a new set and either review the last answer or return home from miss review.
 - Mixed practice rotates through the supported tenses for each language, including French passé simple and Spanish imperfect subjunctive. Commands have separate practice modes.
@@ -23,14 +23,14 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Live practice stopwatch in the phone question card and results, and in the progress panel on wider screens. It pauses outside the active drill and resets with each new set.
 - Missed prompts are retained for the Stats workspace and automatically fed back into future practice sessions.
 - Local persistence for selected language, active workspace, tense, missed prompts, and language-specific cumulative practice stats.
-- Use A/B/C/D to answer, Enter/Space to continue after a missed question, and R to restart a practice set from the keyboard.
+- Use A–D or 1–4 to answer, Enter/Space to continue, and R to restart a practice set. Settings → Keyboard can turn off the practice and quiz shortcuts.
 - Dedicated Stats workspace with cumulative answer counts, completed sets, best streak, review load, weak spots, and a dependency-free seven-day accuracy bar chart.
 - Responsive layout: desktop sidebar navigation with a focused trainer area, adaptive tablet-width drill cards, compact mobile header, and single-column mobile flow.
 - Light and dark visual themes selectable in Settings.
 
 ## Current Features
 
-- Quiz and Word Book code load on first use; quiz rounds remain mounted when switching workspaces. Confetti loads only for a perfect round, stays inside the result card, and respects reduced motion.
+- Quiz and Word Book screens load on first use. Starting a quiz downloads the question bank, which the PWA then caches for offline quizzes. A device needs an online quiz start to cache a new version of the question bank. Quiz rounds remain mounted when switching workspaces. Reduced-motion mode skips confetti, timer pulses, and dialog entrance animations.
 - Google Fonts load without blocking rendering, with preconnect hints and the existing offline runtime cache. The saved theme is applied before React mounts to avoid a light-theme flash.
 - Practice clocks update their subscribed displays without rerendering the app each second. Both clocks pause outside practice and reset with a new set; the countdown stops after answering.
 - Practice initialization reuses stored language, tense and review data. Word Book search text, alphabetical ordering and verb lookups are indexed; quiz generation also indexes its verb data.
@@ -99,6 +99,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - A single Chinese / English interface-language preference controls navigation, instructions, labels, grammar explanations, verb glosses, and sentence translations. Spanish learners can also hide vosotros from prompts, answer choices, reviews, and the Verb Book.
 - Present subjunctive for French, Spanish, and Italian, derived from each verb's indicative forms with explicit tables for truly irregular stems; prompts read "que tu…", "qu'il…", "che io…".
 - Installable, offline-capable PWA (vite-plugin-pwa) with precached assets and cached Google Fonts; the header logo uses WebP, and the maskable app icon keeps the mark inside the safe area.
+- Online page loads and refreshes fetch the current release from the server. Offline navigation uses the installed release. An open page checks for updates when it regains focus and offers Update now to activate a waiting release and reload.
 - ConjuGO checks for releases when opened, when returning to its tab, and when reconnecting. Once a new release is cached, a dismissible notice offers **Update now**, which reloads the app. Choose **Later** to finish the current set first.
 
 ## UI design

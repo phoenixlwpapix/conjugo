@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  readActiveView, readFavoriteVerbs, readPracticeQuestionCount, readPracticeStatsByLanguage, readPracticeTense, readQuizQuestionCount,
+  readActiveView, readDrillShortcuts, readFavoriteVerbs, readPracticeAutoAdvance, readPracticeQuestionCount, readPracticeStatsByLanguage, readPracticeTense, readQuizQuestionCount,
   readStoredMisses, readTimerEnabled, readTranslationLanguage, writeActiveView, writeFavoriteVerbs,
-  writePracticeQuestionCount, writePracticeStatsByLanguage, writePracticeTense, writeQuizQuestionCount, writeStoredMisses,
+  writeDrillShortcuts, writePracticeAutoAdvance, writePracticeQuestionCount, writePracticeStatsByLanguage, writePracticeTense, writeQuizQuestionCount, writeStoredMisses,
 } from '../storage';
 
 const legacyMiss = {
@@ -88,6 +88,15 @@ describe('storage', () => {
     expect(readTimerEnabled()).toBe(false);
     store.set('conjugo.timerEnabled', 'true');
     expect(readTimerEnabled()).toBe(true);
+  });
+
+  it('keeps the existing defaults and persists turning off shortcuts and auto-advance', () => {
+    expect(readDrillShortcuts()).toBe(true);
+    expect(readPracticeAutoAdvance()).toBe(true);
+    writeDrillShortcuts(false);
+    writePracticeAutoAdvance(false);
+    expect(readDrillShortcuts()).toBe(false);
+    expect(readPracticeAutoAdvance()).toBe(false);
   });
 
   it('persists the settings view and validates the practice question count', () => {

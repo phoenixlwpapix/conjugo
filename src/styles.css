@@ -169,10 +169,6 @@ button {
   background: var(--panel-border) !important;
 }
 
-.timer-ring-btn:active {
-  transform: scale(0.9);
-}
-
 .timer-ring-svg {
   position: absolute;
   top: 0;
@@ -200,7 +196,11 @@ button {
   border-radius: 50%;
   border: 2px solid var(--red);
   opacity: 0.4;
-  animation: timer-pulse 1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .timer-ring-btn:active { transform: scale(0.9); }
+  .timer-pulse-ring { animation: timer-pulse 1s ease-in-out infinite; }
 }
 
 .app-topbar,
@@ -2433,6 +2433,9 @@ button {
 .quiz-setup-footer { display: flex; justify-content: flex-end; padding-top: 20px; border-top: 1px solid var(--subtle-border); }
 .quiz-setup-footer .quiz-primary { min-height: 40px; font-size: .82rem; font-weight: 600; }
 .quiz-setup-footer .quiz-primary:disabled { opacity: .45; cursor: not-allowed; }
+.quiz-setup-footer .quiz-primary[aria-disabled='true'] { opacity: .45; cursor: progress; }
+.quiz-load-status { margin: 0; color: var(--muted); font-size: var(--text-body); }
+.quiz-load-status:not(:empty) { margin-top: 12px; }
 .quiz-primary, .quiz-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 0 18px; border: 1px solid var(--language-accent); border-radius: 7px; font-weight: 600; }
 .quiz-primary { color: var(--on-accent); background: var(--language-accent); }
 .quiz-secondary { color: var(--language-accent); background: transparent; }
@@ -2529,10 +2532,6 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
   .prompt-subject { gap: 12px; }
   .prompt-divider { font-size: 1.4rem; line-height: 1; }
   .prompt-pronoun, .prompt-infinitive, .prompt-display[data-density] .prompt-pronoun, .prompt-display[data-density] .prompt-infinitive { min-width: 0; font-size: clamp(1.7rem, 7cqi, 2.6rem); white-space: normal; overflow-wrap: anywhere; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 
 /* Shared workspace surfaces and actions follow the practice screen. */
@@ -2751,7 +2750,6 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
   background: rgb(15 18 26 / 44%);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
-  animation: conjugation-backdrop-in 180ms ease-out;
 }
 
 .conjugation-modal-backdrop[open] { display: flex; }
@@ -2768,7 +2766,6 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
   border-radius: 20px 20px 0 0;
   background: var(--paper-strong);
   box-shadow: 0 -10px 36px rgb(15 18 26 / 18%);
-  animation: conjugation-sheet-up 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .conjugation-modal-handle {
@@ -2898,12 +2895,39 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--language-a
     border-bottom: 1px solid var(--panel-border);
     border-radius: var(--radius-panel);
     box-shadow: 0 12px 40px rgb(15 18 26 / 20%);
-    animation: none;
   }
 
   .conjugation-modal-handle {
     display: none;
   }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .conjugation-modal-backdrop[open] { animation: conjugation-backdrop-in 180ms ease-out; }
+}
+
+@media (max-width: 640px) and (prefers-reduced-motion: no-preference) {
+  .conjugation-modal { animation: conjugation-sheet-up 220ms cubic-bezier(0.22, 1, 0.36, 1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timer-pulse-ring { display: none; }
+  .timer-ring-progress,
+  .timer-ring-progress[data-ticking='true'] { transition: stroke 0.3s ease; }
+  .timer-progress-bar { transition: background-color 0.2s ease; }
+  .ring-meter,
+  .accuracy-chart-bar,
+  .preference-switch input::after { transition: none; }
+
+  .tab-button:hover,
+  .view-button:hover,
+  .segment-button:hover,
+  .book-tense-button:hover,
+  .choice-card:hover:not(:disabled),
+  .next-button:hover,
+  .stats-review-start-button:hover:not(:disabled),
+  .quiz-primary:hover,
+  .quiz-secondary:hover { transform: none; }
 }
 
 @media (max-width: 640px) {

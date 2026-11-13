@@ -26,9 +26,32 @@ export default defineConfig({
       },
       workbox: {
         clientsClaim: true,
+        navigateFallback: null,
         globPatterns: ['**/*.{js,css,html,png,webp,svg,ico}'],
-        // Cache the fonts linked from index.html for subsequent offline visits.
+        globIgnores: ['**/quiz-*.js'],
+        // Keep the offline shell under a separate URL so precaching does not intercept online navigations.
+        manifestTransforms: [
+          (entries) => ({
+            manifest: entries.map((entry) => entry.url === 'index.html' ? { ...entry, url: 'index.html?offline' } : entry),
+            warnings: [],
+          }),
+        ],
         runtimeCaching: [
+          {
+            urlPattern: ({ request, sameOrigin }) => sameOrigin && request.mode === 'navigate',
+            handler: 'NetworkOnly',
+            options: {
+              precacheFallback: { fallbackURL: 'index.html?offline' },
+            },
+          },
+          {
+            urlPattern: /\/assets\/quiz-[\w-]+\.js$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'conjugo-quiz-questions',
+              expiration: { maxEntries: 4 },
+            },
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\//,
             handler: 'StaleWhileRevalidate',

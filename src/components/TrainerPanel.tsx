@@ -44,6 +44,7 @@ interface TrainerPanelProps {
   sessionKind: SessionKind;
   streak?: number;
   autoAdvanceStopped?: boolean;
+  shortcutsEnabled?: boolean;
   translationLanguage: TranslationLanguage;
 }
 
@@ -83,6 +84,7 @@ export function TrainerPanel({
   sessionKind,
   streak = 0,
   autoAdvanceStopped = false,
+  shortcutsEnabled = true,
   translationLanguage,
 }: TrainerPanelProps) {
   const { t, languageName } = useI18n();
@@ -101,6 +103,8 @@ export function TrainerPanel({
     if (isTyping && wasAnswered.current && !isAnswered) {
       answerInputRef.current?.focus();
     } else if (wasComplete.current && !isSessionComplete) {
+      questionHeadingRef.current?.focus();
+    } else if (wasAnswered.current && !isAnswered && document.activeElement === document.body) {
       questionHeadingRef.current?.focus();
     } else if (isAnswered && !showResults && (isSessionComplete || canManualAdvance)) {
       actionButtonRef.current?.focus();
@@ -149,6 +153,7 @@ export function TrainerPanel({
 
   const iconColor = !timerEnabled ? 'var(--muted)' : timedOut || showAlertStyle ? 'var(--red)' : 'var(--ink)';
   const correctAnswerLabel = t('Correct answer: {answer}', { answer: correctAnswer });
+  const feedbackTitle = timedOut ? t("Time's up!") : isCorrect ? t('Correct!') : correctAnswerLabel;
 
   return (
     <section className="trainer-panel" aria-label={panelLabel}>
@@ -272,10 +277,13 @@ export function TrainerPanel({
         />
       )}
 
+      <div className="sr-only" role="status">
+        {isAnswered && (timedOut ? `${feedbackTitle} ${correctAnswerLabel}` : feedbackTitle)}
+      </div>
       {isAnswered ? (
         <AnswerFeedback
           result={isCorrect ? 'correct' : 'wrong'}
-          title={timedOut ? t("Time's up!") : isCorrect ? t('Correct!') : correctAnswerLabel}
+          title={feedbackTitle}
           description={timedOut ? correctAnswerLabel : !canManualAdvance && !isSessionComplete ? t('next question loading') : undefined}
           onOpenWordbook={onOpenWordbook}
           onNext={isSessionComplete ? toggleResults : canManualAdvance ? moveNext : undefined}
@@ -286,7 +294,7 @@ export function TrainerPanel({
         <div className="answer-dock" data-result="idle">
           <div className="answer-hint">
             <strong>{t("Choose one answer card.")}</strong>
-            <span>{t("Use A–D or 1–4 on your keyboard.")}</span>
+            {shortcutsEnabled && <span>{t("Use A–D or 1–4 on your keyboard.")}</span>}
           </div>
         </div>
       )}

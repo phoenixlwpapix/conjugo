@@ -233,18 +233,18 @@ export function TrainerPanel({
             </div>
           </div>
 
-          <div className="prompt-display" data-density={promptDensity}>
-            <span className="prompt-subject" lang={studyLanguageTag}>
-              <span className="prompt-pronoun">{pronounLabel}</span>
-              <span className="prompt-divider" aria-hidden="true">/</span>
-            </span>
-            <div className="prompt-verb-block">
-              <div className="prompt-verb-row">
+          <div className="prompt-display-row">
+            <div className="prompt-display" data-density={promptDensity}>
+              <span className="prompt-subject" lang={studyLanguageTag}>
+                <span className="prompt-pronoun">{pronounLabel}</span>
+                <span className="prompt-divider" aria-hidden="true">/</span>
+              </span>
+              <div className="prompt-verb-block">
                 <strong className="prompt-infinitive" lang={studyLanguageTag}>{prompt.verb.infinitive}</strong>
-                <FavoriteButton infinitive={prompt.verb.infinitive} isFavorite={isFavorite} onToggle={onToggleFavorite} />
+                {translation && <em className="prompt-translation" lang={translationLanguage}>{translation}</em>}
               </div>
-              {translation && <em className="prompt-translation" lang={translationLanguage}>{translation}</em>}
             </div>
+            <FavoriteButton infinitive={prompt.verb.infinitive} isFavorite={isFavorite} onToggle={onToggleFavorite} />
           </div>
         </div>
       </div>

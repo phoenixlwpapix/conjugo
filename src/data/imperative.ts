@@ -15,9 +15,9 @@ const emptyForms = (): PersonForms => ({ I: '', you: '', 'he/she': '', we: '', '
 // Start with useful everyday commands; unsupported verbs stay out of drills.
 const supported: Record<LanguageId, Set<string>> = {
   english: new Set(),
-  french: new Set('être avoir aller faire dire savoir voir prendre mettre lire écrire parler regarder écouter chercher donner travailler jouer marcher demander fermer étudier préparer oublier expliquer utiliser finir choisir venir manger boire acheter dormir ouvrir partir rester suivre attendre'.split(' ')),
-  spanish: new Set('ser tener ir estar hacer decir saber ver venir poner salir dar comer beber aprender leer vivir abrir escribir hablar mirar escuchar buscar comprar trabajar jugar caminar cerrar estudiar preparar olvidar explicar usar terminar elegir dormir esperar'.split(' ')),
-  italian: new Set('essere avere andare fare dire sapere vedere venire prendere mettere leggere scrivere parlare guardare ascoltare trovare lavorare camminare portare studiare preparare usare finire scegliere mangiare bere comprare dormire aprire partire restare seguire aspettare stare dare'.split(' ')),
+  french: new Set('être avoir aller faire dire savoir voir prendre mettre lire écrire parler regarder écouter chercher donner travailler jouer marcher demander fermer étudier préparer oublier expliquer utiliser finir choisir venir manger boire acheter dormir ouvrir partir rester suivre attendre conduire construire traduire éteindre rejoindre permettre promettre revenir couvrir appeler tenir envoyer courir perdre gagner entendre offrir rire'.split(' ')),
+  spanish: new Set('ser tener ir estar hacer decir saber ver venir poner salir dar comer beber aprender leer vivir abrir escribir hablar mirar escuchar buscar comprar trabajar jugar caminar cerrar estudiar preparar olvidar explicar usar terminar elegir dormir esperar conducir traducir construir servir repetir mostrar ofrecer mantener suponer enviar correr perder ganar reír'.split(' ')),
+  italian: new Set('essere avere andare fare dire sapere vedere venire prendere mettere leggere scrivere parlare guardare ascoltare trovare lavorare camminare portare studiare preparare usare finire scegliere mangiare bere comprare dormire aprire partire restare seguire aspettare stare dare guidare tradurre costruire salire scendere togliere raccogliere permettere promettere aggiungere scoprire mandare correre tenere offrire ridere perdere vincere'.split(' ')),
 };
 
 const frenchIrregular: Record<string, [string, string, string]> = {
@@ -25,6 +25,7 @@ const frenchIrregular: Record<string, [string, string, string]> = {
 };
 const spanishTu: Record<string, string> = {
   ser: 'sé', tener: 'ten', ir: 've', hacer: 'haz', decir: 'di', venir: 'ven', poner: 'pon', salir: 'sal',
+  mantener: 'mantén', suponer: 'supón',
 };
 // Use the full accepted variants (vai/fai/dai/stai), avoiding duplicate correct choices.
 const italianTu: Record<string, string> = {

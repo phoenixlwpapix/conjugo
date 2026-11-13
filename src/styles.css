@@ -1057,9 +1057,11 @@ button {
   gap: 5px;
 }
 
-.prompt-verb-row {
-  display: flex;
+.prompt-display-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
+  gap: 12px;
 }
 
 .prompt-infinitive {
@@ -1991,7 +1993,9 @@ button {
   padding-bottom: 8px;
   border-bottom: 1px solid var(--panel-border);
   font-size: var(--text-caption);
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--muted);
 }
 
@@ -2004,7 +2008,7 @@ button {
   min-height: 56px;
   padding: 10px 0;
   font-size: var(--text-body);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .preference-row + .preference-row {
@@ -2053,6 +2057,7 @@ button {
   background: var(--button-surface);
   color: var(--ink);
   font: inherit;
+  font-weight: 500;
 }
 
 .preference-toggle {
@@ -2076,13 +2081,14 @@ button {
   color: var(--muted);
   background: transparent;
   font-size: 0.76rem;
-  font-weight: 700;
+  font-weight: 500;
   white-space: nowrap;
 }
 
 .preference-toggle button[data-active='true'] {
   color: var(--ink);
   background: var(--button-surface);
+  font-weight: 600;
   box-shadow: 0 1px 3px rgba(20, 32, 28, 0.14);
 }
 

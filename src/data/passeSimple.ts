@@ -3,27 +3,33 @@ import type { Pronoun } from './verbs';
 type Ending = 'i' | 'u' | 'in';
 
 const stems: Partial<Record<string, [stem: string, ending: Ending]>> = {
+  accueillir: ['accueill', 'i'],
   attendre: ['attend', 'i'], apprendre: ['appr', 'i'], battre: ['batt', 'i'],
-  choisir: ['chois', 'i'], comprendre: ['compr', 'i'], découvrir: ['découvr', 'i'],
+  choisir: ['chois', 'i'], comprendre: ['compr', 'i'], conduire: ['conduis', 'i'],
+  construire: ['construis', 'i'], couvrir: ['couvr', 'i'], craindre: ['craign', 'i'],
+  découvrir: ['découvr', 'i'],
   dire: ['d', 'i'], dormir: ['dorm', 'i'], écrire: ['écriv', 'i'],
-  entendre: ['entend', 'i'], faire: ['f', 'i'], finir: ['fin', 'i'],
-  grandir: ['grand', 'i'], grossir: ['gross', 'i'], maigrir: ['maigr', 'i'],
+  entendre: ['entend', 'i'], éteindre: ['éteign', 'i'], faire: ['f', 'i'], finir: ['fin', 'i'],
+  fuir: ['fu', 'i'], grandir: ['grand', 'i'], grossir: ['gross', 'i'], maigrir: ['maigr', 'i'],
   mentir: ['ment', 'i'], mettre: ['m', 'i'], naître: ['naqu', 'i'],
   obéir: ['obé', 'i'], offrir: ['offr', 'i'], ouvrir: ['ouvr', 'i'],
-  partir: ['part', 'i'], perdre: ['perd', 'i'], prendre: ['pr', 'i'],
-  réfléchir: ['réfléch', 'i'], remplir: ['rempl', 'i'], rendre: ['rend', 'i'],
+  partir: ['part', 'i'], peindre: ['peign', 'i'], perdre: ['perd', 'i'],
+  permettre: ['perm', 'i'], prendre: ['pr', 'i'], produire: ['produis', 'i'],
+  promettre: ['prom', 'i'],
+  réfléchir: ['réfléch', 'i'], rejoindre: ['rejoign', 'i'], remplir: ['rempl', 'i'], rendre: ['rend', 'i'],
   répondre: ['répond', 'i'], réussir: ['réuss', 'i'], rire: ['r', 'i'],
   rompre: ['romp', 'i'], sentir: ['sent', 'i'], servir: ['serv', 'i'],
   sortir: ['sort', 'i'], souffrir: ['souffr', 'i'], sourire: ['sour', 'i'],
-  suivre: ['suiv', 'i'], vendre: ['vend', 'i'], vieillir: ['vieill', 'i'], voir: ['v', 'i'],
+  suivre: ['suiv', 'i'], traduire: ['traduis', 'i'], vendre: ['vend', 'i'], vieillir: ['vieill', 'i'], voir: ['v', 'i'],
 
   avoir: ['e', 'u'], boire: ['b', 'u'], connaître: ['conn', 'u'],
   courir: ['cour', 'u'], croire: ['cr', 'u'], devoir: ['d', 'u'],
   être: ['f', 'u'], lire: ['l', 'u'], mourir: ['mour', 'u'],
-  pouvoir: ['p', 'u'], recevoir: ['reç', 'u'], savoir: ['s', 'u'],
+  paraître: ['par', 'u'], plaire: ['pl', 'u'],
+  pouvoir: ['p', 'u'], recevoir: ['reç', 'u'], résoudre: ['résol', 'u'], savoir: ['s', 'u'],
   valoir: ['val', 'u'], vivre: ['véc', 'u'], vouloir: ['voul', 'u'],
 
-  devenir: ['dev', 'in'], tenir: ['t', 'in'], venir: ['v', 'in'],
+  devenir: ['dev', 'in'], obtenir: ['obt', 'in'], revenir: ['rev', 'in'], tenir: ['t', 'in'], venir: ['v', 'in'],
 };
 
 const endings = {

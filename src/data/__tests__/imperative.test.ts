@@ -12,16 +12,19 @@ const fixtures: [LanguageId, string, string[], string[]][] = [
   ['french', 'savoir', ['sache', 'sachons', 'sachez'], ['ne sache pas', 'ne sachons pas', 'ne sachez pas']],
   ['french', 'aller', ['va', 'allons', 'allez'], ["ne va pas", "n'allons pas", "n'allez pas"]],
   ['french', 'ouvrir', ['ouvre', 'ouvrons', 'ouvrez'], ["n'ouvre pas", "n'ouvrons pas", "n'ouvrez pas"]],
+  ['french', 'éteindre', ['éteins', 'éteignons', 'éteignez'], ["n'éteins pas", "n'éteignons pas", "n'éteignez pas"]],
   ['spanish', 'hablar', ['habla', 'hable', 'hablemos', 'hablad', 'hablen'], ['no hables', 'no hable', 'no hablemos', 'no habléis', 'no hablen']],
   ['spanish', 'ir', ['ve', 'vaya', 'vamos', 'id', 'vayan'], ['no vayas', 'no vaya', 'no vayamos', 'no vayáis', 'no vayan']],
   ['spanish', 'ser', ['sé', 'sea', 'seamos', 'sed', 'sean'], ['no seas', 'no sea', 'no seamos', 'no seáis', 'no sean']],
   ['spanish', 'hacer', ['haz', 'haga', 'hagamos', 'haced', 'hagan'], ['no hagas', 'no haga', 'no hagamos', 'no hagáis', 'no hagan']],
+  ['spanish', 'mantener', ['mantén', 'mantenga', 'mantengamos', 'mantened', 'mantengan'], ['no mantengas', 'no mantenga', 'no mantengamos', 'no mantengáis', 'no mantengan']],
   ['italian', 'parlare', ['parla', 'parli', 'parliamo', 'parlate'], ['non parlare', 'non parli', 'non parliamo', 'non parlate']],
   ['italian', 'essere', ['sii', 'sia', 'siamo', 'siate'], ['non essere', 'non sia', 'non siamo', 'non siate']],
   ['italian', 'avere', ['abbi', 'abbia', 'abbiamo', 'abbiate'], ['non avere', 'non abbia', 'non abbiamo', 'non abbiate']],
   ['italian', 'andare', ['vai', 'vada', 'andiamo', 'andate'], ['non andare', 'non vada', 'non andiamo', 'non andate']],
   ['italian', 'dire', ["di'", 'dica', 'diciamo', 'dite'], ['non dire', 'non dica', 'non diciamo', 'non dite']],
   ['italian', 'sapere', ['sappi', 'sappia', 'sappiamo', 'sappiate'], ['non sapere', 'non sappia', 'non sappiamo', 'non sappiate']],
+  ['italian', 'tradurre', ['traduci', 'traduca', 'traduciamo', 'traducete'], ['non tradurre', 'non traduca', 'non traduciamo', 'non traducete']],
 ];
 
 describe('imperative', () => {

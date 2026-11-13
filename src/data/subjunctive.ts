@@ -69,6 +69,7 @@ const spanishIrregular: Record<string, SixForms> = {
   dar: ['dé', 'des', 'dé', 'demos', 'deis', 'den'],
   saber: ['sepa', 'sepas', 'sepa', 'sepamos', 'sepáis', 'sepan'],
   haber: ['haya', 'hayas', 'haya', 'hayamos', 'hayáis', 'hayan'],
+  reír: ['ría', 'rías', 'ría', 'riamos', 'riais', 'rían'],
 };
 
 /** Keeps the stem's final consonant sound before e: busc→busqu, lleg→llegu, empiez→empiec. */

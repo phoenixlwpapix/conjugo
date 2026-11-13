@@ -25,6 +25,9 @@ describe('Spanish imperfect subjunctive', () => {
     ['haber', 'I', 'hubiera', 'hubiese'], ['dar', 'we', 'diéramos', 'diésemos'],
     ['leer', 'I', 'leyera', 'leyese'], ['oír', 'you', 'oyeras', 'oyeses'],
     ['pedir', 'we', 'pidiéramos', 'pidiésemos'], ['dormir', 'we', 'durmiéramos', 'durmiésemos'],
+    ['caer', 'I', 'cayera', 'cayese'], ['caber', 'you', 'cupieras', 'cupieses'],
+    ['conducir', 'they', 'condujeran', 'condujesen'], ['andar', 'we', 'anduviéramos', 'anduviésemos'],
+    ['construir', 'he/she', 'construyera', 'construyese'], ['reír', 'I', 'riera', 'riese'],
   ];
   it.each(irregulars)('preserves the irregular stem of %s (%s)', (infinitive, person, ra, se) => {
     const verb = spanish.verbs.find((entry) => entry.infinitive === infinitive)!;
@@ -32,9 +35,9 @@ describe('Spanish imperfect subjunctive', () => {
     expect(verb.imperfectSubjunctiveSe?.[person]).toBe(se);
   });
 
-  it('supports all 100 Spanish verbs and uses only -ra forms as targets and choices', () => {
+  it('supports all 120 Spanish verbs and uses only -ra forms as targets and choices', () => {
     const pool = createPromptPool(spanish, tense);
-    expect(pool).toHaveLength(600);
+    expect(pool).toHaveLength(720);
     for (const prompt of pool) {
       expect(prompt.verb.forms[tense][prompt.pronoun]).toBeTruthy();
       const variants = Object.values(prompt.verb.imperfectSubjunctiveSe ?? {});
@@ -61,7 +64,7 @@ describe('Spanish imperfect subjunctive', () => {
 
   it('keeps past requests and hypothetical future events distinct from past completed actions', () => {
     const bank = createQuizBank(spanish, tense);
-    expect(bank).toHaveLength(40);
+    expect(bank).toHaveLength(50);
     const request = bank.find((question) => question.sentence.includes('Ana te pidió'))!;
     expect(request.answer).toBe('vinieras');
     expect(request.translation.en).toBe('Yesterday, Ana asked you to come to her house today.');
@@ -78,7 +81,7 @@ describe('Spanish imperfect subjunctive', () => {
   it('honors vosotros preferences and keeps -ra answers in review', () => {
     const language = { ...spanish, excludedPronouns: ['you plural' as const] };
     const pool = createPromptPool(language, tense);
-    expect(pool).toHaveLength(500);
+    expect(pool).toHaveLength(600);
     expect(createQuizBank(language, tense).some((question) => question.pronoun === 'you plural')).toBe(false);
     const prompt = pool.find((entry) => entry.verb.infinitive === 'venir' && entry.pronoun === 'you')!;
     const misses = upsertMiss([], prompt);

@@ -8,12 +8,12 @@ const spanish = languages.find((language) => language.id === 'spanish');
 if (!spanish) throw new Error('Spanish data missing');
 
 describe('authored quiz scenes', () => {
-  it('provides forty complete scenes per tense in its supported languages', () => {
+  it('provides fifty complete scenes per tense in its supported languages', () => {
     for (const [tense, scenes] of Object.entries(quizScenes)) {
-      expect(scenes).toHaveLength(40);
+      expect(scenes).toHaveLength(50);
       for (const language of languages) {
         if (!isTenseAvailable(language.id, tense as TenseId)) continue;
-        expect(new Set(scenes.map((scene) => scene.sentence[language.id])).size).toBe(40);
+        expect(new Set(scenes.map((scene) => scene.sentence[language.id])).size).toBe(50);
         for (const scene of scenes) {
           expect(scene.sentence[language.id]?.split('____')).toHaveLength(2);
           expect(scene.sentence[language.id]).not.toMatch(/undefined/);
@@ -49,7 +49,7 @@ describe('authored quiz scenes', () => {
     for (const language of languages) {
       for (const { id } of getLanguageTenses(language.id)) {
         const bank = createQuizBank(language, id);
-        expect(bank).toHaveLength(40);
+        expect(bank).toHaveLength(50);
         bank.forEach((question, index) => {
           const scene = quizScenes[id][index];
           expect(question.sentence).toBe(scene.sentence[language.id]);
@@ -209,7 +209,7 @@ describe('authored quiz scenes', () => {
   });
 
   it('uses only eligible scenes when the requested round is larger than the bank', () => {
-    const language = { ...spanish, excludedPronouns: ['you plural' as const] };
+    const language = { ...spanish, excludedPronouns: ['you plural' as const, 'they' as const, 'we' as const] };
     const eligible = createQuizBank(language, 'present');
     const questions = createQuizQuestions(language, 'present', 40);
     expect(eligible.length).toBeLessThan(40);

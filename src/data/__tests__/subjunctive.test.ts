@@ -21,6 +21,8 @@ const expected: Record<Exclude<LanguageId, 'english'>, Record<string, string[]>>
     croire: ['croie', 'croies', 'croie', 'croyions', 'croyiez', 'croient'],
     commencer: ['commence', 'commences', 'commence', 'commencions', 'commenciez', 'commencent'],
     vouloir: ['veuille', 'veuilles', 'veuille', 'voulions', 'vouliez', 'veuillent'],
+    conduire: ['conduise', 'conduises', 'conduise', 'conduisions', 'conduisiez', 'conduisent'],
+    craindre: ['craigne', 'craignes', 'craigne', 'craignions', 'craigniez', 'craignent'],
   },
   spanish: {
     hablar: ['hable', 'hables', 'hable', 'hablemos', 'habléis', 'hablen'],
@@ -36,6 +38,12 @@ const expected: Record<Exclude<LanguageId, 'english'>, Record<string, string[]>>
     conocer: ['conozca', 'conozcas', 'conozca', 'conozcamos', 'conozcáis', 'conozcan'],
     estar: ['esté', 'estés', 'esté', 'estemos', 'estéis', 'estén'],
     dar: ['dé', 'des', 'dé', 'demos', 'deis', 'den'],
+    caer: ['caiga', 'caigas', 'caiga', 'caigamos', 'caigáis', 'caigan'],
+    caber: ['quepa', 'quepas', 'quepa', 'quepamos', 'quepáis', 'quepan'],
+    conducir: ['conduzca', 'conduzcas', 'conduzca', 'conduzcamos', 'conduzcáis', 'conduzcan'],
+    construir: ['construya', 'construyas', 'construya', 'construyamos', 'construyáis', 'construyan'],
+    reír: ['ría', 'rías', 'ría', 'riamos', 'riais', 'rían'],
+    preferir: ['prefiera', 'prefieras', 'prefiera', 'prefiramos', 'prefiráis', 'prefieran'],
   },
   italian: {
     parlare: ['parli', 'parli', 'parli', 'parliamo', 'parliate', 'parlino'],
@@ -47,6 +55,11 @@ const expected: Record<Exclude<LanguageId, 'english'>, Record<string, string[]>>
     essere: ['sia', 'sia', 'sia', 'siamo', 'siate', 'siano'],
     andare: ['vada', 'vada', 'vada', 'andiamo', 'andiate', 'vadano'],
     dovere: ['debba', 'debba', 'debba', 'dobbiamo', 'dobbiate', 'debbano'],
+    salire: ['salga', 'salga', 'salga', 'saliamo', 'saliate', 'salgano'],
+    togliere: ['tolga', 'tolga', 'tolga', 'togliamo', 'togliate', 'tolgano'],
+    proporre: ['proponga', 'proponga', 'proponga', 'proponiamo', 'proponiate', 'propongano'],
+    tradurre: ['traduca', 'traduca', 'traduca', 'traduciamo', 'traduciate', 'traducano'],
+    piacere: ['piaccia', 'piaccia', 'piaccia', 'piacciamo', 'piacciate', 'piacciano'],
   },
 };
 

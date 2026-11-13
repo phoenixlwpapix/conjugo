@@ -16,14 +16,18 @@ describe('French passé simple', () => {
     ['recevoir', ['reçus', 'reçus', 'reçut', 'reçûmes', 'reçûtes', 'reçurent']],
     ['venir', ['vins', 'vins', 'vint', 'vînmes', 'vîntes', 'vinrent']],
     ['naître', ['naquis', 'naquis', 'naquit', 'naquîmes', 'naquîtes', 'naquirent']],
+    ['conduire', ['conduisis', 'conduisis', 'conduisit', 'conduisîmes', 'conduisîtes', 'conduisirent']],
+    ['craindre', ['craignis', 'craignis', 'craignit', 'craignîmes', 'craignîtes', 'craignirent']],
+    ['revenir', ['revins', 'revins', 'revint', 'revînmes', 'revîntes', 'revinrent']],
+    ['plaire', ['plus', 'plus', 'plut', 'plûmes', 'plûtes', 'plurent']],
   ])('conjugates %s for all six persons', (infinitive, expected) => {
     const verb = french.verbs.find((entry) => entry.infinitive === infinitive)!;
     expect(pronouns.map((pronoun) => verb.forms.passeSimple[pronoun])).toEqual(expected);
   });
 
-  it('provides 600 French prompts, including in mixed practice', () => {
+  it('provides 720 French prompts, including in mixed practice', () => {
     const dedicated = createPromptPool(french, 'passeSimple');
-    expect(dedicated).toHaveLength(600);
+    expect(dedicated).toHaveLength(720);
     expect(dedicated.every(({ verb, pronoun }) => Boolean(verb.forms.passeSimple[pronoun]))).toBe(true);
     expect(createPromptPool(french, 'mixed').filter(({ tense }) => tense === 'passeSimple')).toHaveLength(dedicated.length);
     for (const language of languages.filter(({ id }) => id !== 'french')) {
@@ -56,4 +60,13 @@ describe('oír accent placement', () => {
       expect(pronouns.map((pronoun) => verb!.forms[tense][pronoun])).toEqual(expected[tense]);
     });
   }
+});
+
+describe('verb bank size', () => {
+  it('provides 120 unique verbs for every language', () => {
+    for (const language of languages) {
+      expect(language.verbs).toHaveLength(120);
+      expect(new Set(language.verbs.map((entry) => entry.infinitive)).size).toBe(120);
+    }
+  });
 });

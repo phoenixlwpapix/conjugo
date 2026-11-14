@@ -5,15 +5,14 @@ import releases from '../data/releases.json';
 
 type ReleaseNotesProps = {
   dialogRef: Ref<HTMLDialogElement>;
-  onClose: () => void;
 };
 
-export function ReleaseNotes({ dialogRef, onClose }: ReleaseNotesProps) {
+export function ReleaseNotes({ dialogRef }: ReleaseNotesProps) {
   const { locale, t } = useI18n();
   const dateFormat = new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en', { dateStyle: 'medium', timeZone: 'UTC' });
 
   return (
-    <dialog ref={dialogRef} className="release-notes" aria-labelledby="release-notes-title" onClose={onClose}>
+    <dialog ref={dialogRef} className="release-notes" aria-labelledby="release-notes-title">
       <header className="release-notes-header">
         <h2 id="release-notes-title">{t('Changelog')}</h2>
         <form method="dialog">

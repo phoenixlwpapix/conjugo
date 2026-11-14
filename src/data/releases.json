@@ -1,5 +1,19 @@
 [
   {
+    "version": "0.3.1",
+    "date": "2026-11-14",
+    "changes": {
+      "zh": [
+        "更新日志、版权和版本号集中到设置页，手机答题时有更多空间。",
+        "优化错题复习列表：手机端让长人称单独换行，桌面端突出动词和答案，并分行显示复习阶段与到期状态。"
+      ],
+      "en": [
+        "The changelog, copyright, and version now live in Settings, freeing up space for questions on phones.",
+        "Review lists give long pronouns their own line on phones. Desktop tables emphasize verbs and answers and show review stage and due status on separate lines."
+      ]
+    }
+  },
+  {
     "version": "0.3.0",
     "date": "2026-11-14",
     "changes": {

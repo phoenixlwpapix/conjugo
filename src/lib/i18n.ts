@@ -177,7 +177,7 @@ export const chineseMessages = {
   "Verb": "动词",
   "Answer": "答案",
   "Review": "复习进度",
-  "Box {box}/{count} · {due}": "第 {box}/{count} 阶段 · {due}",
+  "Box {box}/{count}": "第 {box}/{count} 阶段",
   "Quiz mode": "句子测验",
   "Select one or more topics. Each round has up to {count} questions with explanations after you answer.": "可选择一个或多个主题。每轮最多 {count} 题，作答后查看解析。",
   "Select all": "全选",

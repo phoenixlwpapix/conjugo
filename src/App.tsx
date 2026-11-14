@@ -1,12 +1,10 @@
 import { LocaleContext } from './hooks/useI18n';
 import { translate, type MessageKey } from './lib/i18n';
-import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { version } from '../package.json';
+import { lazy, Suspense, useEffect, useState, type CSSProperties } from 'react';
 import { usePractice } from './hooks/usePractice';
 import { usePreferences } from './hooks/usePreferences';
 import { Header } from './components/Header';
 import { AppUpdateNotice } from './components/AppUpdateNotice';
-import { ReleaseNotes } from './components/ReleaseNotes';
 import { SessionBar } from './components/SessionBar';
 import { TimedTrainerPanel } from './components/TrainerPanel';
 import { ProgressPanel } from './components/ProgressPanel';
@@ -41,12 +39,6 @@ export default function App() {
   });
 
   const preferences = usePreferences();
-  const releaseDialog = useRef<HTMLDialogElement>(null);
-  const [releaseNotesOpen, setReleaseNotesOpen] = useState(false);
-  const openReleaseNotes = () => {
-    releaseDialog.current?.showModal();
-    setReleaseNotesOpen(true);
-  };
   const { drillShortcuts, practiceAutoAdvance, translationLanguage } = preferences;
   const t = (key: MessageKey) => translate(translationLanguage, key);
 
@@ -122,7 +114,7 @@ export default function App() {
     trend,
     sessionTarget,
     recordQuizResult,
-  } = usePractice({ ...preferences, paused: releaseNotesOpen });
+  } = usePractice(preferences);
   const canAutoAdvance = practiceAutoAdvance && !autoAdvanceStopped;
 
   const openWordbookList = () => {
@@ -154,7 +146,7 @@ export default function App() {
   }, [themeId]);
 
   useEffect(() => {
-    if (!drillShortcuts || activeView !== 'practice' || conjugationPrompt || releaseNotesOpen || isEmptyFavoriteSession) return;
+    if (!drillShortcuts || activeView !== 'practice' || conjugationPrompt || isEmptyFavoriteSession) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (shouldIgnoreDrillKey(event)) return;
 
@@ -214,7 +206,6 @@ export default function App() {
     isSessionComplete,
     moveNext,
     resetSession,
-    releaseNotesOpen,
     submitAnswer,
     reviewingLastAnswer,
     toggleResults,
@@ -237,7 +228,6 @@ export default function App() {
           switchLanguage={switchLanguage}
           activeView={activeView}
           setActiveView={setActiveView}
-          onOpenReleaseNotes={openReleaseNotes}
           themeId={themeId}
         />
 
@@ -366,7 +356,7 @@ export default function App() {
                 key={`${languageId}-${languageId === 'spanish' && preferences.includeVosotros}`}
                 active={activeView === 'quiz'}
                 language={activeLanguage}
-                shortcutsEnabled={drillShortcuts && !releaseNotesOpen}
+                shortcutsEnabled={drillShortcuts}
                 questionCount={preferences.quizQuestionCount}
                 onAnswer={recordQuizResult}
                 onOpenWordbook={(quizPrompt) => openPromptInWordbook(quizPrompt, 'quiz')}
@@ -401,11 +391,6 @@ export default function App() {
             </Suspense>
           )}
         </main>
-        <footer className="app-footer">
-          <span lang="en">© 2025-2026 STUDIO YYH · Youthful · Yummy · Happy</span>
-          <span>v{version}</span>
-        </footer>
-        <ReleaseNotes dialogRef={releaseDialog} onClose={() => setReleaseNotesOpen(false)} />
         {conjugationPrompt && (
           <ConjugationModal
             prompt={conjugationPrompt}
@@ -415,7 +400,7 @@ export default function App() {
             translationLanguage={translationLanguage}
           />
         )}
-        <WorkspaceNavigation activeView={activeView} onViewChange={setActiveView} onOpenReleaseNotes={openReleaseNotes} placement="bottom" />
+        <WorkspaceNavigation activeView={activeView} onViewChange={setActiveView} placement="bottom" />
       </div>
     </LocaleContext>
   );

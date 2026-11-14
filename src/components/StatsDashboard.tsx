@@ -1,4 +1,4 @@
-import { formatStudyDate, translate, type Locale } from '../lib/i18n';
+import { formatStudyDate, getStudyLanguageTag, translate, type Locale } from '../lib/i18n';
 import { useI18n } from '../hooks/useI18n';
 import { BarChart3, CalendarDays, ClipboardList, Crosshair, Flame, Layers, Target, Trophy, type LucideIcon } from 'lucide-react';
 import { getVerbTranslation, type TranslationLanguage } from '../data/translations';
@@ -96,6 +96,7 @@ export function StatsDashboard({
   onDrillVerbs,
 }: StatsDashboardProps) {
   const { t, locale, tenseName } = useI18n();
+  const studyLang = getStudyLanguageTag(activeLanguage.id);
   const localizedTrend = trend.map((point) => ({ ...point, label: formatStudyDate(point.key, locale) }));
   const overallAccuracy = getAccuracy(stats.totalCorrect, stats.totalAnswered);
   const activeDays = Object.values(stats.days).filter((day) => day.answered > 0).length;
@@ -325,7 +326,7 @@ export function StatsDashboard({
             <div className="panel-title">
               <Target size={18} aria-hidden="true" />
               <div>
-                <h2>{t("Review load")}</h2>
+                <h2 id="stats-review-title">{t("Review load")}</h2>
                 <span>
                   {t('{saved} saved misses · {due} due. Each needs {passes} clean passes on separate days.', { saved: storedMisses.length, due: dueMissCount, passes: reviewBoxCount })}
                 </span>
@@ -343,30 +344,32 @@ export function StatsDashboard({
           {recentMisses.length === 0 ? (
             <p className="empty-state">{t("No saved misses yet. Your future review load will appear here.")}</p>
           ) : (
-            <div className="stats-review-table-wrap">
-              <table className="stats-review-table">
-                <thead>
-                  <tr>
-                    <th>{t("Tense / mood")}</th>
-                    <th>{t("Pronoun")}</th>
-                    <th>{t("Verb")}</th>
-                    <th>{t("Answer")}</th>
-                    <th>{t("Review")}</th>
+            <div className="stats-review-table-wrap" role="region" aria-labelledby="stats-review-title" tabIndex={0}>
+              <table className="stats-review-table" role="table">
+                <thead role="rowgroup">
+                  <tr role="row">
+                    <th scope="col" role="columnheader">{t("Verb")}</th>
+                    <th scope="col" role="columnheader">{t("Pronoun")}</th>
+                    <th scope="col" role="columnheader">{t("Answer")}</th>
+                    <th scope="col" role="columnheader">{t("Tense / mood")}</th>
+                    <th scope="col" role="columnheader" className="stats-review-box-heading">{t("Review")}</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody role="rowgroup">
                   {recentMisses.map((miss) => {
                     const verb = activeLanguage.verbs.find((entry) => entry.infinitive === miss.verbInfinitive);
                     const displayAnswer = miss.answer || (verb ? verb.forms[miss.tense][miss.pronoun] : '');
+                    const pronoun = getConjugationPronounLabel(activeLanguage, miss.tense, miss.pronoun);
 
                     return (
-                      <tr key={`${miss.languageId}-${miss.verbInfinitive}-${miss.tense}-${miss.pronoun}`}>
-                        <td>{tenseName(activeLanguage, miss.tense)}</td>
-                        <td>{getConjugationPronounLabel(activeLanguage, miss.tense, miss.pronoun)}</td>
-                        <td className="stats-review-verb">{miss.verbInfinitive}</td>
-                        <td className="stats-review-answer">{displayAnswer}</td>
-                        <td className="stats-review-box" data-due={isMissDue(miss)}>
-                          {t('Box {box}/{count} · {due}', { box: miss.box, count: reviewBoxCount, due: formatDue(miss, locale) })}
+                      <tr role="row" data-has-pronoun={Boolean(pronoun)} key={`${miss.languageId}-${miss.verbInfinitive}-${miss.tense}-${miss.pronoun}`}>
+                        <th scope="row" role="rowheader" className="stats-review-verb" lang={studyLang}>{miss.verbInfinitive}</th>
+                        <td role="cell" className="stats-review-pronoun" lang={studyLang}>{pronoun || <span aria-hidden="true">—</span>}</td>
+                        <td role="cell" className="stats-review-answer" lang={studyLang}>{displayAnswer}</td>
+                        <td role="cell" className="stats-review-tense">{tenseName(activeLanguage, miss.tense)}</td>
+                        <td role="cell" className="stats-review-box" data-due={isMissDue(miss)}>
+                          <span className="stats-review-stage">{t('Box {box}/{count}', { box: miss.box, count: reviewBoxCount })}</span>{' '}
+                          <span className="stats-review-due">{formatDue(miss, locale)}</span>
                         </td>
                       </tr>
                     );

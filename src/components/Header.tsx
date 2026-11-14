@@ -1,6 +1,6 @@
 import { useI18n } from '../hooks/useI18n';
 import type { CSSProperties } from 'react';
-import { Check, ChevronDown, ScrollText, Settings } from 'lucide-react';
+import { Check, ChevronDown, Settings } from 'lucide-react';
 import { languages, type LanguageId } from '../data/verbs';
 import { type ThemeId } from '../data/themes';
 import type { AppView } from '../types';
@@ -11,7 +11,6 @@ interface HeaderProps {
   switchLanguage: (id: LanguageId) => void;
   activeView: AppView;
   setActiveView: (view: AppView) => void;
-  onOpenReleaseNotes: () => void;
   themeId: ThemeId;
 }
 
@@ -27,7 +26,6 @@ export function Header({
   switchLanguage,
   activeView,
   setActiveView,
-  onOpenReleaseNotes,
   themeId,
 }: HeaderProps) {
   const { t, languageName } = useI18n();
@@ -95,10 +93,6 @@ export function Header({
         >
           <Settings size={16} aria-hidden="true" />
           <span>{t('Settings')}</span>
-        </button>
-        <button className="view-button" type="button" aria-haspopup="dialog" aria-label={t('Changelog')} title={t('Changelog')} onClick={onOpenReleaseNotes}>
-          <ScrollText size={16} aria-hidden="true" />
-          <span>{t('Changelog')}</span>
         </button>
       </div>
     </header>

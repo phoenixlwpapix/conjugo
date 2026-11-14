@@ -1,10 +1,13 @@
-import { ChevronRight, Mail, Moon, Sun } from 'lucide-react';
+import { ChevronRight, Mail, Moon, ScrollText, Sun } from 'lucide-react';
+import { useRef } from 'react';
+import { version } from '../../package.json';
 import type { ThemeId } from '../data/themes';
 import { translationLanguageOptions } from '../data/translations';
 import { useI18n } from '../hooks/useI18n';
 import type { usePreferences } from '../hooks/usePreferences';
 import { defaultPracticeQuestionCount, defaultQuizQuestionCount, practiceQuestionCounts, type PracticeQuestionCount } from '../lib/prompts';
 import type { PracticeAnswerMode } from '../types';
+import { ReleaseNotes } from './ReleaseNotes';
 
 type SettingsPanelProps = ReturnType<typeof usePreferences> & {
   activePracticeAnswerMode: PracticeAnswerMode;
@@ -69,6 +72,7 @@ export function SettingsPanel({
   toggleTimer,
 }: SettingsPanelProps) {
   const { t } = useI18n();
+  const releaseDialog = useRef<HTMLDialogElement>(null);
 
   return (
     <section className="settings-page" aria-labelledby="settings-title">
@@ -174,11 +178,21 @@ export function SettingsPanel({
         </label>
       </section>
 
-      <a className="preference-row feedback-link" href="mailto:phoenixlwp@gmail.com?subject=ConjuGO%20Feedback">
+      <button className="preference-row settings-action" type="button" aria-haspopup="dialog" onClick={() => releaseDialog.current?.showModal()}>
+        <ScrollText size={16} aria-hidden="true" />
+        <span>{t('Changelog')}</span>
+        <ChevronRight size={16} aria-hidden="true" />
+      </button>
+      <a className="preference-row settings-action" href="mailto:phoenixlwp@gmail.com?subject=ConjuGO%20Feedback">
         <Mail size={16} aria-hidden="true" />
         <span>{t('Feedback')}</span>
         <ChevronRight size={16} aria-hidden="true" />
       </a>
+      <footer className="app-footer">
+        <span lang="en">© 2025-2026 STUDIO YYH · Youthful · Yummy · Happy</span>
+        <span>v{version}</span>
+      </footer>
+      <ReleaseNotes dialogRef={releaseDialog} />
     </section>
   );
 }

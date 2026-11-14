@@ -84,7 +84,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Completion stats persist in localStorage across browser sessions and are tracked separately for each language.
 - The practice side panel stays focused on current-session and all-time metrics, with its height aligned to the trainer card on desktop.
 - The All-time Progress card now shows only the active language and includes a language tag for quick confirmation.
-- The Stats workspace uses a tighter dashboard layout with consistent KPI typography, today’s performance, review load, and a responsive HTML/CSS accuracy bar chart (no charting library).
+- The Stats workspace shows today’s performance, review load, and a responsive HTML/CSS accuracy chart. The review table leads with the verb and emphasizes the answer. Wider layouts use sticky column headers and separate each review stage from its due status. In narrow lists, the verb and answer align at the top, with the pronoun, tense, and review status below.
 - The Stats workspace is lazy-loaded so it does not inflate the initial practice bundle.
 - The prompt card no longer repeats the same build information in a side rail, giving the question more room.
 - Desktop navigation now uses a sticky left sidebar for brand, language, and workspace switching.
@@ -140,14 +140,14 @@ Vercel Web Analytics is integrated at the React entry point. Enable Analytics in
 
 ## Releases
 
-The Changelog sits immediately after Settings on desktop and mobile, with releases in a timeline. The Studio YYH footer reads the running build's version from `package.json`. Changelog entries start with `0.2.0` and live in `src/data/releases.json`.
+Open Settings → Changelog to see the release timeline. The Studio YYH footer appears at the bottom of Settings and reads the running build's version from `package.json`. Changelog entries start with `0.2.0` and live in `src/data/releases.json`.
 
 For each production push to `main`, choose one version bump for the complete release. Use `patch` for fixes and small polish, `minor` for features and substantial content additions, and `major` for breaking changes. The numbering follows [Semantic Versioning](https://semver.org/).
 
 1. Run `pnpm version patch --no-git-tag-version --no-git-checks`, substituting `minor` or `major` as appropriate. Prepend a matching entry to `src/data/releases.json` with the planned release date and Chinese and English notes.
 2. Run `pnpm test`, `pnpm lint`, and `pnpm build`. The build checks the version, date, log order, and notes in both languages. `pnpm release:check` runs that validation on its own.
 3. Commit the release changes together and create an annotated `vX.Y.Z` tag on that commit. Push `main` and the version tag together, for example with `git push --atomic origin main refs/tags/vX.Y.Z`.
-4. After Vercel finishes, verify the production footer shows the same version and the Changelog opens to that release. Individual development commits can share a release.
+4. After Vercel finishes, open Settings and verify its footer and Changelog show the new version. Individual development commits can share a release.
 
 ## Scripts
 

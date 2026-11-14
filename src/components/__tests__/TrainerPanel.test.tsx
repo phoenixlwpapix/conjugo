@@ -40,11 +40,18 @@ const renderPanel = (overrides: Partial<ComponentProps<typeof TrainerPanel>> = {
     sessionTarget={20}
     sessionKind="standard"
     translationLanguage="en"
+    showVerbGloss
     {...overrides}
   />,
 );
 
 describe('practice feedback', () => {
+  it('shows the verb meaning only when the practice preference is enabled', () => {
+    const french = languages.find(({ id }) => id === 'french')!;
+    const frenchPrompt = { ...prompt, language: french, verb: french.verbs[0] };
+    expect(renderPanel({ prompt: frenchPrompt })).toContain('class="prompt-translation"');
+    expect(renderPanel({ prompt: frenchPrompt, showVerbGloss: false })).not.toContain('class="prompt-translation"');
+  });
   it('keeps a live region ready before answering and shows Next when auto-advance is off', () => {
     expect(renderPanel()).toContain('<div class="sr-only" role="status"></div>');
     const html = renderPanel({

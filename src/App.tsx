@@ -306,6 +306,7 @@ export default function App() {
                     autoAdvanceStopped={!canAutoAdvance}
                     shortcutsEnabled={drillShortcuts}
                     translationLanguage={translationLanguage}
+                    showVerbGloss={preferences.practiceShowGloss}
                   />
 
                   <ProgressPanel

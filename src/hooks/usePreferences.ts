@@ -7,6 +7,7 @@ import {
   readPracticeAnswerMode,
   readPracticeAutoAdvance,
   readPracticeQuestionCount,
+  readPracticeShowGloss,
   readQuizQuestionCount,
   readTranslationLanguage,
   writeDrillShortcuts,
@@ -15,6 +16,7 @@ import {
   writePracticeAnswerMode,
   writePracticeAutoAdvance,
   writePracticeQuestionCount,
+  writePracticeShowGloss,
   writeQuizQuestionCount,
   writeTranslationLanguage,
 } from '../lib/storage';
@@ -25,6 +27,7 @@ export function usePreferences() {
   const [practiceAnswerMode, setPracticeAnswerMode] = useState(readPracticeAnswerMode);
   const [practiceAccentRetry, setPracticeAccentRetry] = useState(readPracticeAccentRetry);
   const [practiceAutoAdvance, setPracticeAutoAdvance] = useState(readPracticeAutoAdvance);
+  const [practiceShowGloss, setPracticeShowGloss] = useState(readPracticeShowGloss);
   const [drillShortcuts, setDrillShortcuts] = useState(readDrillShortcuts);
   const [practiceQuestionCount, setPracticeQuestionCount] = useState(readPracticeQuestionCount);
   const [quizQuestionCount, setQuizQuestionCount] = useState(readQuizQuestionCount);
@@ -50,6 +53,10 @@ export function usePreferences() {
   }, [practiceAutoAdvance]);
 
   useEffect(() => {
+    writePracticeShowGloss(practiceShowGloss);
+  }, [practiceShowGloss]);
+
+  useEffect(() => {
     writeDrillShortcuts(drillShortcuts);
   }, [drillShortcuts]);
 
@@ -72,6 +79,8 @@ export function usePreferences() {
     setPracticeAccentRetry,
     practiceAutoAdvance,
     setPracticeAutoAdvance,
+    practiceShowGloss,
+    setPracticeShowGloss,
     drillShortcuts,
     setDrillShortcuts,
     practiceQuestionCount,

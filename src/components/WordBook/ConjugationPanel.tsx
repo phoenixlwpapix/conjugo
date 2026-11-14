@@ -105,7 +105,7 @@ export function ConjugationPanel({
   translationLanguage,
   favoriteAction,
 }: ConjugationPanelProps) {
-  const { t, tenseName } = useI18n();
+  const { t, languageName, tenseName } = useI18n();
   const translation = getVerbTranslation(activeLanguage, selectedVerb, translationLanguage);
   const showCommands = isImperative(bookTense);
   const bookTab = showCommands ? 'imperative' : isNonFiniteForm(bookTense) ? 'pastParticiple' : bookTense;
@@ -115,6 +115,7 @@ export function ConjugationPanel({
       <div className="conjugation-head">
         <div className="conjugation-summary">
           <div className="conjugation-title">
+            <span className="eyebrow">{languageName(activeLanguage.id)}</span>
             <h2 lang={getStudyLanguageTag(activeLanguage.id)}>{selectedVerb.infinitive}</h2>
             {translation && <p lang={translationLanguage}>{translation}</p>}
           </div>

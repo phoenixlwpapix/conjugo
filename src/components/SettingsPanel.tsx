@@ -57,6 +57,8 @@ export function SettingsPanel({
   setPracticeAccentRetry,
   practiceAutoAdvance,
   setPracticeAutoAdvance,
+  practiceShowGloss,
+  setPracticeShowGloss,
   drillShortcuts,
   setDrillShortcuts,
   practiceQuestionCount,
@@ -105,6 +107,10 @@ export function SettingsPanel({
           defaultCount={defaultPracticeQuestionCount}
           onChange={setPracticeQuestionCount}
         />
+        <label className="preference-row preference-switch">
+          <span>{t('Show verb meanings')}</span>
+          <input checked={practiceShowGloss} onChange={(event) => setPracticeShowGloss(event.target.checked)} role="switch" type="checkbox" />
+        </label>
         <label className="preference-row preference-switch">
           <span>{t('Question timer')}</span>
           <input checked={timerEnabled} onChange={toggleTimer} role="switch" type="checkbox" />

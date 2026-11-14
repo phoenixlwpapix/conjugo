@@ -61,6 +61,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - 100 verbs per language, combining high-frequency irregular verbs with regular conjugation families.
 - Settings has its own workspace, accessible from the desktop sidebar, tablet header, and mobile bottom tab bar. It groups conjugation practice, sentence quiz, and display options.
 - Under Settings → Practice, choose Multiple choice or Typing. The preference is saved locally and applies immediately to an unanswered set or from the next set once you have answered. Typing provides language-specific character keys and uses Next to advance between questions. Accents are required by default. The optional accent retry gives one chance to correct accent marks, while a different valid form of the same verb is marked wrong. Spanish imperfect subjunctive accepts both the -ra and -se forms in Typing.
+- Settings → Practice → Show verb meanings toggles the gloss below the verb in both answer formats. The setting defaults to on and is saved locally. Verb Book entries and sentence quizzes keep their translations.
 - Settings stores separate counts for conjugation practice (20 by default) and sentence quizzes (10 by default). Both offer 10, 20, 30, or 40 questions. Counts apply to new rounds, and an untouched conjugation set can also resize. Sentence quizzes use fewer questions when the selected tenses and pronouns have fewer distinct scenes available.
 - Star verbs in the Verb Book list or detail view, and use Favorites only to browse them. Favorites are saved locally for each learning language.
 - Use the star beside the tense selector in Practice to toggle favorite-only sets. Favorite sets use only the selected language, tense range, and saved verbs, including eligible review questions. The set uses the configured count or all available questions when the pool is smaller. Changing favorites takes effect with the next set.
@@ -75,7 +76,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Interactive verb book with per-tense conjugation tables.
 - Review items can be opened directly in the Word Book with the matching tense selected.
 - Searchable compact verb list built for larger future vocabularies.
-- On phones and tablets (up to 980px), the Verb Book uses separate list and detail views. Selecting a verb opens its conjugation. Returning from a verb opened in the list restores the same scroll position and filters. Previous and next follow the current list order. Search and sorting share one row, verb entries use compact single rows, and the tense strip scrolls horizontally with the selected tense centered. Compact headings and conjugation rows keep the reference visible. Desktop retains both panels.
+- On phones and tablets (up to 980px), the Verb Book uses separate list and detail views. Selecting a verb opens its conjugation. Returning from a verb opened in the list restores the same scroll position and filters. Previous and next follow the current list order. Search and sorting share one row. The tense strip centers the selected tense and uses arrows on wider screens or touch scrolling on phones. Desktop retains both panels.
 - Card-style multiple-choice answer selection.
 - Multiple-choice answer cards now use randomized positions per prompt while keeping distractors relevant to the current verb family.
 - English conjugation practice reserves a choice for common mistakes on selected irregular past forms, such as `drawed` for `drew`, `runned` for `ran`, and `sung` for `sang`. It also uses these distractors to fill four distinct choices when other forms share a spelling.
@@ -143,7 +144,7 @@ The Changelog sits immediately after Settings on desktop and mobile, with releas
 
 For each production push to `main`, choose one version bump for the complete release. Use `patch` for fixes and small polish, `minor` for features and substantial content additions, and `major` for breaking changes. The numbering follows [Semantic Versioning](https://semver.org/).
 
-1. Run `pnpm version patch --no-git-tag-version`, substituting `minor` or `major` as appropriate. Prepend a matching entry to `src/data/releases.json` with the planned release date and Chinese and English notes.
+1. Run `pnpm version patch --no-git-tag-version --no-git-checks`, substituting `minor` or `major` as appropriate. Prepend a matching entry to `src/data/releases.json` with the planned release date and Chinese and English notes.
 2. Run `pnpm test`, `pnpm lint`, and `pnpm build`. The build checks the version, date, log order, and notes in both languages. `pnpm release:check` runs that validation on its own.
 3. Commit the release changes together and create an annotated `vX.Y.Z` tag on that commit. Push `main` and the version tag together, for example with `git push --atomic origin main refs/tags/vX.Y.Z`.
 4. After Vercel finishes, verify the production footer shows the same version and the Changelog opens to that release. Individual development commits can share a release.

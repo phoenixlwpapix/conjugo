@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   readActiveView, readDrillShortcuts, readFavoriteVerbs, readPracticeAutoAdvance, readPracticeQuestionCount, readPracticeStatsByLanguage, readPracticeTense, readQuizQuestionCount,
   readStoredMisses, readTimerEnabled, readTranslationLanguage, writeActiveView, writeFavoriteVerbs,
+  readPracticeShowGloss, writePracticeShowGloss,
   writeDrillShortcuts, writePracticeAutoAdvance, writePracticeQuestionCount, writePracticeStatsByLanguage, writePracticeTense, writeQuizQuestionCount, writeStoredMisses,
 } from '../storage';
 
@@ -88,6 +89,14 @@ describe('storage', () => {
     expect(readTimerEnabled()).toBe(false);
     store.set('conjugo.timerEnabled', 'true');
     expect(readTimerEnabled()).toBe(true);
+  });
+
+  it('shows practice meanings by default and saves changes to the preference', () => {
+    expect(readPracticeShowGloss()).toBe(true);
+    writePracticeShowGloss(false);
+    expect(readPracticeShowGloss()).toBe(false);
+    writePracticeShowGloss(true);
+    expect(readPracticeShowGloss()).toBe(true);
   });
 
   it('keeps the existing defaults and persists turning off shortcuts and auto-advance', () => {

@@ -46,6 +46,7 @@ interface TrainerPanelProps {
   autoAdvanceStopped?: boolean;
   shortcutsEnabled?: boolean;
   translationLanguage: TranslationLanguage;
+  showVerbGloss: boolean;
 }
 
 export function TimedTrainerPanel({ clock, ...props }: Omit<TrainerPanelProps, 'timeLeft'> & { clock: PracticeClock }) {
@@ -86,6 +87,7 @@ export function TrainerPanel({
   autoAdvanceStopped = false,
   shortcutsEnabled = true,
   translationLanguage,
+  showVerbGloss,
 }: TrainerPanelProps) {
   const { t, languageName } = useI18n();
   const actionButtonRef = useRef<HTMLButtonElement>(null);
@@ -130,7 +132,7 @@ export function TrainerPanel({
 
   const pronounLabel = getPronounLabel(prompt);
   const studyLanguageTag = getStudyLanguageTag(prompt.language.id);
-  const translation = getVerbTranslation(prompt.language, prompt.verb, translationLanguage);
+  const translation = showVerbGloss ? getVerbTranslation(prompt.language, prompt.verb, translationLanguage) : undefined;
   const sessionTag = sessionKind === 'review' ? t('Review misses') : sessionKind === 'verbs' ? t('Hardest verbs') : practiceTense === 'mixed' ? t('Mixed practice') : null;
   const showAlertStyle = !isAnswered && timeLeft <= 3;
   const promptTextLength = Array.from(`${pronounLabel}${prompt.verb.infinitive}`).length;

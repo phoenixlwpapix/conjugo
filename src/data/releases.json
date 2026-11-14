@@ -1,5 +1,19 @@
 [
   {
+    "version": "0.3.0",
+    "date": "2026-11-14",
+    "changes": {
+      "zh": [
+        "变位练习新增「显示动词释义」开关，选择题和输入题都可隐藏释义，设置会保存在本机。",
+        "动词本恢复动词与释义分行显示。时态栏在桌面放不下时可用左右箭头滚动，手机端可直接横滑。"
+      ],
+      "en": [
+        "Show or hide verb meanings in multiple-choice and typing practice. ConjuGO saves your preference on this device.",
+        "The Verb Book displays the verb and its meaning on separate lines. Use arrows to scroll through tenses on desktop or swipe on a phone."
+      ]
+    }
+  },
+  {
     "version": "0.2.0",
     "date": "2026-11-14",
     "changes": {

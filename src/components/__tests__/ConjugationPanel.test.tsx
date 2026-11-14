@@ -3,6 +3,19 @@ import { describe, expect, it } from 'vitest';
 import { languages } from '../../data/verbs';
 import { ConjugationModal, ConjugationPanel } from '../WordBook/ConjugationPanel';
 
+describe('present-tense subjects', () => {
+  it.each([
+    ['english', 'to be', '<span>he/she/it</span><strong>is</strong>'],
+    ['italian', 'parlare', '<span>lui/lei/Lei</span><strong>parla</strong>'],
+    ['french', 'parler', 'Vous can address one person politely or more than one person.'],
+  ] as const)('shows the %s subject reference', (id, infinitive, expected) => {
+    const language = languages.find((entry) => entry.id === id)!;
+    const verb = language.verbs.find((entry) => entry.infinitive === infinitive)!;
+    const html = renderToStaticMarkup(<ConjugationPanel activeLanguage={language} bookTense="present" selectedVerb={verb} onTenseChange={() => {}} translationLanguage="en" />);
+    expect(html).toContain(expected);
+  });
+});
+
 describe('imperfect subjunctive reference', () => {
   it('shows both variants for visible pronouns, and respects the vosotros preference', () => {
     const spanish = languages.find((language) => language.id === 'spanish')!;
@@ -17,6 +30,8 @@ describe('imperfect subjunctive reference', () => {
       />);
       expect(html).toContain('<th scope="col">-ra</th><th scope="col">-se</th>');
       expect(html).toContain('<th scope="row">que yo</th><td>viniera</td><td>viniese</td>');
+      expect(html).toContain('<th scope="row">que él/ella/usted</th><td>viniera</td><td>viniese</td>');
+      expect(html).toContain('<th scope="row">que ellos/ellas/ustedes</th><td>vinieran</td><td>viniesen</td>');
       expect(html).not.toContain('Practice: -ra');
       expect(html).toContain('viniera');
       expect(html).toContain('viniese');
@@ -80,6 +95,8 @@ describe('conjugation modal sheet', () => {
     expect(html).toContain('aria-label="hablar conjugation table"');
     expect(html).toContain('aria-label="Close"');
     expect(html).toContain('data-highlighted="true"><span>nosotros</span><strong>hablamos</strong>');
-    expect(html).not.toContain('Choose tense or mood');
+    expect(html).toContain('<span>él/ella/usted</span><strong>habla</strong>');
+    expect(html).toContain('<span>ellos/ellas/ustedes</span><strong>hablan</strong>');
+    expect(html).not.toContain('Choose tense, mood, or verb form');
   });
 });

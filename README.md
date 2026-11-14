@@ -47,7 +47,8 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Back to home on the miss review results exits review and starts a fresh standard practice set with the current language and tense selection.
 - In practice, View conjugations opens the same table and stops correct-answer auto-advance so the learner can take their time. Closing it returns focus to its trigger, and Next continues the drill.
 - Quiz answers count toward the existing seven-day accuracy chart and tense breakdown, with separate quiz totals and accuracy on the Stats dashboard.
-- Present, past, imperfect, future, conditional, present subjunctive, and affirmative/negative imperative. English drills present, past, and future only.
+- Present, past, imperfect, future, conditional, present subjunctive, and affirmative/negative imperative. English finite-tense drills cover present, past, and future.
+- Non-finite forms are available in the Verb Book, Practice, and Quiz. All four languages cover the past participle. English and French also drill the present participle, and Spanish and Italian drill the gerund. Selected Italian present participles appear in the Verb Book. French and Italian references show the masculine singular past participle. Practice supports typing and multiple choice, and sentence quizzes supply the context while leaving only the target form blank. Misses and scores use the existing review and progress tracking.
 - French, Spanish, and Italian commands share one Imperative entry in Practice and Quiz. Both modes balance affirmative and negative prompts when Imperative is the only selection and both pools have enough questions. Each question retains an affirmative/negative badge. The Verb Book also uses one Imperative tab, comparing affirmative and negative forms side by side for each valid addressee on desktop and mobile. Opening either command polarity from practice or review selects this comparison. Statistics retain the separate concrete forms; existing saved command selections migrate to the unified entry. The first release covers a curated set of everyday verbs, without attached object pronouns. Unlisted verbs show an explicit empty state in the Verb Book.
 - Command prompts use only valid addressees: French tu/nous/vous; Spanish tú/usted/nosotros/vosotros/ustedes; Italian tu/Lei/noi/voi. The Spanish vosotros preference applies to command questions and choices. Negative forms include the negation in the answer.
 - Ordinary Mixed practice excludes commands. Quiz rounds include commands only when Imperative is checked. Command mistakes still enter the shared review queue, persist across reloads, and appear in tense/mood statistics.
@@ -69,12 +70,15 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Practice state is managed through focused hooks and prompt/scoring/storage helpers instead of one monolithic component.
 - Verb data preserves proper French, Spanish, and Italian diacritics.
 - Localized pronoun labels for English, French, Spanish, and Italian.
+- The Spanish Verb Book lists usted and ustedes alongside their shared third-person conjugations. They appear as individual subjects in conjugation practice and in Spanish sentence quiz rounds, including when vosotros is hidden.
+- English it and Italian polite Lei appear in the Verb Book, conjugation practice, and sentence quizzes. The French Verb Book explains the singular polite use of vous, and sentence quizzes include examples addressing one person.
 - Interactive verb book with per-tense conjugation tables.
 - Review items can be opened directly in the Word Book with the matching tense selected.
 - Searchable compact verb list built for larger future vocabularies.
 - On phones and tablets (up to 980px), the Verb Book uses separate list and detail views. Selecting a verb opens its conjugation. Returning from a verb opened in the list restores the same scroll position and filters. Previous and next follow the current list order. Search and sorting share one row, verb entries use compact single rows, and the tense strip scrolls horizontally with the selected tense centered. Compact headings and conjugation rows keep the reference visible. Desktop retains both panels.
 - Card-style multiple-choice answer selection.
 - Multiple-choice answer cards now use randomized positions per prompt while keeping distractors relevant to the current verb family.
+- English conjugation practice reserves a choice for common mistakes on selected irregular past forms, such as `drawed` for `drew`, `runned` for `ran`, and `sung` for `sang`. It also uses these distractors to fill four distinct choices when other forms share a spelling.
 - Auto-advance on correct answers and confetti for a perfect set.
 - Completion stats persist in localStorage across browser sessions and are tracked separately for each language.
 - The practice side panel stays focused on current-session and all-time metrics, with its height aligned to the trainer card on desktop.
@@ -132,6 +136,17 @@ Local-only promotional projects are organized under `promo/` and excluded from G
 ## Web Analytics
 
 Vercel Web Analytics is integrated at the React entry point. Enable Analytics in the Vercel project dashboard and deploy to start collecting page views and visitor counts. Custom domains such as `conjugo.studioyyh.com` need no DNS changes; use the dashboard's Hostname filter to view their traffic separately. Earlier uncollected visits cannot be recovered. Only default page analytics are enabled; practice answers and local learning statistics are not sent as custom events.
+
+## Releases
+
+The Changelog sits immediately after Settings on desktop and mobile, with releases in a timeline. The Studio YYH footer reads the running build's version from `package.json`. Changelog entries start with `0.2.0` and live in `src/data/releases.json`.
+
+For each production push to `main`, choose one version bump for the complete release. Use `patch` for fixes and small polish, `minor` for features and substantial content additions, and `major` for breaking changes. The numbering follows [Semantic Versioning](https://semver.org/).
+
+1. Run `pnpm version patch --no-git-tag-version`, substituting `minor` or `major` as appropriate. Prepend a matching entry to `src/data/releases.json` with the planned release date and Chinese and English notes.
+2. Run `pnpm test`, `pnpm lint`, and `pnpm build`. The build checks the version, date, log order, and notes in both languages. `pnpm release:check` runs that validation on its own.
+3. Commit the release changes together and create an annotated `vX.Y.Z` tag on that commit. Push `main` and the version tag together, for example with `git push --atomic origin main refs/tags/vX.Y.Z`.
+4. After Vercel finishes, verify the production footer shows the same version and the Changelog opens to that release. Individual development commits can share a release.
 
 ## Scripts
 

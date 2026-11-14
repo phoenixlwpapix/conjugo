@@ -1,10 +1,9 @@
-import { isImperative } from '../data/imperative';
 import { useI18n } from '../hooks/useI18n';
 import { getStudyLanguageTag, type MessageKey } from '../lib/i18n';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowRight, Check } from 'lucide-react';
 import type { QuizQuestion } from '../data/quiz';
-import { getConjugationPronounLabel, getLanguagePracticeTenses, type Language, type PracticeTenseId } from '../data/verbs';
+import { getLanguagePracticeTenses, type Language, type PracticeTenseId } from '../data/verbs';
 import { getAccuracy, type RecordedAnswer } from '../lib/scoring';
 import { shouldIgnoreDrillKey } from '../lib/keyboard';
 import type { PracticeQuestionCount } from '../lib/prompts';
@@ -45,12 +44,7 @@ export function QuizPanel({ active, language, shortcutsEnabled, questionCount, o
   const isAnswered = selected !== null;
   const selectionLabel = selectedTenses.length === 1
     ? tenseName(language, selectedTenses[0])
-    : t('Selected {count} tenses or moods', { count: selectedTenses.length });
-  const subjectHint = question && isImperative(question.tense)
-    ? getConjugationPronounLabel(language, question.tense, question.pronoun)
-    : question?.pronoun === 'he/she'
-    ? { spanish: 'él', french: 'il', italian: 'lui', english: 'he' }[language.id]
-    : question ? language.pronounLabels[question.pronoun] : '';
+    : t('Selected {count} topics', { count: selectedTenses.length });
 
   const resetRound = (nextQuestions: QuizQuestion[]) => {
     setQuestions(nextQuestions);
@@ -132,7 +126,7 @@ export function QuizPanel({ active, language, shortcutsEnabled, questionCount, o
           <div className="trainer-panel" data-stage="setup">
             <div className="quiz-card-heading">
               <h1 className="workspace-title" ref={quizHeadingRef} tabIndex={-1}>{t('Quiz')}</h1>
-              <p>{t('Select one or more tenses or moods. Each round has up to {count} questions with explanations after you answer.', { count: questionCount })}</p>
+              <p>{t('Select one or more topics. Each round has up to {count} questions with explanations after you answer.', { count: questionCount })}</p>
             </div>
             <div className="quiz-selection-toolbar">
               <span aria-live="polite">{selectionLabel}</span>
@@ -140,7 +134,7 @@ export function QuizPanel({ active, language, shortcutsEnabled, questionCount, o
                 {t(allSelected ? 'Deselect all' : 'Select all')}
               </button>
             </div>
-            <div className="quiz-tense-grid" role="group" aria-label={t('Choose a quiz tense or mood')}>
+            <div className="quiz-tense-grid" role="group" aria-label={t('Choose quiz topics')}>
               {options.map((option) => (
                 <button
                   className="quiz-tense-option"
@@ -194,7 +188,7 @@ export function QuizPanel({ active, language, shortcutsEnabled, questionCount, o
                     ? <QuestionTense language={language} tense={question.tense} />
                     : <span className="mixed-mode-tag">{t('Mixed practice')}</span>}
                   <div className="prompt-meta-tags">
-                    <span lang={getStudyLanguageTag(language.id)}>{subjectHint} / {question.verb.infinitive}</span>
+                    <span lang={getStudyLanguageTag(language.id)}>{question.pronounLabel && `${question.pronounLabel} / `}{question.verb.infinitive}</span>
                     <span className="quiz-difficulty" data-level={question.difficulty}>
                       {t('Difficulty: {level}', { level: t(difficultyLabels[question.difficulty]) })}
                     </span>

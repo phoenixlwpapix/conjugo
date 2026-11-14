@@ -42,6 +42,65 @@ describe('prompts', () => {
   });
 
   describe('getChoices', () => {
+    it('fills every English practice question with four distinct choices', () => {
+      const pool = createPromptPool(english, 'mixed');
+      for (const prompt of pool) {
+        const choices = getChoices(prompt, 17);
+        expect(new Set(choices).size).toBe(4);
+        expect(choices).toContain(getAnswer(prompt));
+      }
+    });
+
+    it('uses readed as the fourth choice and avoids treating costed as a misspelling', () => {
+      const pool = createPromptPool(english, 'past', new Set(['to read', 'to cost']));
+      const read = pool.find(({ pronoun, verb }) => pronoun === 'you' && verb.infinitive === 'to read')!;
+      const cost = pool.find(({ pronoun, verb }) => pronoun === 'you' && verb.infinitive === 'to cost')!;
+      expect(getAnswer(read)).toBe('read');
+      expect(getChoices(read, 17).sort()).toEqual(['read', 'readed', 'reads', 'will read']);
+      expect(getChoices(cost, 17).sort()).toEqual(['cost', 'costs', 'will cost', 'would cost']);
+    });
+
+    it.each([
+      ['to put', 'put', 'putted'], ['to cut', 'cut', 'cutted'], ['to let', 'let', 'letted'],
+      ['to hit', 'hit', 'hitted'], ['to shut', 'shut', 'shutted'], ['to begin', 'began', 'beginned'],
+      ['to run', 'ran', 'runned'], ['to forget', 'forgot', 'forgetted'], ['to swim', 'swam', 'swimmed'],
+      ['to hurt', 'hurt', 'hurted'], ['to write', 'wrote', 'writed'], ['to buy', 'bought', 'buyed'],
+    ])('offers the regularized spelling for %s as a past-tense distractor', (infinitive, answer, misspelling) => {
+      const [prompt] = createPromptPool(english, 'past', new Set([infinitive]));
+      const choices = getChoices(prompt, 17);
+      expect(getAnswer(prompt)).toBe(answer);
+      expect(choices).toHaveLength(4);
+      expect(choices).toEqual(expect.arrayContaining([answer, misspelling]));
+    });
+
+    it('prioritizes drawed in the plural you past question even when there are enough other choices', () => {
+      const prompt = createPromptPool(english, 'past', new Set(['to draw']))
+        .find(({ pronoun }) => pronoun === 'you plural')!;
+      expect(getAnswer(prompt)).toBe('drew');
+      expect(getChoices(prompt, 17, 2).sort()).toEqual(['drawed', 'drew']);
+      for (const seed of [0, 17, 42]) {
+        const choices = getChoices(prompt, seed);
+        expect(choices).toHaveLength(4);
+        expect(choices).toEqual(expect.arrayContaining(['drew', 'drawed']));
+      }
+    });
+
+    it.each([
+      ['to drink', 'drank', 'drunk'], ['to fly', 'flew', 'flown'],
+      ['to ring', 'rang', 'rung'], ['to sing', 'sang', 'sung'],
+    ])('includes the easily confused participle for %s in past practice', (infinitive, answer, participle) => {
+      const [prompt] = createPromptPool(english, 'past', new Set([infinitive]));
+      expect(getAnswer(prompt)).toBe(answer);
+      expect(getChoices(prompt, 17)).toContain(participle);
+    });
+
+    it('uses regularized spellings outside the past only when needed to fill the choices', () => {
+      const [run] = createPromptPool(english, 'present', new Set(['to run']));
+      const [cut] = createPromptPool(english, 'present', new Set(['to cut']));
+      expect(getChoices(run, 17)).not.toContain('runned');
+      expect(getChoices(cut, 17)).toContain('cutted');
+    });
+
     it('should generate exactly 4 unique choices including the correct answer', () => {
       const verb = spanish.verbs[0];
       const prompt = {
@@ -79,6 +138,18 @@ describe('prompts', () => {
   });
 
   describe('createSessionPrompts', () => {
+    it.each([
+      ['english', 'to be', 'it', 'is'],
+      ['italian', 'parlare', 'Lei', 'parla'],
+    ] as const)('uses %s third-person forms for %s', (id, infinitive, label, answer) => {
+      const language = languages.find((entry) => entry.id === id)!;
+      vi.spyOn(Math, 'random').mockReturnValue(0.99);
+      const pool = createPromptPool(language, 'present', new Set([infinitive]));
+      const prompt = pool.find((entry) => getPronounLabel(entry) === label)!;
+      expect(getAnswer(prompt)).toBe(answer);
+      expect(createSessionPrompts(language, 'present').map(getPronounLabel)).toContain(label);
+    });
+
     it('should generate a list of 20 prompts', () => {
       const session = createSessionPrompts(spanish, 'present');
       expect(session).toHaveLength(20);
@@ -240,6 +311,19 @@ describe('prompts', () => {
   });
   describe('vosotros preference', () => {
     const withoutVosotros = { ...spanish, excludedPronouns: ['you plural' as const] };
+
+    it('asks for usted and ustedes using the third-person forms when vosotros is hidden', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99);
+      const pool = createPromptPool(withoutVosotros, 'present', new Set(['hablar']));
+      const singular = pool.find((prompt) => getPronounLabel(prompt) === 'usted')!;
+      const plural = pool.find((prompt) => getPronounLabel(prompt) === 'ustedes')!;
+      expect(getAnswer(singular)).toBe('habla');
+      expect(getAnswer(plural)).toBe('hablan');
+      const subjunctive = createPromptPool(withoutVosotros, 'subjunctive', new Set(['hablar']));
+      expect(subjunctive.map(getPronounLabel)).toEqual(expect.arrayContaining(['que usted', 'que ustedes']));
+      const set = createSessionPrompts(withoutVosotros, 'present', [], { limit: 10 });
+      expect(set.map(getPronounLabel)).toEqual(expect.arrayContaining(['usted', 'ustedes']));
+    });
 
     it('never prompts or offers vosotros forms when hidden', () => {
       const pool = createPromptPool(withoutVosotros, 'mixed');

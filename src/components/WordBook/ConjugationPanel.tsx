@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { getStudyLanguageTag } from '../../lib/i18n';
 import { useI18n } from '../../hooks/useI18n';
 import { getVerbTranslation, type TranslationLanguage } from '../../data/translations';
+import { isNonFiniteForm, nonFiniteForms } from '../../data/nonFinite/types';
 import {
   getConjugationPronouns,
   getConjugationPronounLabel,
@@ -33,6 +34,19 @@ export function ConjugationTable({
   highlightPronoun,
 }: ConjugationTableProps) {
   const { t, locale, tenseName } = useI18n();
+  if (isNonFiniteForm(bookTense) && selectedVerb.nonFinite) {
+    const entries = selectedVerb.nonFinite;
+    return (
+      <dl className="conjugation-table">
+        {nonFiniteForms.map((form) => entries[form] && (
+          <div className="conjugation-row" key={form} data-highlighted={form === bookTense && highlightPronoun !== undefined || undefined}>
+            <dt lang={locale}><span>{tenseName(activeLanguage, form)}</span></dt>
+            <dd lang={getStudyLanguageTag(activeLanguage.id)}><strong>{[entries[form], ...(entries.accepted?.[form] ?? [])].join(' / ')}</strong></dd>
+          </div>
+        ))}
+      </dl>
+    );
+  }
   const showCommands = isImperative(bookTense);
   const showVariants = bookTense === 'imperfectSubjunctive' && Boolean(selectedVerb.imperfectSubjunctiveSe);
   const pronouns = getConjugationPronouns(activeLanguage, bookTense, selectedVerb);
@@ -67,6 +81,9 @@ export function ConjugationTable({
           ))}
         </div>
       )}
+      {activeLanguage.id === 'french' && pronouns.includes('you plural') && (
+        <p className="conjugation-note" lang={locale}>{t('Vous can address one person politely or more than one person.')}</p>
+      )}
     </>
   );
 }
@@ -88,33 +105,31 @@ export function ConjugationPanel({
   translationLanguage,
   favoriteAction,
 }: ConjugationPanelProps) {
-  const { t, languageName, tenseName } = useI18n();
+  const { t, tenseName } = useI18n();
   const translation = getVerbTranslation(activeLanguage, selectedVerb, translationLanguage);
   const showCommands = isImperative(bookTense);
+  const bookTab = showCommands ? 'imperative' : isNonFiniteForm(bookTense) ? 'pastParticiple' : bookTense;
 
   return (
     <section className="conjugation-panel" aria-label={t('{verb} conjugation table', { verb: selectedVerb.infinitive })}>
       <div className="conjugation-head">
         <div className="conjugation-summary">
           <div className="conjugation-title">
-            <span className="eyebrow">{languageName(activeLanguage.id)}</span>
             <h2 lang={getStudyLanguageTag(activeLanguage.id)}>{selectedVerb.infinitive}</h2>
-            {translation && <p>{translation}</p>}
+            {translation && <p lang={translationLanguage}>{translation}</p>}
           </div>
           {favoriteAction}
         </div>
 
         <SegmentedControl
-          ariaLabel={t('Choose tense or mood')}
+          ariaLabel={t('Choose tense, mood, or verb form')}
           className="book-tense-tabs"
           onChange={onTenseChange}
-          options={getLanguageTenses(activeLanguage.id).filter(({ id }) => id !== 'imperativeNegative').map((item) => ({
-            id: item.id,
-            label: tenseName(activeLanguage, item.id === 'imperative' ? 'commands' : item.id),
-            nativeLabel: activeLanguage.tenseLabels[item.id === 'imperative' ? 'commands' : item.id],
-            lang: getStudyLanguageTag(activeLanguage.id),
-          }))}
-          value={showCommands ? 'imperative' : bookTense}
+          options={getLanguageTenses(activeLanguage.id).filter(({ id }) => id !== 'imperativeNegative' && (!isNonFiniteForm(id) || id === 'pastParticiple')).map(({ id }) => {
+            const labelId = id === 'imperative' ? 'commands' : id === 'pastParticiple' ? 'nonFinite' : id;
+            return { id, label: tenseName(activeLanguage, labelId), nativeLabel: activeLanguage.tenseLabels[labelId], lang: getStudyLanguageTag(activeLanguage.id) };
+          })}
+          value={bookTab}
         />
       </div>
 

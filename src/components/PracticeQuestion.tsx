@@ -66,6 +66,9 @@ const tenseColors: Partial<Record<Prompt['tense'], string>> = {
   conditional: 'var(--gold)',
   subjunctive: 'var(--teal)',
   imperfectSubjunctive: 'var(--teal)',
+  pastParticiple: 'var(--past-participle-label)',
+  presentParticiple: 'var(--present-participle-label)',
+  gerund: 'var(--gerund-label)',
 };
 
 export function QuestionTense({ language, tense }: Pick<Prompt, 'language' | 'tense'>) {

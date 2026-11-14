@@ -1,4 +1,4 @@
-import { BarChart3, BookOpenText, ClipboardList, Settings, Target } from 'lucide-react';
+import { BarChart3, BookOpenText, ClipboardList, ScrollText, Settings, Target } from 'lucide-react';
 import { useI18n } from '../hooks/useI18n';
 import type { MessageKey } from '../lib/i18n';
 import type { AppView } from '../types';
@@ -6,6 +6,7 @@ import type { AppView } from '../types';
 type WorkspaceNavigationProps = {
   activeView: AppView;
   onViewChange: (view: AppView) => void;
+  onOpenReleaseNotes?: () => void;
   placement: 'header' | 'bottom';
 };
 
@@ -23,7 +24,7 @@ const bottomWorkspaces: Workspace[] = [
   { view: 'settings', label: 'Settings', Icon: Settings },
 ];
 
-export function WorkspaceNavigation({ activeView, onViewChange, placement }: WorkspaceNavigationProps) {
+export function WorkspaceNavigation({ activeView, onViewChange, onOpenReleaseNotes, placement }: WorkspaceNavigationProps) {
   const { t } = useI18n();
   const isBottom = placement === 'bottom';
 
@@ -51,6 +52,12 @@ export function WorkspaceNavigation({ activeView, onViewChange, placement }: Wor
           <span>{t(label)}</span>
         </button>
       ))}
+      {isBottom && onOpenReleaseNotes && (
+        <button className="view-button" type="button" aria-haspopup="dialog" onClick={onOpenReleaseNotes}>
+          <ScrollText size={22} aria-hidden="true" />
+          <span>{t('Changelog')}</span>
+        </button>
+      )}
     </nav>
   );
 }

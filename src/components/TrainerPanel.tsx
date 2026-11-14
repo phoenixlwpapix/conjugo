@@ -240,10 +240,12 @@ export function TrainerPanel({
 
           <div className="prompt-display-row">
             <div className="prompt-display" data-density={promptDensity}>
-              <span className="prompt-subject" lang={studyLanguageTag}>
-                <span className="prompt-pronoun">{pronounLabel}</span>
-                <span className="prompt-divider" aria-hidden="true">/</span>
-              </span>
+              {pronounLabel && (
+                <span className="prompt-subject" lang={studyLanguageTag}>
+                  <span className="prompt-pronoun">{pronounLabel}</span>
+                  <span className="prompt-divider" aria-hidden="true">/</span>
+                </span>
+              )}
               <div className="prompt-verb-block">
                 <strong className="prompt-infinitive" lang={studyLanguageTag}>{prompt.verb.infinitive}</strong>
                 {translation && <em className="prompt-translation" lang={translationLanguage}>{translation}</em>}

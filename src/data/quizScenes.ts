@@ -1,5 +1,6 @@
 import type { Locale } from '../lib/i18n';
 import type { LanguageId, Pronoun, TenseId } from './verbs';
+import type { NonFiniteForm } from './nonFinite/types';
 
 export const quizVerbs = {
   come: { english: 'to come', french: 'venir', spanish: 'venir', italian: 'venire' },
@@ -53,6 +54,16 @@ export const quizVerbs = {
   lose: { english: 'to lose', french: 'perdre', spanish: 'perder', italian: 'perdere' },
 } as const;
 
+const featuredSubjects = {
+  it: { language: 'english', pronoun: 'he/she', label: 'it' },
+  Lei: { language: 'italian', pronoun: 'he/she', label: 'Lei' },
+  'polite vous': { language: 'french', pronoun: 'you plural', label: 'vous' },
+  usted: { language: 'spanish', pronoun: 'he/she', label: 'usted' },
+  ustedes: { language: 'spanish', pronoun: 'they', label: 'ustedes' },
+} as const satisfies Record<string, { language: LanguageId; pronoun: Pronoun; label: string }>;
+
+export type FeaturedSubject = keyof typeof featuredSubjects;
+
 type QuizScene = {
   verb: keyof typeof quizVerbs;
   pronoun: Pronoun;
@@ -61,6 +72,9 @@ type QuizScene = {
   zh: string;
   reason: Record<Locale, string>;
   englishAnswer?: string;
+  pronounLabel?: string;
+  studyLanguage?: LanguageId;
+  featuredSubject?: FeaturedSubject;
 };
 
 // Complete authored situations: context, subject and object stay together.
@@ -74,27 +88,43 @@ function scene(
   return { verb, pronoun, difficulty, sentence: { spanish, french, italian, english }, zh, reason: { zh: reasons[0], en: reasons[1] }, englishAnswer };
 }
 
-// This tense is supported only in Spanish; English supplies the translation.
+// English supplies the translation for Spanish-only scenes.
 function spanishScene(
-  verb: QuizScene['verb'], pronoun: Pronoun, difficulty: QuizScene['difficulty'],
+  verb: QuizScene['verb'], subject: Pronoun | 'usted' | 'ustedes', difficulty: QuizScene['difficulty'],
   sentences: [spanish: string, english: string, chinese: string],
   reasons: [chinese: string, english: string], englishAnswer: string,
 ): QuizScene {
   const [spanish, english, zh] = sentences;
-  return { verb, pronoun, difficulty, sentence: { spanish, english }, zh, reason: { zh: reasons[0], en: reasons[1] }, englishAnswer };
+  if (subject === 'usted' || subject === 'ustedes') return featuredScene(verb, subject, difficulty, sentences, reasons, englishAnswer);
+  return { verb, pronoun: subject, difficulty, sentence: { spanish, english }, zh, reason: { zh: reasons[0], en: reasons[1] }, englishAnswer };
 }
 
 function frenchScene(
   verb: QuizScene['verb'], pronoun: Pronoun, difficulty: QuizScene['difficulty'],
   sentences: [french: string, english: string, chinese: string],
-  reasons: [chinese: string, english: string],
+  reasons: [chinese: string, english: string], pronounLabel?: string,
 ): QuizScene {
   const [french, english, zh] = sentences;
-  return { verb, pronoun, difficulty, sentence: { french, english }, zh, reason: { zh: reasons[0], en: reasons[1] } };
+  return { verb, pronoun, pronounLabel, difficulty, sentence: { french, english }, zh, reason: { zh: reasons[0], en: reasons[1] } };
 }
 
-export const quizScenes: Record<TenseId, QuizScene[]> = {
+function featuredScene(
+  verb: QuizScene['verb'], featuredSubject: FeaturedSubject, difficulty: QuizScene['difficulty'],
+  [sentence, english, zh]: [study: string, english: string, chinese: string],
+  [zhReason, enReason]: [chinese: string, english: string], englishAnswer?: string,
+): QuizScene {
+  const { language, pronoun, label } = featuredSubjects[featuredSubject];
+  return { verb, featuredSubject, studyLanguage: language, pronoun, pronounLabel: label, difficulty,
+    sentence: { english, [language]: sentence }, zh, reason: { zh: zhReason, en: enReason }, englishAnswer };
+}
+
+export const quizScenes: Record<Exclude<TenseId, NonFiniteForm>, QuizScene[]> = {
   present: [
+    featuredScene("be", "it", 'beginner', ["It ____ usually cold here in January.", "It ____ usually cold here in January.", "这里一月份通常很冷。"], ["usually 和 in January 描述一般气候。", "Usually signals a recurring weather pattern."]),
+    featuredScene("work", "Lei", 'beginner', ["Dottoressa, Lei ____ qui ogni martedì?", "Doctor, do you ____ here every Tuesday?", "医生，您每周二都在这里工作吗？"], ["用敬称向一位医生询问每周的工作安排。", "The speaker asks one doctor politely about her weekly schedule."], "work"),
+    featuredScene("live", "polite vous", 'beginner', ["Madame, vous ____ près de la gare ?", "Ma’am, do you ____ near the station?", "女士，您住在火车站附近吗？"], ["用 vous 礼貌地询问一位女士的住处。", "Vous addresses one person politely in a question about where she lives."], "live"),
+    spanishScene('work', 'usted', 'beginner', ['¿Usted ____ aquí todos los días?', 'Do you ____ here every day?', '您每天都在这里工作吗？'], ['todos los días 表示日常习惯。', 'Every day signals a regular habit.'], 'work'),
+    spanishScene('live', 'ustedes', 'beginner', ['¿Ustedes ____ cerca de la estación?', 'Do you all ____ near the station?', '你们住在车站附近吗？'], ['问的是现在的住处。', 'The question asks about where the group lives now.'], 'live'),
     scene('go', 'we', 'beginner', ['Nosotros ____ al gimnasio los martes y los jueves.', 'Nous ____ à la salle de sport le mardi et le jeudi.', 'Noi ____ in palestra il martedì e il giovedì.', 'We ____ to the gym on Tuesdays and Thursdays.', '我们每周二和周四去健身房。'], ['周二和周四是固定的每周安排。', 'Tuesdays and Thursdays identify a weekly routine.']),
     scene('eat', 'he/she', 'beginner', ['Alex ____ fruta en el desayuno todos los días.', 'Alex ____ des fruits au petit-déjeuner tous les jours.', 'Alex ____ frutta a colazione ogni giorno.', 'Alex ____ fruit for breakfast every day.', '亚历克斯每天早餐都吃水果。'], ['每天早餐吃水果，是当前饮食习惯。', 'Fruit at breakfast every day is a current eating habit.']),
     scene('work', 'you', 'intermediate', ['Tú ____ los fines de semana, así que descansas los lunes.', 'Tu ____ le week-end, alors tu te reposes le lundi.', 'Tu ____ nei fine settimana, quindi riposi il lunedì.', 'You ____ on weekends, so you rest on Mondays.', '你周末上班，所以周一休息。'], ['周末工作、周一休息，介绍规律的作息。', 'Weekend work and Monday rest describe a regular schedule.']),
@@ -147,6 +177,11 @@ export const quizScenes: Record<TenseId, QuizScene[]> = {
     scene("lose", "you", "advanced", ["Cuando no apuntas las citas en la agenda, tú siempre ____ la noción del tiempo.", "Quand tu ne notes pas tes rendez-vous dans l’agenda, tu ____ toujours la notion du temps.", "Quando non segni gli appuntamenti in agenda, tu ____ sempre la cognizione del tempo.", "When you do not write appointments in your planner, you always ____ track of time.", "不把日程记在记事本上时，你总是会忘记时间安排。"], ["“总是”表达一般性规律或经常发生的情况。", "Always expresses a general tendency that holds in the present."]),
   ],
   past: [
+    featuredScene("come", "it", 'beginner', ["It ____ in the mail yesterday, in a blue envelope.", "It ____ in the mail yesterday, in a blue envelope.", "它昨天随邮件寄到了，装在一个蓝色信封里。"], ["yesterday 表明邮件已经送达。", "Yesterday places the delivery in the completed past."]),
+    featuredScene("pay", "Lei", 'beginner', ["Signore, Lei ____ il conto ieri?", "Sir, did you ____ the bill yesterday?", "先生，您昨天付账了吗？"], ["ieri 给出了付款发生的日期。", "Yesterday places the payment at a specific time in the past."], "pay"),
+    featuredScene("send", "polite vous", 'beginner', ["Monsieur, vous ____ le formulaire hier à midi.", "Sir, you ____ the form at noon yesterday.", "先生，您昨天中午发了表格。"], ["昨天中午发出表格，是过去已经完成的动作。", "Sending the form at noon yesterday is a completed action."], "sent"),
+    spanishScene('pay', 'usted', 'beginner', ['¿Usted ____ la factura ayer?', 'Did you ____ the bill yesterday?', '您昨天付账了吗？'], ['ayer 给出了付款发生的时间。', 'Yesterday places the payment at a specific time in the past.'], 'pay'),
+    spanishScene('arrive', 'ustedes', 'beginner', ['Ustedes ____ al hotel anoche a las nueve.', 'You all ____ at the hotel at nine last night.', '你们昨晚九点到达酒店。'], ['昨晚九点到达，是过去发生的一次事件。', 'The arrival at nine last night was a completed event.'], 'arrived'),
     scene('go', 'they', 'beginner', ['El domingo pasado, ellos ____ al museo y compraron una guía.', 'Dimanche dernier, ils ____ au musée et ont acheté un guide.', 'Domenica scorsa, loro ____ al museo e hanno comprato una guida.', 'Last Sunday, they ____ to the museum and bought a guidebook.', '上周日，他们去了博物馆，还买了一本导览手册。'], ['去博物馆和买导览手册，是上周日完成的事件。', 'The museum visit and guidebook purchase were completed last Sunday.']),
     scene('eat', 'you', 'beginner', ['Tú ____ un bocadillo ayer antes de subir al tren.', 'Tu ____ un sandwich hier avant de monter dans le train.', 'Tu ____ un panino ieri prima di salire sul treno.', 'You ____ a sandwich yesterday before boarding the train.', '昨天，你上火车前吃了一个三明治。'], ['昨天上车前吃三明治，是一次具体的过去动作。', 'Eating a sandwich before boarding yesterday is a specific past action.']),
     scene('work', 'we', 'intermediate', ['Ayer, nosotros ____ dos horas en el jardín y luego guardamos las herramientas.', 'Hier, nous ____ deux heures dans le jardin, puis nous avons rangé les outils.', 'Ieri, noi ____ due ore in giardino e poi abbiamo messo via gli attrezzi.', 'Yesterday, we ____ in the garden for two hours and then put the tools away.', '昨天，我们在花园里干了两小时活，然后收好了工具。'], ['两小时的劳动以收工具结束，是完整事件。', 'Putting the tools away marks the end of the two-hour work period.']),
@@ -199,6 +234,7 @@ export const quizScenes: Record<TenseId, QuizScene[]> = {
     scene("hold", "they", "advanced", ["Durante toda la ceremonia de ayer, ellos ____ el cartel de bienvenida en la entrada.", "Pendant toute la cérémonie d’hier, ils ____ la banderole de bienvenue à l’entrée.", "Durante tutta la cerimonia di ieri, loro ____ lo striscione di benvenuto all’ingresso.", "Throughout yesterday’s ceremony, they ____ the welcome banner at the entrance.", "昨天整场仪式期间，他们都在入口处举着欢迎横幅。"], ["昨天仪式有明确起止范围，举横幅作为一段完整事件回顾。", "Holding the banner throughout yesterday’s ceremony is a bounded past event."]),
   ],
   passeSimple: [
+    featuredScene("write", "polite vous", 'advanced', ["Mon cher père, vous ____ cette lettre en 1812, au moment de quitter Paris.", "My dear father, you ____ this letter in 1812, as you were leaving Paris.", "亲爱的父亲，您于 1812 年离开巴黎时写下了这封信。"], ["历史叙述中，写信是时间明确的完整事件。", "This historical account presents the writing as a completed event in 1812."], "wrote"),
     frenchScene('open', 'he/she', 'beginner', ['La cloche sonna. La gardienne ____ la grande porte.', 'The bell rang. The keeper ____ the main door.', '钟声响起，女看守打开了大门。'], ['开门接续钟响，构成叙事中的下一个动作。', 'Opening the door is the next event after the bell rings.']),
     frenchScene('go', 'he/she', 'beginner', ['Le prince quitta le château et ____ jusqu’à la rivière.', 'The prince left the castle and ____ as far as the river.', '王子离开城堡，一直走到河边。'], ['离开城堡与走到河边是两个连续的动作。', 'Leaving the castle and going to the river are successive events.']),
     frenchScene('come', 'they', 'beginner', ['Le feu s’éteignit. Les villageois ____ avec des lanternes.', 'The fire went out. The villagers ____ with lanterns.', '火熄灭了，村民们提着灯笼赶了过来。'], ['村民赶来是火熄灭后发生的事。', 'The villagers arrive after the fire goes out.']),
@@ -229,7 +265,7 @@ export const quizScenes: Record<TenseId, QuizScene[]> = {
     frenchScene('listen', 'you plural', 'advanced', ['Vous ____ le témoin jusqu’au bout, sans l’interrompre, puis vous lui posâtes une seule question.', 'You ____ to the witness without interrupting, then asked a single question.', '你们听证人讲完，没有打断，随后只问了一个问题。'], ['听到最后给聆听划出了终点，之后才提问。', 'Listening has an endpoint before the single question is asked.']),
     frenchScene('use', 'they', 'advanced', ['Faute de pont, les éclaireurs ____ une corde pour franchir le torrent.', 'With no bridge, the scouts ____ a rope to cross the rushing stream.', '没有桥，侦察员们便用绳索渡过了湍急的溪流。'], ['使用绳索是这次渡溪采取的具体行动。', 'Using the rope is a specific action taken during the crossing.']),
     frenchScene('walk', 'we', 'advanced', ['Nous ____ trois jours dans la neige avant d’atteindre le col.', 'We ____ for three days through the snow before reaching the pass.', '我们在雪中走了三天，才抵达山口。'], ['步行持续三天，抵达山口为这段行程划出终点。', 'The three-day walk is treated as a whole, ending at the pass.']),
-    frenchScene('learn', 'he/she', 'advanced', ['Elle ____ les cartes toute la nuit et choisit un autre itinéraire à l’aube.', 'She ____ the maps all night and chose a different route at dawn.', '她研究了一整夜的地图，天亮时选了另一条路线。'], ['研究地图虽持续一夜，但在清晨作出决定前已完成。', 'Studying lasts all night and is complete before the decision at dawn.']),
+    frenchScene('learn', 'he/she', 'advanced', ['Elle ____ les cartes toute la nuit et choisit un autre itinéraire à l’aube.', 'She ____ the maps all night and chose a different route at dawn.', '她研究了一整夜的地图，天亮时选了另一条路线。'], ['研究地图虽持续一夜，但在清晨作出决定前已完成。', 'Studying lasts all night and is complete before the decision at dawn.'], 'elle'),
     frenchScene('live', 'they', 'advanced', ['Ils ____ dix ans sur l’île, puis le volcan les força à partir.', 'They ____ on the island for ten years, then the volcano forced them to leave.', '他们在岛上住了十年，后来火山迫使他们离开。'], ['十年的生活被整体回顾，离岛明确结束了这段经历。', 'The ten years are viewed as a whole, with departure marking the end.']),
     frenchScene('work', 'you', 'advanced', ['Tu ____ à la restauration des fresques jusqu’à la fermeture de l’atelier.', 'You ____ on restoring the frescoes until the workshop closed.', '你一直参与壁画修复，直到工坊关门。'], ['工坊关门给这段修复工作划出了终点。', 'The workshop’s closure bounds the period of work.']),
     frenchScene('buy', 'he/she', 'advanced', ['Au marché de la ville, la duchesse ____ un cheval et reprit sa route.', 'At the city market, the duchess ____ a horse and continued on her way.', '公爵夫人在城里的集市买了一匹马，继续赶路。'], ['买马是在重新上路之前完成的动作。', 'The purchase is completed before the duchess resumes her journey.']),
@@ -251,6 +287,10 @@ export const quizScenes: Record<TenseId, QuizScene[]> = {
     frenchScene('lose', 'I', 'advanced', ['Dans l’obscurité du tunnel, je ____ de vue la silhouette du guide.', 'In the darkness of the tunnel, I ____ sight of the guide’s silhouette.', '在黑暗的隧道里，我跟丢了向导的身影。'], ['在隧道里突然失去视野，是叙事中发生的转折事件。', 'Losing sight of the guide is a sudden turning point in the narrative.']),
   ],
   imperfect: [
+    featuredScene("walk", "Lei", 'intermediate', ["Signora, un tempo Lei ____ fino alla stazione ogni mattina.", "Ma’am, you used to ____ to the station every morning.", "女士，您以前每天早晨都步行去车站。"], ["un tempo 和 ogni mattina 描述过去的习惯。", "The sentence describes a habit repeated every morning in the past."], "walk"),
+    featuredScene("read", "polite vous", 'intermediate', ["Monsieur, à l’époque, vous ____ le journal chaque matin dans le train.", "Sir, back then you used to ____ the newspaper on the train every morning.", "先生，那时候您每天早上都在火车上看报。"], ["à l’époque 和 chaque matin 描述过去反复发生的事。", "Back then and every morning signal a repeated past action."], "read"),
+    spanishScene('walk', 'usted', 'intermediate', ['Antes, usted ____ al trabajo todos los días.', 'You used to ____ to work every day.', '您以前每天都走路上班。'], ['antes 和 todos los días 合起来描述过去的习惯。', 'Before and every day together describe a past habit.'], 'walk'),
+    spanishScene('eat', 'ustedes', 'intermediate', ['En aquella época, ustedes ____ aquí todos los viernes.', 'Back then, you all used to ____ here every Friday.', '那时候，你们每周五都在这里吃饭。'], ['每周五吃饭，是那段时期反复发生的事。', 'Eating here every Friday was a recurring action in that period.'], 'eat'),
     scene('go', 'we', 'beginner', ['Cuando vivíamos junto al mar, nosotros ____ a la playa cada tarde.', 'Quand nous habitions au bord de la mer, nous ____ à la plage chaque après-midi.', 'Quando abitavamo al mare, noi ____ in spiaggia ogni pomeriggio.', 'When we lived by the sea, we ____ to the beach every afternoon.', '住在海边时，我们每天下午都去海滩。'], ['每天下午去海滩，是过去的重复行为。', 'Daily beach visits were a repeated past habit.'], 'used to go'),
     scene('eat', 'he/she', 'intermediate', ['Alex ____ en la terraza cuando empezó a llover.', 'Alex ____ sur la terrasse quand il a commencé à pleuvoir.', 'Alex ____ sulla terrazza quando ha iniziato a piovere.', 'Alex ____ on the terrace when it started raining.', '开始下雨时，亚历克斯正在露台上吃饭。'], ['下雨开始时，吃饭已经在进行。', 'The meal was in progress when the rain started.'], 'was eating'),
     scene('work', 'you', 'beginner', ['En aquella época, tú ____ en una librería los sábados.', 'À cette époque, tu ____ dans une librairie le samedi.', 'A quell’epoca, tu ____ in una libreria il sabato.', 'Back then, you ____ at a bookstore on Saturdays.', '那时，你每周六在书店工作。'], ['每周六在书店工作，是过去的固定安排。', 'Saturday work at the bookstore was a regular past schedule.'], 'used to work'),
@@ -303,6 +343,11 @@ export const quizScenes: Record<TenseId, QuizScene[]> = {
     scene("lose", "you plural", "advanced", ["En los partidos de aquella temporada, vosotros casi nunca ____ la concentración.", "Dans les matchs de cette saison-là, vous ne ____ presque jamais votre concentration.", "Nelle partite di quella stagione, voi non ____ quasi mai la concentrazione.", "In the matches that season, you all hardly ever ____ your focus.", "在那个赛季的比赛里，你们几乎从未失去专注。"], ["整个赛季一贯保持的状态与习惯性表现。", "Hardly ever losing focus describes a consistent past pattern across the season."], "lost"),
   ],
   future: [
+    featuredScene("be", "it", 'beginner', ["It ____ dark by the time we get home tonight.", "It ____ dark by the time we get home tonight.", "今晚我们到家时，天已经黑了。"], ["今晚到家时天黑，是对将来情况的判断。", "The sentence predicts what conditions will be like tonight."]),
+    featuredScene("see", "Lei", 'beginner', ["Signore, Lei ____ i risultati domani, dopo la riunione.", "Sir, you will ____ the results tomorrow, after the meeting.", "先生，您明天会后就会看到结果。"], ["domani 给出将来的时间。", "Tomorrow sets the action in the future."], "see"),
+    featuredScene("see", "polite vous", 'beginner', ["Madame, vous ____ les résultats demain après la réunion.", "Ma’am, you will ____ the results tomorrow after the meeting.", "女士，您明天会后就会看到结果。"], ["demain 给出将来的时间。", "Tomorrow sets the action in the future."], "see"),
+    spanishScene('see', 'usted', 'beginner', ['Usted ____ los resultados mañana, cuando publiquemos el informe.', 'You will ____ the results tomorrow, when we publish the report.', '明天我们发布报告后，您就会看到结果。'], ['报告明天发布，看到结果也发生在明天。', 'The results will be seen tomorrow, when the report is published.'], 'see'),
+    spanishScene('read', 'ustedes', 'beginner', ['Ustedes ____ el informe cuando esté listo.', 'You will all ____ the report when it is ready.', '报告准备好后，你们都会读到它。'], ['cuando esté listo 给出将来阅读报告的时间。', 'When the report is ready sets the time for the future reading.'], 'read'),
     scene('go', 'we', 'beginner', ['El próximo domingo, nosotros ____ al zoo con los niños.', 'Dimanche prochain, nous ____ au zoo avec les enfants.', 'Domenica prossima, noi ____ allo zoo con i bambini.', 'Next Sunday, we ____ to the zoo with the children.', '下周日，我们会带孩子去动物园。'], ['去动物园安排在下周日，尚未发生。', 'The zoo visit is scheduled for next Sunday.']),
     scene('eat', 'he/she', 'intermediate', ['Alex saldrá del trabajo a las seis; después ____ con su hermana.', 'Alex sortira du travail à six heures ; ensuite, il ____ avec sa sœur.', 'Alex uscirà dal lavoro alle sei; dopo ____ con sua sorella.', 'Alex will leave work at six; afterward, he ____ with his sister.', '亚历克斯六点下班，之后会和姐姐一起吃饭。'], ['用餐在未来的下班之后。', 'The meal follows his future departure from work.']),
     scene('work', 'you', 'beginner', ['Mañana, tú ____ en la recepción de nueve a cinco.', 'Demain, tu ____ à la réception de neuf heures à dix-sept heures.', 'Domani, tu ____ alla reception dalle nove alle cinque.', 'Tomorrow, you ____ at reception from nine to five.', '明天，你会从九点到五点在前台工作。'], ['前台工作的时间是明天。', 'The reception shift takes place tomorrow.']),
@@ -355,6 +400,10 @@ export const quizScenes: Record<TenseId, QuizScene[]> = {
     scene("lose", "we", "advanced", ["Si no confirmamos la reserva hoy mismo, nosotros ____ el descuento de grupo.", "Si nous ne confirmons pas la réservation aujourd’hui, nous ____ la réduction de groupe.", "Se non confermiamo la prenotazione oggi stesso, noi ____ lo sconto di gruppo.", "If we do not confirm the booking today, we ____ the group discount.", "如果今天不确认预订，我们就会失去团体折扣。"], ["现实条件句中，主句表示若条件不满足在未来会出现的后果。", "In a real conditional, the main clause expresses a likely future consequence."]),
   ],
   conditional: [
+    featuredScene("buy", "Lei", 'intermediate', ["Signore, se costasse meno, Lei ____ il biglietto?", "Sir, if it cost less, would you ____ the ticket?", "先生，如果票价更低，您会买这张票吗？"], ["买票是票价更低这一假设下的结果。", "Buying the ticket is the possible result of a hypothetical lower price."], "buy"),
+    featuredScene("buy", "polite vous", 'intermediate', ["Madame, si le billet coûtait moins cher, vous l’____ ?", "Ma’am, if the ticket cost less, would you ____ it?", "女士，如果票价更低，您会买吗？"], ["用条件式询问价格更低时会不会买票。", "The conditional asks whether she would buy the ticket at a lower price."], "buy"),
+    spanishScene('buy', 'usted', 'intermediate', ['Si el billete fuera más barato, ¿usted lo ____?', 'If the ticket were cheaper, would you ____ it?', '如果票便宜一点，您会买吗？'], ['买票是票价更低这一假设下的结果。', 'Buying the ticket is the result of the hypothetical lower price.'], 'buy'),
+    spanishScene('go', 'ustedes', 'intermediate', ['Si tuvieran un día libre, ¿adónde ____ ustedes?', 'If you all had a day off, where would you ____?', '如果有一天假，你们会去哪儿？'], ['条件式用于询问假设有空时会去哪里。', 'The conditional asks where the group would go in that hypothetical situation.'], 'go'),
     scene('go', 'we', 'beginner', ['Si no lloviera, nosotros ____ al parque con los niños.', 'S’il ne pleuvait pas, nous ____ au parc avec les enfants.', 'Se non piovesse, noi ____ al parco con i bambini.', 'If it were not raining, we ____ to the park with the children.', '如果没下雨，我们就会带孩子去公园。'], ['不下雨是假设，去公园是条件成立的结果。', 'The park trip depends on the hypothetical absence of rain.']),
     scene('eat', 'he/she', 'intermediate', ['Si no fuera alérgico, Alex ____ este pastel de nueces.', 'S’il n’était pas allergique, Alex ____ ce gâteau aux noix.', 'Se non fosse allergico, Alex ____ questa torta alle noci.', 'If he were not allergic, Alex ____ this walnut cake.', '如果不过敏，亚历克斯就会吃这块核桃蛋糕。'], ['不过敏是假设条件，吃蛋糕是可能结果。', 'Eating the cake depends on an imagined absence of allergy.']),
     scene('work', 'you', 'beginner', ['Si te ofrecieran ese puesto, tú ____ con tu mejor amigo.', 'Si on te proposait ce poste, tu ____ avec ton meilleur ami.', 'Se ti offrissero quel posto, tu ____ con il tuo migliore amico.', 'If they offered you that job, you ____ with your best friend.', '如果他们给你那个职位，你就会和最好的朋友一起工作。'], ['获得职位尚是假设，一起工作取决于它。', 'Working together depends on the hypothetical job offer.']),
@@ -407,6 +456,10 @@ export const quizScenes: Record<TenseId, QuizScene[]> = {
     scene("lose", "they", "advanced", ["Si retrasaran la entrega otra semana, ellos ____ la confianza del cliente.", "S’ils retardaient encore la livraison d’une semaine, ils ____ la confiance du client.", "Se rimandassero la consegna di un’altra settimana, loro ____ la fiducia del cliente.", "If they delayed delivery another week, they ____ the client’s trust.", "如果再把交货推迟一周，他们就会失去客户的信任。"], ["推迟交货是假设情况，失去信任是条件成立后的后果。", "Losing the client’s trust is the hypothetical consequence of another delay."]),
   ],
   subjunctive: [
+    featuredScene("send", "Lei", 'intermediate', ["Dottoressa, è importante che Lei ____ il modulo oggi.", "Doctor, it is important that you ____ the form today.", "医生，您今天务必发出表格。"], ["è importante che 表达要求，从句用虚拟式。", "È importante che introduces a requirement and takes the subjunctive."], "send"),
+    featuredScene("write", "polite vous", 'intermediate', ["Monsieur, je voudrais que vous ____ votre adresse ici.", "Sir, I would like you to ____ your address here.", "先生，我想请您把地址写在这里。"], ["je voudrais que 表达请求，从句用虚拟式。", "Je voudrais que introduces a request and takes the subjunctive."], "write"),
+    spanishScene('send', 'usted', 'intermediate', ['Le pido que usted ____ el formulario hoy mismo.', 'I ask that you ____ the form today.', '请您今天就把表格发过来。'], ['pedir que 表达请求，从句用虚拟式。', 'Asking someone to do something triggers the subjunctive after pedir que.'], 'send'),
+    spanishScene('arrive', 'ustedes', 'intermediate', ['Es importante que ustedes ____ antes de las ocho.', 'It is important that you all ____ before eight.', '你们务必在八点前到。'], ['es importante que 表达对行动的要求，从句用虚拟式。', 'Es importante que expresses a requirement and takes the subjunctive.'], 'arrive'),
     scene('go', 'we', 'beginner', ['El guía quiere que nosotros ____ al museo antes de las diez.', 'Le guide veut que nous ____ au musée avant dix heures.', 'La guida vuole che noi ____ al museo prima delle dieci.', 'The guide wants us to ____ to the museum before ten.', '导游希望我们十点前去博物馆。'], ['导游表达的是对我们的要求。', 'The guide expresses a desired action for another subject.'], 'go'),
     scene('eat', 'he/she', 'intermediate', ['Su madre quiere que Alex ____ algo antes de salir.', 'Sa mère veut qu’Alex ____ quelque chose avant de sortir.', 'Sua madre vuole che Alex ____ qualcosa prima di uscire.', 'His mother wants Alex to ____ something before leaving.', '妈妈希望亚历克斯出门前吃点东西。'], ['“希望他吃点东西”表达意愿。', 'Wanting him to eat expresses a wish.'], 'eat'),
     scene('work', 'you', 'intermediate', ['Es mejor que tú ____ en la biblioteca; aquí hay demasiado ruido.', 'Il vaut mieux que tu ____ à la bibliothèque ; il y a trop de bruit ici.', 'È meglio che tu ____ in biblioteca; qui c’è troppo rumore.', 'It is better for you to ____ in the library; it is too noisy here.', '你最好去图书馆工作，这里太吵了。'], ['“最好”是对工作地点的评价和建议。', 'It is better evaluates and recommends a place to work.'], 'work'),
@@ -459,6 +512,10 @@ export const quizScenes: Record<TenseId, QuizScene[]> = {
     scene("lose", "I", "advanced", ["Dudo que yo ____ el rumbo con este mapa tan detallado.", "Je doute que je ____ mon chemin avec une carte aussi détaillée.", "Dubito che io ____ l’orientamento con una mappa così dettagliata.", "I doubt that I will ____ my way with such a detailed map.", "有这么详细的地图，我怀疑自己不太可能迷路。"], ["“怀疑”否定动作发生的确定性，从句使用虚拟式。", "Expressing doubt puts the outcome in question and triggers the subjunctive."], "lose"),
   ],
   imperative: [
+    featuredScene("open", "Lei", 'beginner', ["Signora, ____ la finestra, per favore.", "Ma’am, please ____ the window.", "女士，请您开一下窗。"], ["对一位女士提出礼貌请求，用敬称 Lei 的命令式。", "The speaker makes a polite request to one person using the Lei command form."], "open"),
+    featuredScene("wait", "polite vous", 'beginner', ["Monsieur, ____ ici, s’il vous plaît.", "Sir, please ____ here.", "先生，请您在这里等候。"], ["用 vous 的命令式礼貌地请一位先生等候。", "The vous command form addresses one person politely."], "wait"),
+    spanishScene('open', 'usted', 'beginner', ['Señora, ____ usted la puerta, por favor.', 'Ma’am, please ____ the door.', '女士，请您开门。'], ['说话者礼貌地请一位女士开门。', 'The speaker politely asks one person to open the door.'], 'open'),
+    spanishScene('wait', 'ustedes', 'beginner', ['Señores, ____ ustedes aquí, por favor.', 'Ladies and gentlemen, please ____ here.', '各位，请在这里等候。'], ['说话者请一群人在这里等候。', 'The speaker asks a group to wait here.'], 'wait'),
     scene("go", "you", "beginner", ["Ana, ____ a la derecha después del puente.", "Anne, ____ à droite après le pont.", "Anna, ____ a destra dopo il ponte.", "____ right after the bridge.", "过桥后向右走。"], ["指路时直接告诉对方往哪里走。", "A direct instruction gives the listener a direction."], "go"),
     scene("eat", "you", "beginner", ["____ la sopa antes de que se enfríe.", "____ ta soupe avant qu’elle refroidisse.", "____ la zuppa prima che si raffreddi.", "____ your soup before it gets cold.", "趁汤还没凉，喝汤吧。"], ["提醒熟人趁热吃饭，使用肯定命令。", "This is a direct reminder to eat while the food is warm."], "eat"),
     scene("speak", "you", "beginner", ["____ más despacio, por favor.", "____ plus lentement, s’il te plaît.", "____ più lentamente, per favore.", "____ more slowly, please.", "请说慢一点。"], ["请对方说慢一点，是直接请求。", "Asking the listener to slow down is a direct request."], "speak"),
@@ -511,6 +568,10 @@ export const quizScenes: Record<TenseId, QuizScene[]> = {
     scene("buy", "we", "advanced", ["____ únicamente materiales reciclables para el montaje de la exposición.", "____ uniquement des matériaux recyclables pour le montage de l’exposition.", "____ soltanto materiali riciclabili per l’allestimento della mostra.", "Let’s ____ only recyclable materials for setting up the exhibition.", "我们布展时只买可回收材料吧。"], ["团队内部关于采购原则的共同倡议，使用第一人称复数命令式。", "A shared team proposal uses the let’s imperative."], "buy"),
   ],
   imperativeNegative: [
+    featuredScene("drive", "Lei", 'beginner', ["Signore, ____ così in fretta su questa strada.", "Sir, don’t ____ so fast on this road.", "先生，请您在这条路上别开那么快。"], ["用敬称 Lei 的否定命令式劝一位司机减速。", "The speaker uses the negative Lei command form to tell one driver to slow down."], "drive"),
+    featuredScene("open", "polite vous", 'beginner', ["Madame, ____ la fenêtre pendant l’orage.", "Ma’am, don’t ____ the window during the storm.", "女士，雷雨期间请您别开窗。"], ["用 vous 的否定命令式提醒一位女士。", "The negative vous command form warns one person politely."], "open"),
+    spanishScene('drive', 'usted', 'beginner', ['Señor, ____ usted tan rápido en esta calle.', 'Sir, don’t ____ so fast on this street.', '先生，请您在这条街上别开那么快。'], ['说话者劝一位司机别开太快。', 'The speaker tells one driver to slow down.'], 'drive'),
+    spanishScene('run', 'ustedes', 'beginner', ['Por favor, ____ ustedes por los pasillos del hospital.', 'Please don’t ____ in the hospital corridors.', '请各位不要在医院走廊里跑。'], ['说话者请一群人不要在走廊里跑。', 'The speaker tells a group to avoid running in the corridors.'], 'run'),
     scene("go", "you", "beginner", ["____ solo al bosque de noche.", "____ seul dans la forêt la nuit.", "____ nel bosco da solo di notte.", "Don’t ____ into the forest alone at night.", "晚上不要独自去森林。"], ["直接劝阻对方独自夜行。", "A direct warning tells the listener not to go alone."], "go"),
     scene("eat", "you", "beginner", ["____ esta fruta; todavía está verde.", "____ ce fruit ; il est encore vert.", "____ questo frutto; è ancora acerbo.", "Don’t ____ this fruit; it is not ripe yet.", "不要吃这个水果，它还没熟。"], ["禁止吃未成熟的水果，使用否定命令。", "A negative command warns against eating unripe fruit."], "eat"),
     scene("speak", "you", "beginner", ["____ tan alto; el bebé está durmiendo.", "____ si fort ; le bébé dort.", "____ così forte; il bambino dorme.", "Don’t ____ so loudly; the baby is sleeping.", "不要这么大声说话，宝宝在睡觉。"], ["要求对方停止大声说话。", "The listener is asked not to speak loudly."], "speak"),
@@ -563,6 +624,8 @@ export const quizScenes: Record<TenseId, QuizScene[]> = {
     scene("buy", "you plural", "advanced", ["Clientes, ____ productos sin etiqueta de origen certificada.", "Chers clients, ____ de produits sans étiquette d’origine certifiée.", "Clienti, ____ prodotti privi di etichetta d’origine certificata.", "Customers, don’t ____ products without a certified origin label.", "各位顾客，请不要购买没有原产地认证标签的商品。"], ["消费提示劝告顾客核查标签，使用复数否定命令式。", "A consumer advisory uses the plural negative imperative."], "buy"),
   ],
   imperfectSubjunctive: [
+    spanishScene('speak', 'usted', 'intermediate', ['Ayer le pedí que usted ____ con la directora.', 'Yesterday I asked you to ____ with the director.', '我昨天请您和主任谈一谈。'], ['pedí que 转述过去提出的请求，从句用过去虚拟式。', 'The past request pedí que triggers the imperfect subjunctive.'], 'speak'),
+    spanishScene('have', 'ustedes', 'intermediate', ['Si ustedes ____ más tiempo, podríamos visitar el museo.', 'If you all ____ more time, we could visit the museum.', '如果你们有更多时间，我们就能去参观博物馆。'], ['si 引出假设条件，与主句的条件式 podríamos 搭配。', 'The hypothetical si clause pairs with the conditional podríamos.'], 'had'),
     spanishScene("come", "you", "beginner", ["Ayer, Ana te pidió que ____ hoy a su casa.", "Yesterday, Ana asked you to ____ to her house today.", "昨天，安娜请你今天去她家。"], ["pidió 表示过去提出的请求，从句使用未完成过去虚拟式；来的动作在今天，并不一定发生在过去。", "Pidió frames a past request; the requested visit is today, so the imperfect subjunctive need not describe a past action."], "come"),
     spanishScene("work", "I", "beginner", ["El jefe quería que yo ____ desde casa durante la reforma de la oficina.", "The manager wanted me to ____ from home during the office renovation.", "经理当时希望我在办公室装修期间居家工作。"], ["quería 表达过去的意愿，工作是当时希望我采取的行动。", "Quería expresses a past wish about an action the manager wanted me to take."], "work"),
     spanishScene("go", "we", "beginner", ["El guía nos pidió que nosotros ____ al punto de encuentro a las ocho.", "The guide asked us to ____ to the meeting point at eight.", "导游要求我们八点去集合地点。"], ["过去的请求 pidió que 引出未完成过去虚拟式；ir 使用不规则词干 fue-。", "A past request with pidió que takes the imperfect subjunctive; ir uses the irregular stem fue-."], "go"),

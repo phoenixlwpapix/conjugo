@@ -1,0 +1,20 @@
+[
+  {
+    "version": "0.2.0",
+    "date": "2026-11-14",
+    "changes": {
+      "zh": [
+        "四种语言新增分词和副动词专项，覆盖动词本、变位练习和句子测验。",
+        "西语补充 usted 和 ustedes，英语补充 it，意大利语补充敬称 Lei，法语补充 vous 的礼貌单数用法。",
+        "英语不规则动词的选择题优先考查常见误写和易混词形，每题提供四个不同选项。",
+        "新增更新日志，页脚可查看当前版本。"
+      ],
+      "en": [
+        "Study participles and gerunds across all four languages in the Verb Book, Practice, and Quiz.",
+        "Practice Spanish usted and ustedes, English it, Italian polite Lei, and the French polite singular use of vous.",
+        "English irregular-verb drills prioritize common misspellings and easily confused forms, with four distinct choices per question.",
+        "Open the changelog to see what changed, and check the footer for the current version."
+      ]
+    }
+  }
+]

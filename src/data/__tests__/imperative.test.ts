@@ -45,7 +45,7 @@ describe('imperative', () => {
     expect(clampEnglishTense('english', 'imperativeNegative')).toBe('present');
     expect(createPromptPool(english, 'imperative')).toEqual([]);
     expect(createQuizBank(english, 'imperativeNegative')).toEqual([]);
-    expect(getLanguageTenses('english')).toHaveLength(3);
+    expect(getLanguageTenses('english').map(({ id }) => id)).toEqual(['present', 'past', 'future', 'pastParticiple', 'presentParticiple']);
   });
 
   it('only drills supported verbs and persons, with four nonempty choices', () => {

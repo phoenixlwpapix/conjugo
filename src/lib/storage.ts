@@ -37,7 +37,7 @@ const legacyKeys = {
 
 const languageIds = languages.map((language) => language.id);
 const tenseIds = concreteTenses.map(({ id }) => id);
-const practiceTenses: PracticeTenseId[] = [...tenseIds, 'commands', 'mixed'];
+const practiceTenses: PracticeTenseId[] = [...tenseIds, 'commands', 'nonFinite', 'mixed'];
 const appViews: AppView[] = ['practice', 'quiz', 'stats', 'wordbook', 'settings'];
 const pronounIds: Pronoun[] = ['I', 'you', 'he/she', 'we', 'you plural', 'they'];
 
@@ -246,7 +246,7 @@ export const readPracticeTense = (): PracticeTenseId => {
   const key = safeGet(storageKeys.practiceTense) ? storageKeys.practiceTense : legacyKeys.practiceTense;
   const tense = readString<PracticeTenseId>(key, 'present', practiceTenses);
   // Old affirmative/negative selections now open the unified command practice.
-  return tense !== 'mixed' && tense !== 'commands' && isImperative(tense) ? 'commands' : tense;
+  return tense !== 'mixed' && tense !== 'commands' && tense !== 'nonFinite' && isImperative(tense) ? 'commands' : tense;
 };
 
 export const writePracticeTense = (practiceTense: PracticeTenseId) => {

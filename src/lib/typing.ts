@@ -1,4 +1,5 @@
 import type { Prompt } from '../types';
+import { isNonFiniteForm } from '../data/nonFinite/types';
 import { getAnswer } from './prompts';
 
 const normalize = (answer: string) => answer.trim().toLowerCase().normalize('NFC').replace(/\s+/g, ' ').replace(/[‘’]/g, "'");
@@ -10,6 +11,9 @@ const withoutAccents = (answer: string) => answer.split('ñ')
 export function gradeTypedAnswer(input: string, prompt: Prompt): 'correct' | 'accent' | 'wrong' {
   const answer = normalize(input);
   const accepted = [normalize(getAnswer(prompt))];
+  if (isNonFiniteForm(prompt.tense)) {
+    accepted.push(...(prompt.verb.nonFinite?.accepted?.[prompt.tense] ?? []).map(normalize));
+  }
   if (prompt.tense === 'imperfectSubjunctive' && prompt.verb.imperfectSubjunctiveSe) {
     accepted.push(normalize(prompt.verb.imperfectSubjunctiveSe[prompt.pronoun]));
   }

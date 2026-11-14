@@ -1,4 +1,5 @@
 import { isImperative } from '../imperative';
+import { isNonFiniteForm } from '../nonFinite/types';
 import { describe, expect, it } from 'vitest';
 import { createQuizBank, createQuizQuestions } from '../quiz';
 import { quizScenes, quizVerbs } from '../quizScenes';
@@ -10,16 +11,17 @@ if (!spanish) throw new Error('Spanish data missing');
 describe('authored quiz scenes', () => {
   it('provides fifty complete scenes per tense in its supported languages', () => {
     for (const [tense, scenes] of Object.entries(quizScenes)) {
-      expect(scenes).toHaveLength(50);
+      expect(scenes.filter((scene) => !scene.featuredSubject)).toHaveLength(50);
       for (const language of languages) {
         if (!isTenseAvailable(language.id, tense as TenseId)) continue;
-        expect(new Set(scenes.map((scene) => scene.sentence[language.id])).size).toBe(50);
-        for (const scene of scenes) {
+        const supportedScenes = scenes.filter((scene) => !scene.studyLanguage || scene.studyLanguage === language.id);
+        expect(new Set(supportedScenes.map((scene) => scene.sentence[language.id])).size).toBe(supportedScenes.length);
+        for (const scene of supportedScenes) {
           expect(scene.sentence[language.id]?.split('____')).toHaveLength(2);
           expect(scene.sentence[language.id]).not.toMatch(/undefined/);
           expect(scene.reason.zh).toBeTruthy();
           expect(scene.reason.en).toBeTruthy();
-          expect(scene.zh.endsWith('。')).toBe(true);
+          expect(scene.zh).toMatch(/[。？]$/);
         }
       }
     }
@@ -28,7 +30,7 @@ describe('authored quiz scenes', () => {
   it('covers all pronouns, difficulties, and diverse verbs across the expanded bank', () => {
     const usedVerbs = new Set<string>();
     for (const [tense, scenes] of Object.entries(quizScenes)) {
-      const tensePronouns = new Set(scenes.map((scene) => scene.pronoun));
+      const tensePronouns = new Set(scenes.filter((scene) => !scene.featuredSubject).map((scene) => scene.pronoun));
       const tenseDifficulties = new Set(scenes.map((scene) => scene.difficulty));
       const tenseVerbs = new Set(scenes.map((scene) => scene.verb));
       scenes.forEach((scene) => usedVerbs.add(scene.verb));
@@ -48,10 +50,12 @@ describe('authored quiz scenes', () => {
   it('keeps the authored scene, verb, subject, and explanation together', () => {
     for (const language of languages) {
       for (const { id } of getLanguageTenses(language.id)) {
+        if (isNonFiniteForm(id)) continue;
         const bank = createQuizBank(language, id);
-        expect(bank).toHaveLength(50);
+        const scenes = quizScenes[id].filter((scene) => !scene.studyLanguage || scene.studyLanguage === language.id);
+        expect(bank).toHaveLength(scenes.length);
         bank.forEach((question, index) => {
-          const scene = quizScenes[id][index];
+          const scene = scenes[index];
           expect(question.sentence).toBe(scene.sentence[language.id]);
           expect(question.pronoun).toBe(scene.pronoun);
           expect(question.difficulty).toBe(scene.difficulty);
@@ -61,9 +65,47 @@ describe('authored quiz scenes', () => {
           expect(question.explanation.zh).toContain(question.answer);
           expect(question.explanation.en).toContain(question.answer);
           expect(question.translation.en).not.toMatch(/____|undefined|\p{Script=Han}/u);
-          expect(question.translation.en.endsWith('.')).toBe(true);
+          expect(question.translation.en).toMatch(/[.?]$/);
           expect(question.explanation.en).not.toMatch(/undefined|\p{Script=Han}/u);
         });
+      }
+    }
+  });
+
+  it.each([
+    ['english', 'it', 'it', 'he/she'],
+    ['italian', 'Lei', 'Lei', 'he/she'],
+    ['french', 'polite vous', 'vous', 'you plural'],
+  ] as const)('includes the new %s subject across its supported tenses', (id, subject, label, pronoun) => {
+    const language = languages.find((entry) => entry.id === id)!;
+    for (const { id: tense } of getLanguageTenses(id)) {
+      if (isNonFiniteForm(tense)) continue;
+      const question = createQuizQuestions(language, tense).find((entry) => entry.featuredSubject === subject)!;
+      expect(question.pronounLabel).toBe(label);
+      expect(question.pronoun).toBe(pronoun);
+      expect(question.answer).toBe(question.verb.forms[tense][pronoun]);
+      expect(question.choices).toContain(question.answer);
+    }
+  });
+
+  it('uses the authored feminine pronoun in the French quiz hint and feedback', () => {
+    const french = languages.find(({ id }) => id === 'french')!;
+    const question = createQuizBank(french, 'passeSimple').find(({ sentence }) => sentence.startsWith('Elle ____ les cartes'))!;
+    expect(question.pronounLabel).toBe('elle');
+    expect(question.explanation.en).toContain('for elle');
+  });
+
+  it('includes both Spanish forms of address in every supported tense with vosotros hidden', () => {
+    const language = { ...spanish, excludedPronouns: ['you plural' as const] };
+    for (const { id } of getLanguageTenses(language.id)) {
+      if (isNonFiniteForm(id)) continue;
+      const questions = createQuizQuestions(language, id);
+      for (const [label, pronoun] of [['usted', 'he/she'], ['ustedes', 'they']] as const) {
+        const question = questions.find((entry) => entry.pronounLabel === label)!;
+        expect(question.sentence).toMatch(new RegExp(`\\b${label}\\b`, 'i'));
+        expect(question.answer).toBe(question.verb.forms[id][pronoun]);
+        expect(question.answer).toBeTruthy();
+        expect(question.explanation.zh).toContain(` ${label} `);
       }
     }
   });
@@ -164,7 +206,9 @@ describe('authored quiz scenes', () => {
           expect(question.choices).toContain(question.answer);
           expect(question.choices).toHaveLength(4);
           expect(new Set(question.choices).size).toBe(question.choices.length);
-          expect(question.choices.every((choice) => Object.values(question.verb.forms).some((forms) => Object.values(forms).includes(choice)))).toBe(true);
+          if (!isNonFiniteForm(question.tense)) {
+            expect(question.choices.every((choice) => Object.values(question.verb.forms).some((forms) => Object.values(forms).includes(choice)))).toBe(true);
+          }
         }
         if (selected === 'mixed') expect(new Set(questions.map((question) => question.tense)).size).toBe(getLanguageTenses(language.id).filter(({ id }) => !isImperative(id)).length);
       }
@@ -174,6 +218,7 @@ describe('authored quiz scenes', () => {
   it('excludes vosotros scenes and forms when the preference is disabled', () => {
     const language = { ...spanish, excludedPronouns: ['you plural' as const] };
     for (const { id } of getLanguageTenses(language.id)) {
+      if (isNonFiniteForm(id)) continue;
       for (const question of createQuizBank(language, id)) {
         expect(question.pronoun).not.toBe('you plural');
         expect(question.choices).toHaveLength(4);
@@ -224,7 +269,7 @@ describe('authored quiz scenes', () => {
       const questions = createQuizQuestions(language, tenses);
       expect(questions).toHaveLength(10);
       expect(new Set(questions.map(({ id }) => id)).size).toBe(10);
-      expect(new Set(questions.map(({ tense }) => tense))).toEqual(new Set(tenses));
+      expect(new Set(questions.map(({ tense }) => tense)).size).toBe(Math.min(tenses.length, 10));
     }
     const commands = createQuizQuestions(spanish, ['commands']);
     expect(commands.filter(({ tense }) => tense === 'imperative')).toHaveLength(5);

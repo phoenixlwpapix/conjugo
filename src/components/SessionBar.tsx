@@ -25,7 +25,7 @@ export function SessionBar({ language, practiceTense, switchTense, favoriteCount
   return (
     <section className="session-bar" aria-label={t("Practice controls")}>
       <SegmentedControl
-        ariaLabel={t('Choose tense or mood')}
+        ariaLabel={t('Choose tense, mood, or verb form')}
         onChange={switchTense}
         options={options}
         value={practiceTense}

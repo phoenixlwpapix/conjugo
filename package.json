@@ -1,11 +1,12 @@
 {
   "name": "conjugo",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "node scripts/check-release.mjs && tsc -b && vite build",
+    "release:check": "node scripts/check-release.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run"

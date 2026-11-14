@@ -47,6 +47,7 @@ import { gradeTypedAnswer } from '../lib/typing';
 
 type PracticePreferences = {
   includeVosotros: boolean;
+  paused?: boolean;
   practiceAnswerMode: PracticeAnswerMode;
   practiceAccentRetry: boolean;
   practiceAutoAdvance: boolean;
@@ -63,7 +64,7 @@ const resolveLanguage = (languageId: LanguageId, includeVosotros: boolean): Lang
   return language.id === 'spanish' && !includeVosotros ? { ...language, excludedPronouns: ['you plural'] } : language;
 };
 
-export function usePractice({ includeVosotros, practiceAnswerMode, practiceAccentRetry, practiceAutoAdvance, practiceQuestionCount }: PracticePreferences) {
+export function usePractice({ includeVosotros, paused = false, practiceAnswerMode, practiceAccentRetry, practiceAutoAdvance, practiceQuestionCount }: PracticePreferences) {
   const [languageId, setLanguageId] = useState<LanguageId>(readLanguageId);
   const [practiceTense, setPracticeTense] = useState<PracticeTenseId>(() =>
     clampEnglishTense(languageId, readPracticeTense()),
@@ -369,17 +370,18 @@ export function usePractice({ includeVosotros, practiceAnswerMode, practiceAccen
   }, [countdownClock, promptIndex, isAnswered, isSessionComplete]);
 
   useEffect(() => {
-    if (activeView !== 'practice' || isSessionComplete) {
+    if (activeView !== 'practice' || isSessionComplete || paused) {
       return undefined;
     }
 
     elapsedClock.start();
     return elapsedClock.stop;
-  }, [activeView, elapsedClock, isSessionComplete]);
+  }, [activeView, elapsedClock, isSessionComplete, paused]);
 
   useEffect(() => {
     if (
       !timerEnabled ||
+      paused ||
       isAnswered ||
       isSessionComplete ||
       activeView !== 'practice'
@@ -389,14 +391,14 @@ export function usePractice({ includeVosotros, practiceAnswerMode, practiceAccen
 
     countdownClock.start(handleTimeout);
     return countdownClock.stop;
-  }, [activeView, countdownClock, handleTimeout, isAnswered, isSessionComplete, timerEnabled]);
+  }, [activeView, countdownClock, handleTimeout, isAnswered, isSessionComplete, paused, timerEnabled]);
 
   useEffect(() => {
-    if (activeView !== 'practice' || !practiceAutoAdvance || answerMode === 'typing' || !isCorrect || isSessionComplete || autoAdvanceStopped || conjugationPrompt) return;
+    if (activeView !== 'practice' || paused || !practiceAutoAdvance || answerMode === 'typing' || !isCorrect || isSessionComplete || autoAdvanceStopped || conjugationPrompt) return;
 
     autoAdvanceTimer.current = setTimeout(moveNext, autoAdvanceDelayMs);
     return clearAutoAdvance;
-  }, [activeView, answerMode, autoAdvanceStopped, clearAutoAdvance, conjugationPrompt, isCorrect, isSessionComplete, moveNext, practiceAutoAdvance]);
+  }, [activeView, answerMode, autoAdvanceStopped, clearAutoAdvance, conjugationPrompt, isCorrect, isSessionComplete, moveNext, paused, practiceAutoAdvance]);
 
   const switchLanguage = useCallback(
     (nextLanguageId: LanguageId) => {

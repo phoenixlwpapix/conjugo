@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.2",
+    "date": "2026-11-14",
+    "changes": {
+      "zh": ["新版就绪提示会显示即将安装的版本号。"],
+      "en": ["The update notice shows the version that is ready to install."]
+    }
+  },
+  {
     "version": "0.3.1",
     "date": "2026-11-14",
     "changes": {

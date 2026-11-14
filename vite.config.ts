@@ -1,12 +1,29 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { version } from './package.json';
 
 const oneYearInSeconds = 60 * 60 * 24 * 365;
+const workerVersionFile = `sw-version-${version}.js`;
 
 export default defineConfig({
   plugins: [
     react(),
+    {
+      name: 'conjugo-worker-version',
+      apply: 'build',
+      generateBundle() {
+        this.emitFile({
+          type: 'asset',
+          fileName: workerVersionFile,
+          source: `self.addEventListener('message', (event) => {
+  if (event.data?.type === 'CONJUGO_GET_VERSION') {
+    event.source?.postMessage({ type: 'CONJUGO_VERSION', version: ${JSON.stringify(version)} });
+  }
+});\n`,
+        });
+      },
+    },
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'conjugo-logo.webp'],
@@ -26,9 +43,10 @@ export default defineConfig({
       },
       workbox: {
         clientsClaim: true,
+        importScripts: [workerVersionFile],
         navigateFallback: null,
         globPatterns: ['**/*.{js,css,html,png,webp,svg,ico}'],
-        globIgnores: ['**/quiz-*.js'],
+        globIgnores: ['**/quiz-*.js', 'sw-version-*.js'],
         // Keep the offline shell under a separate URL so precaching does not intercept online navigations.
         manifestTransforms: [
           (entries) => ({

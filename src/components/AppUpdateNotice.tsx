@@ -4,6 +4,7 @@ import { useI18n } from '../hooks/useI18n';
 export function AppUpdateNotice() {
   const { t } = useI18n();
   const [updateReady, setUpdateReady] = useState(false);
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [updating, setUpdating] = useState(false);
   const registration = useRef<ServiceWorkerRegistration | null>(null);
@@ -15,10 +16,33 @@ export function AppUpdateNotice() {
     const workers = navigator.serviceWorker;
     let controller = workers.controller;
     let installing: ServiceWorker | null = null;
+    let updateWorker: ServiceWorker | null = null;
     let disposed = false;
 
+    const showUpdate = (worker: ServiceWorker) => {
+      if (worker === updateWorker) return;
+      updateWorker = worker;
+      setUpdateReady(true);
+      setUpdateVersion(null);
+      setDismissed(false);
+      try {
+        worker.postMessage({ type: 'CONJUGO_GET_VERSION' });
+      } catch {
+        // Another tab may replace the worker before it receives the message.
+      }
+    };
+
+    const handleVersionMessage = (event: MessageEvent<unknown>) => {
+      if (!updateWorker || event.source !== updateWorker || !event.data || typeof event.data !== 'object') return;
+      const data = event.data as { type?: unknown; version?: unknown };
+      if (data.type === 'CONJUGO_VERSION' && typeof data.version === 'string' && /^\d+\.\d+\.\d+$/.test(data.version)) {
+        setUpdateVersion(data.version);
+      }
+    };
+
     const showWaitingUpdate = () => {
-      if (registration.current?.waiting) setUpdateReady(true);
+      const waiting = registration.current?.waiting;
+      if (waiting) showUpdate(waiting);
     };
 
     const watchInstallingWorker = () => {
@@ -31,7 +55,7 @@ export function AppUpdateNotice() {
       const nextController = workers.controller;
       if (nextController && controller !== nextController) {
         if (reloadOnUpdate.current) window.location.reload();
-        else if (controller) setUpdateReady(true);
+        else if (controller) showUpdate(registration.current?.waiting ?? nextController);
       }
       controller = nextController;
     };
@@ -45,6 +69,7 @@ export function AppUpdateNotice() {
     };
 
     workers.addEventListener('controllerchange', handleControllerChange);
+    workers.addEventListener('message', handleVersionMessage);
     document.addEventListener('visibilitychange', checkForUpdate);
     window.addEventListener('focus', checkForUpdate);
     window.addEventListener('online', checkForUpdate);
@@ -63,6 +88,7 @@ export function AppUpdateNotice() {
       registration.current?.removeEventListener('updatefound', watchInstallingWorker);
       installing?.removeEventListener('statechange', showWaitingUpdate);
       workers.removeEventListener('controllerchange', handleControllerChange);
+      workers.removeEventListener('message', handleVersionMessage);
       document.removeEventListener('visibilitychange', checkForUpdate);
       window.removeEventListener('focus', checkForUpdate);
       window.removeEventListener('online', checkForUpdate);
@@ -82,7 +108,9 @@ export function AppUpdateNotice() {
   };
 
   const visible = updateReady && !dismissed;
-  const message = t(updating ? 'Updating…' : 'A new version is ready');
+  const message = updating
+    ? t('Updating…')
+    : updateVersion ? t('Version v{version} is ready', { version: updateVersion }) : t('A new version is ready');
 
   return (
     <>

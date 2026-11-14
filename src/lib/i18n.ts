@@ -24,6 +24,7 @@ export const chineseMessages = {
   "Settings": "设置",
   "Changelog": "更新日志",
   "A new version is ready": "新版已就绪",
+  "Version v{version} is ready": "新版 v{version} 已就绪",
   "Update now": "立即更新",
   "Later": "稍后",
   "Updating…": "正在更新…",

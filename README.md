@@ -105,7 +105,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Present subjunctive for French, Spanish, and Italian, derived from each verb's indicative forms with explicit tables for truly irregular stems; prompts read "que tu…", "qu'il…", "che io…".
 - Installable, offline-capable PWA (vite-plugin-pwa) with precached assets and cached Google Fonts; the header logo uses WebP, and the maskable app icon keeps the mark inside the safe area.
 - Online page loads and refreshes fetch the current release from the server. Offline navigation uses the installed release. An open page checks for updates when it regains focus and offers Update now to activate a waiting release and reload.
-- ConjuGO checks for releases when opened, when returning to its tab, and when reconnecting. Once a new release is cached, a dismissible notice offers **Update now**, which reloads the app. Choose **Later** to finish the current set first.
+- ConjuGO checks for releases when opened, when returning to its tab, and when reconnecting. Once a new release is cached, the notice shows the incoming version when available and offers **Update now**, which reloads the app. Choose **Later** to finish the current set first.
 
 ## UI design
 

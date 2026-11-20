@@ -17,7 +17,7 @@ ConjuGO is a Vite + React verb conjugation drill app for English, French, Spanis
 - Completed practice sets show the score, accuracy, and question outcomes inside the trainer card, with actions to start a new set and either review the last answer or return home from miss review.
 - Mixed practice rotates through the supported tenses for each language, including French passé simple and Spanish imperfect subjunctive. Commands have separate practice modes.
 - Language-specific pronoun prompts instead of English-only pronouns.
-- Answer choices are generated from the current verb's conjugation family, prioritizing the same tense and other pronouns.
+- Answer choices are generated from the current verb's conjugation family, prioritizing one same-tense different-person distractor and two different-tense same-person distractors for standard finite tenses and affirmative imperatives, while keeping negative imperatives in the same polarity when possible.
 - Answer card positions are shuffled per prompt so the correct conjugation does not stay tied to a predictable slot.
 - Session metrics for target progress, attempts, accuracy, and current streak.
 - Live practice stopwatch in the phone question card and results, and in the progress panel on wider screens. It pauses outside the active drill and resets with each new set.

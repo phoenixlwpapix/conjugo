@@ -293,24 +293,50 @@ export const getChoices = (prompt: Prompt, seed: number, choiceCount = 4, author
   }
   const pastDistractor = prompt.tense === 'past' && choiceCount > 1 ? englishDistractor : undefined;
   const formLimit = choiceCount - (pastDistractor ? 2 : 1);
+  const isUsableDistractor = (value: string, existing: readonly string[]) =>
+    Boolean(value) &&
+    value !== correctAnswer &&
+    value !== pastDistractor &&
+    !existing.includes(value) &&
+    !isCommandVariant(prompt.language.id, prompt.verb.infinitive, prompt.tense, prompt.pronoun, value);
+  const pickDistractors = (candidates: string[], limit: number, existing: readonly string[]) =>
+    candidates
+      .filter((value, index, values) => isUsableDistractor(value, existing) && values.indexOf(value) === index)
+      .sort((first, second) => stableScore(first, seed) - stableScore(second, seed))
+      .slice(0, limit);
+
   const pronouns = getConjugationPronouns(prompt.language, prompt.tense, prompt.verb);
-  const sameTenseDistractors = pronouns
-    .map((pronoun) => prompt.verb.forms[prompt.tense][pronoun])
-    .filter((value, index, values) => Boolean(value) && !isCommandVariant(prompt.language.id, prompt.verb.infinitive, prompt.tense, prompt.pronoun, value) && value !== correctAnswer && values.indexOf(value) === index)
-    .sort((first, second) => stableScore(first, seed) - stableScore(second, seed))
-    .slice(0, formLimit);
+  // Negative imperatives carry negation markers, so keep distractors within the same polarity when possible.
+  const sameTenseLimit = prompt.tense === 'imperativeNegative' ? formLimit : Math.min(1, formLimit);
+  const sameTenseDistractors = pickDistractors(
+    pronouns.map((pronoun) => prompt.verb.forms[prompt.tense][pronoun]),
+    sameTenseLimit,
+    [],
+  );
 
-  const languageTenses = getLanguageTenses(prompt.language.id).filter(({ id }) => !isNonFiniteForm(id) && (isImperative(prompt.tense) || !isImperative(id)));
+  const otherTenses = getLanguageTenses(prompt.language.id).filter(
+    ({ id }) => id !== prompt.tense && !isNonFiniteForm(id) && (prompt.tense === 'imperativeNegative' || !isImperative(id)),
+  );
+  const samePersonDistractors = pickDistractors(
+    otherTenses
+      .filter(({ id }) => getConjugationPronouns(prompt.language, id, prompt.verb).includes(prompt.pronoun))
+      .map(({ id }) => prompt.verb.forms[id][prompt.pronoun]),
+    formLimit - sameTenseDistractors.length,
+    sameTenseDistractors,
+  );
 
-  const fallbackDistractors = languageTenses
-    .flatMap((tense) => getConjugationPronouns(prompt.language, tense.id, prompt.verb).map((pronoun) => prompt.verb.forms[tense.id][pronoun]))
-    .filter(
-      (value, index, values) =>
-        Boolean(value) && !isCommandVariant(prompt.language.id, prompt.verb.infinitive, prompt.tense, prompt.pronoun, value) && value !== correctAnswer && !sameTenseDistractors.includes(value) && values.indexOf(value) === index,
-    )
-    .sort((first, second) => stableScore(first, seed) - stableScore(second, seed))
-    .slice(0, formLimit - sameTenseDistractors.length);
-  const distractors = [...sameTenseDistractors, ...fallbackDistractors];
+  const selectedDistractors = [...sameTenseDistractors, ...samePersonDistractors];
+  const fallbackTenses = getLanguageTenses(prompt.language.id).filter(
+    ({ id }) => !isNonFiniteForm(id) && (isImperative(prompt.tense) || !isImperative(id)),
+  );
+  const fallbackDistractors = pickDistractors(
+    fallbackTenses.flatMap((tense) =>
+      getConjugationPronouns(prompt.language, tense.id, prompt.verb).map((pronoun) => prompt.verb.forms[tense.id][pronoun]),
+    ),
+    formLimit - selectedDistractors.length,
+    selectedDistractors,
+  );
+  const distractors = [...selectedDistractors, ...fallbackDistractors];
   if (pastDistractor) distractors.push(pastDistractor);
 
   if (prompt.language.id === 'english' && distractors.length < choiceCount - 1) {

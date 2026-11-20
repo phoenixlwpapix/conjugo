@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { languages } from '../../data/verbs';
+import { isImperative } from '../../data/imperative';
+import { isNonFiniteForm } from '../../data/nonFinite/types';
+import { getConjugationPronouns, getLanguageTenses, languages } from '../../data/verbs';
 import {
   clampEnglishTense,
   createPromptPool,
@@ -134,6 +136,92 @@ describe('prompts', () => {
       
       const correctAnswer = getAnswer(prompt);
       expect(choices).toContain(correctAnswer);
+    });
+
+    it('pairs 1 same-tense different-person and 2 different-tense same-person distractors across Romance finite tenses and affirmative imperatives', () => {
+      const configs = [
+        ...languages.filter((language) => language.id !== 'english'),
+        { ...spanish, excludedPronouns: ['you plural' as const] },
+      ];
+
+      for (const language of configs) {
+        const finiteTenses = getLanguageTenses(language.id).filter(({ id }) => !isNonFiniteForm(id) && id !== 'imperativeNegative');
+        for (const { id: tense } of finiteTenses) {
+          const otherFiniteTenses = getLanguageTenses(language.id).filter(
+            ({ id }) => id !== tense && !isNonFiniteForm(id) && !isImperative(id),
+          );
+          for (const prompt of createPromptPool(language, tense)) {
+            const answer = getAnswer(prompt);
+            const choices = getChoices(prompt, 13);
+            expect(choices).toHaveLength(4);
+            expect(new Set(choices).size).toBe(4);
+            expect(choices).toContain(answer);
+
+            const distractors = choices.filter((choice) => choice !== answer);
+            const sameTenseForms = new Set(
+              getConjugationPronouns(language, tense, prompt.verb)
+                .filter((pronoun) => pronoun !== prompt.pronoun)
+                .map((pronoun) => prompt.verb.forms[tense][pronoun])
+                .filter((form) => Boolean(form) && form !== answer),
+            );
+            const samePersonOtherTenseForms = new Set(
+              otherFiniteTenses
+                .filter(({ id }) => getConjugationPronouns(language, id, prompt.verb).includes(prompt.pronoun))
+                .map(({ id }) => prompt.verb.forms[id][prompt.pronoun])
+                .filter((form) => Boolean(form) && form !== answer),
+            );
+            const hasExactSplit = distractors.some(
+              (sameTenseChoice) =>
+                sameTenseForms.has(sameTenseChoice) &&
+                distractors.filter((other) => other !== sameTenseChoice && samePersonOtherTenseForms.has(other)).length === 2,
+            );
+            expect(hasExactSplit).toBe(true);
+
+            if (tense === 'imperative') {
+              const negativeForms = new Set(Object.values(prompt.verb.forms.imperativeNegative).filter(Boolean));
+              expect(distractors.some((choice) => negativeForms.has(choice))).toBe(false);
+            }
+          }
+        }
+      }
+    });
+
+    it('keeps negative imperative distractors in the same polarity first, then fills with same-person forms', () => {
+      for (const language of languages.filter((entry) => entry.id !== 'english')) {
+        const otherTenses = getLanguageTenses(language.id).filter(({ id }) => id !== 'imperativeNegative' && !isNonFiniteForm(id));
+        for (const prompt of createPromptPool(language, 'imperativeNegative')) {
+          const answer = getAnswer(prompt);
+          const distractors = getChoices(prompt, 13).filter((choice) => choice !== answer);
+          const negativeForms = new Set(
+            getConjugationPronouns(language, 'imperativeNegative', prompt.verb)
+              .filter((pronoun) => pronoun !== prompt.pronoun)
+              .map((pronoun) => prompt.verb.forms.imperativeNegative[pronoun]),
+          );
+          const samePolarityCount = distractors.filter((choice) => negativeForms.has(choice)).length;
+
+          if (language.id === 'french') {
+            expect(samePolarityCount).toBe(2);
+            const samePersonForms = new Set(
+              otherTenses
+                .filter(({ id }) => getConjugationPronouns(language, id, prompt.verb).includes(prompt.pronoun))
+                .map(({ id }) => prompt.verb.forms[id][prompt.pronoun]),
+            );
+            expect(distractors.filter((choice) => !negativeForms.has(choice)).every((choice) => samePersonForms.has(choice))).toBe(true);
+          } else {
+            expect(samePolarityCount).toBe(3);
+          }
+        }
+      }
+    });
+
+    it('prioritizes same-person other-tense forms for English practice questions', () => {
+      const [bePresent] = createPromptPool(english, 'present', new Set(['to be']));
+      const beChoices = getChoices(bePresent, 5);
+      expect(beChoices).toEqual(expect.arrayContaining(['am', 'was', 'will be']));
+      expect(beChoices.filter((choice) => choice === 'is' || choice === 'are')).toHaveLength(1);
+
+      const [goPast] = createPromptPool(english, 'past', new Set(['to go']));
+      expect(getChoices(goPast, 5).sort()).toEqual(['go', 'goed', 'went', 'will go']);
     });
   });
 

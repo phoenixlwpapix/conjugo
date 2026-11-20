@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.3.3",
+    "date": "2026-11-20",
+    "changes": {
+      "zh": [
+        "优化变位练习选择题干扰项：普通时态和肯定命令式优先搭配 1 个同时态不同人称与 2 个不同时态同人称选项，同时锻炼人称和时态辨别。"
+      ],
+      "en": [
+        "Improved multiple-choice distractors in conjugation practice: standard tenses and affirmative imperatives now prioritize one same-tense, different-person choice and two different-tense, same-person choices to test both tense and person."
+      ]
+    }
+  },
+  {
     "version": "0.3.2",
     "date": "2026-11-14",
     "changes": {

@@ -63,9 +63,55 @@ const genderAgreeingAuxiliaries: Partial<Record<Language['id'], Set<string>>> = 
   italian: new Set(['sono', 'sei', 'è', 'siamo', 'siete']),
 };
 
-/** Stored forms are masculine, so a feminine pronoun would make the expected answer wrong. */
+/** Stored forms are masculine, so Italian essere still restricts prompts to masculine labels. */
 export const isGenderAgreeingForm = (languageId: Language['id'], tense: TenseId, form: string) =>
   tense === 'past' && Boolean(genderAgreeingAuxiliaries[languageId]?.has(form.split(' ')[0]));
+
+export const isFrenchEtrePast = (languageId: LanguageId, tense: TenseId, verb: VerbEntry) =>
+  languageId === 'french' && isGenderAgreeingForm(languageId, tense, verb.forms.past.I);
+
+export const isFrenchFemininePronounLabel = (label?: string) => label === 'elle' || label === 'elles';
+
+export type FrenchEtrePastForms = {
+  masculine: string;
+  feminine: string;
+  tableMasculine: string;
+  tableFeminine: string;
+  accepted: string[];
+};
+
+/** Derives masculine/feminine agreement forms for French passé composé with être. */
+export const getFrenchEtrePastForms = (verb: VerbEntry, pronoun: Pronoun): FrenchEtrePastForms => {
+  const aux = verb.forms.past[pronoun].split(' ')[0];
+  const baseParticiple = verb.forms.past.I.split(' ')[1];
+  const plural = pronoun === 'we' || pronoun === 'you plural' || pronoun === 'they';
+  const masculine = `${aux} ${baseParticiple}${plural ? 's' : ''}`;
+  const feminine = `${aux} ${baseParticiple}${plural ? 'es' : 'e'}`;
+  if (pronoun === 'you plural') {
+    return {
+      masculine,
+      feminine,
+      tableMasculine: `${aux} ${baseParticiple}(s)`,
+      tableFeminine: `${aux} ${baseParticiple}e(s)`,
+      accepted: [masculine, feminine, `${aux} ${baseParticiple}`, `${aux} ${baseParticiple}e`],
+    };
+  }
+  return {
+    masculine,
+    feminine,
+    tableMasculine: masculine,
+    tableFeminine: feminine,
+    accepted: [masculine, feminine],
+  };
+};
+
+/** Returns the opposite-gender form for gendered French être subjects (il/elle, ils/elles). */
+export const getFrenchEtreOppositeGenderForm = (prompt: Prompt): string | undefined => {
+  if (!isFrenchEtrePast(prompt.language.id, prompt.tense, prompt.verb)) return undefined;
+  if (prompt.pronoun !== 'he/she' && prompt.pronoun !== 'they') return undefined;
+  const forms = getFrenchEtrePastForms(prompt.verb, prompt.pronoun);
+  return isFrenchFemininePronounLabel(prompt.selectedPronounLabel) ? forms.masculine : forms.feminine;
+};
 
 const choosePronounLabel = (label: string, masculineOnly = false) => {
   const options = getPronounLabelOptions(label);
@@ -75,7 +121,7 @@ const choosePronounLabel = (label: string, masculineOnly = false) => {
 const choosePromptPronounLabel = (language: Language, verb: VerbEntry, tense: TenseId, pronoun: Pronoun) =>
   isNonFiniteForm(tense) ? undefined : choosePronounLabel(
     getConjugationPronounLabel(language, tense, pronoun),
-    isGenderAgreeingForm(language.id, tense, verb.forms[tense][pronoun]),
+    language.id !== 'french' && isGenderAgreeingForm(language.id, tense, verb.forms[tense][pronoun]),
   );
 
 export const createPromptPool = (language: Language, practiceTense: PracticeTenseId, verbInfinitives?: ReadonlySet<string>): Prompt[] =>
@@ -111,6 +157,11 @@ export const getPromptKey = (prompt: Pick<Prompt, 'verb' | 'tense' | 'pronoun'>)
 const matchesReviewTarget = (prompt: Prompt, target: ReviewTarget) =>
   prompt.verb.infinitive === target.verbInfinitive && prompt.tense === target.tense && prompt.pronoun === target.pronoun;
 
+const resolveReviewPrompt = (promptPool: Prompt[], target: ReviewTarget): Prompt | undefined => {
+  const match = promptPool.find((prompt) => matchesReviewTarget(prompt, target));
+  return match && target.pronounLabel ? { ...match, selectedPronounLabel: target.pronounLabel } : match;
+};
+
 export const createSessionPrompts = (
   language: Language,
   practiceTense: PracticeTenseId,
@@ -120,7 +171,7 @@ export const createSessionPrompts = (
   const promptPool = createPromptPool(language, practiceTense, verbInfinitives);
   const reviewLimit = Math.ceil(Math.min(limit, promptPool.length) * 0.3);
   const reviewPrompts = shufflePrompts(reviewTargets)
-    .map((target) => promptPool.find((prompt) => matchesReviewTarget(prompt, target)))
+    .map((target) => resolveReviewPrompt(promptPool, target))
     .filter((prompt): prompt is Prompt => Boolean(prompt))
     .slice(0, reviewLimit);
   const reviewKeys = new Set(reviewPrompts.map(getPromptKey));
@@ -152,7 +203,7 @@ export const createSessionPrompts = (
 export const createMissSessionPrompts = (language: Language, reviewTargets: ReviewTarget[], limit = defaultPracticeQuestionCount): Prompt[] => {
   const promptPool = getLanguageTenses(language.id).flatMap(({ id }) => createPromptPool(language, id));
   const reviewPrompts = reviewTargets
-    .map((target) => promptPool.find((prompt) => matchesReviewTarget(prompt, target)))
+    .map((target) => resolveReviewPrompt(promptPool, target))
     .filter((prompt): prompt is Prompt => Boolean(prompt))
     .slice(0, limit);
 
@@ -175,7 +226,12 @@ export const getFallbackPrompt = (language: Language, practiceTense: PracticeTen
   throw new Error(`${language.name} needs at least one available verb form`);
 };
 
-export const getAnswer = (prompt: Prompt) => prompt.verb.forms[prompt.tense][prompt.pronoun];
+export const getAnswer = (prompt: Prompt) => {
+  if (isFrenchEtrePast(prompt.language.id, prompt.tense, prompt.verb) && isFrenchFemininePronounLabel(prompt.selectedPronounLabel)) {
+    return getFrenchEtrePastForms(prompt.verb, prompt.pronoun).feminine;
+  }
+  return prompt.verb.forms[prompt.tense][prompt.pronoun];
+};
 
 export const getPronounLabel = (prompt: Prompt) =>
   withMoodMarker(
@@ -308,8 +364,12 @@ export const getChoices = (prompt: Prompt, seed: number, choiceCount = 4, author
   const pronouns = getConjugationPronouns(prompt.language, prompt.tense, prompt.verb);
   // Negative imperatives carry negation markers, so keep distractors within the same polarity when possible.
   const sameTenseLimit = prompt.tense === 'imperativeNegative' ? formLimit : Math.min(1, formLimit);
+  const frenchGenderDistractor = getFrenchEtreOppositeGenderForm(prompt);
+  const sameTenseCandidates = frenchGenderDistractor
+    ? [frenchGenderDistractor]
+    : pronouns.map((pronoun) => prompt.verb.forms[prompt.tense][pronoun]);
   const sameTenseDistractors = pickDistractors(
-    pronouns.map((pronoun) => prompt.verb.forms[prompt.tense][pronoun]),
+    sameTenseCandidates,
     sameTenseLimit,
     [],
   );

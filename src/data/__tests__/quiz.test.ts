@@ -3,6 +3,7 @@ import { isNonFiniteForm } from '../nonFinite/types';
 import { describe, expect, it } from 'vitest';
 import { createQuizBank, createQuizQuestions } from '../quiz';
 import { quizScenes, quizVerbs } from '../quizScenes';
+import { getAnswer, getFrenchEtrePastForms, isFrenchEtrePast } from '../../lib/prompts';
 import { getLanguagePronouns, getLanguageTenses, isTenseAvailable, languages, pronouns, type TenseId } from '../verbs';
 
 const spanish = languages.find((language) => language.id === 'spanish');
@@ -194,6 +195,23 @@ describe('authored quiz scenes', () => {
       .toBe('I am surprised that Alex sleeps with so much noise in the street.');
   });
 
+  it('includes French feminine être agreement scenes with masculine distractors in compound past', () => {
+    const french = languages.find(({ id }) => id === 'french')!;
+    const questions = createQuizQuestions(french, 'past');
+    const singular = questions.find((entry) => entry.featuredSubject === 'feminine être singular')!;
+    const plural = questions.find((entry) => entry.featuredSubject === 'feminine être plural')!;
+
+    expect(singular).toBeDefined();
+    expect(singular.pronounLabel).toBe('elle');
+    expect(singular.answer).toBe(getFrenchEtrePastForms(singular.verb, 'he/she').feminine);
+    expect(singular.choices).toContain(getFrenchEtrePastForms(singular.verb, 'he/she').masculine);
+
+    expect(plural).toBeDefined();
+    expect(plural.pronounLabel).toBe('elles');
+    expect(plural.answer).toBe(getFrenchEtrePastForms(plural.verb, 'they').feminine);
+    expect(plural.choices).toContain(getFrenchEtrePastForms(plural.verb, 'they').masculine);
+  });
+
   it('builds unique ten-question rounds with valid, distinct choices', () => {
     for (const language of languages) {
       for (const selected of [...getLanguageTenses(language.id).map(({ id }) => id), 'mixed' as const]) {
@@ -202,12 +220,25 @@ describe('authored quiz scenes', () => {
         expect(new Set(questions.map((question) => question.id)).size).toBe(10);
         for (const question of questions) {
           if (selected !== 'mixed') expect(question.tense).toBe(selected);
-          expect(question.answer).toBe(question.verb.forms[question.tense][question.pronoun]);
+          const expectedAnswer = getAnswer({
+            language,
+            verb: question.verb,
+            tense: question.tense,
+            pronoun: question.pronoun,
+            selectedPronounLabel: question.pronounLabel,
+          });
+          expect(question.answer).toBe(expectedAnswer);
           expect(question.choices).toContain(question.answer);
           expect(question.choices).toHaveLength(4);
           expect(new Set(question.choices).size).toBe(question.choices.length);
           if (!isNonFiniteForm(question.tense)) {
-            expect(question.choices.every((choice) => Object.values(question.verb.forms).some((forms) => Object.values(forms).includes(choice)))).toBe(true);
+            const agreedForms = isFrenchEtrePast(language.id, question.tense, question.verb)
+              ? getFrenchEtrePastForms(question.verb, question.pronoun).accepted
+              : [];
+            expect(question.choices.every((choice) =>
+              agreedForms.includes(choice) ||
+              Object.values(question.verb.forms).some((forms) => Object.values(forms).includes(choice)),
+            )).toBe(true);
           }
         }
         if (selected === 'mixed') expect(new Set(questions.map((question) => question.tense)).size).toBe(getLanguageTenses(language.id).filter(({ id }) => !isImperative(id)).length);

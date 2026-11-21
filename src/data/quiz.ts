@@ -1,6 +1,6 @@
 import { isCommandVariant, isImperative } from './imperative';
 import { getLocalizedTenseName, type Locale } from '../lib/i18n';
-import { defaultQuizQuestionCount, getChoices, getPracticeTenses, type PracticeQuestionCount } from '../lib/prompts';
+import { defaultQuizQuestionCount, getAnswer, getChoices, getFrenchEtreOppositeGenderForm, getPracticeTenses, type PracticeQuestionCount } from '../lib/prompts';
 import { getConjugationPronouns, getConjugationPronounLabel, getLanguageTenses, languages, type Language, type PracticeTenseId, type Pronoun, type TenseId, type VerbEntry } from './verbs';
 import { quizScenes, quizVerbs, type FeaturedSubject } from './quizScenes';
 import { englishNonFiniteScenes } from './nonFinite/englishScenes';
@@ -69,7 +69,9 @@ export const createQuizBank = (language: Language, tense: TenseId): QuizQuestion
     if (!verb || !englishVerb) throw new Error(`Missing quiz verb ${scene.verb}`);
     const sentence = scene.sentence[language.id];
     if (!sentence) throw new Error(`Missing ${language.id} quiz scene for ${tense}`);
-    const answer = verb.forms[tense][scene.pronoun];
+    const prompt = { language, verb, tense, pronoun: scene.pronoun, selectedPronounLabel: scene.pronounLabel };
+    const answer = getAnswer(prompt);
+    const oppositeGender = scene.pronounLabel ? getFrenchEtreOppositeGenderForm(prompt) : undefined;
     // These two French tenses can narrate the same event in different registers.
     const alternateFrenchPast = language.id === 'french' && (tense === 'passeSimple' ? 'past' : tense === 'past' ? 'passeSimple' : null);
     const canUseAsDistractor = (other: TenseId) => !isNonFiniteForm(other) && other !== alternateFrenchPast && (isImperative(tense) || !isImperative(other));
@@ -77,7 +79,8 @@ export const createQuizBank = (language: Language, tense: TenseId): QuizQuestion
     const fallback = shuffle((Object.keys(verb.forms) as TenseId[]).filter(canUseAsDistractor).flatMap((id) =>
       getConjugationPronouns(language, id, verb).map((pronoun) => verb.forms[id][pronoun]),
     ));
-    const choices = shuffle([...new Set([answer, ...[...alternatives, ...fallback].filter((form) => !isCommandVariant(language.id, verb.infinitive, tense, scene.pronoun, form))])].slice(0, 4));
+    const preferred = oppositeGender ? [oppositeGender] : [];
+    const choices = shuffle([...new Set([answer, ...preferred, ...[...alternatives, ...fallback].filter((form) => !isCommandVariant(language.id, verb.infinitive, tense, scene.pronoun, form))])].slice(0, 4));
     const subject = scene.pronounLabel ?? (isImperative(tense)
       ? getConjugationPronounLabel(language, tense, scene.pronoun)
       : language.pronounLabels[scene.pronoun]);

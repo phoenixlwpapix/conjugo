@@ -75,6 +75,24 @@ describe('misses', () => {
       expect(updated).toContainEqual(frenchMiss);
       expect(capMissesPerLanguage(updated, 1)).toHaveLength(2);
     });
+
+    it('records feminine French être misses with their pronounLabel and agreed answer', () => {
+      const french = languages.find((l) => l.id === 'french')!;
+      const aller = french.verbs.find((v) => v.infinitive === 'aller')!;
+      const femininePrompt: Prompt = {
+        language: french,
+        verb: aller,
+        tense: 'past',
+        pronoun: 'he/she',
+        selectedPronounLabel: 'elle',
+      };
+      const updated = upsertMiss([], femininePrompt, 40, now);
+      expect(updated[0].pronounLabel).toBe('elle');
+      expect(updated[0].answer).toBe('est allée');
+      expect(getReviewTargets(french, 'past', updated, { now })).toEqual([
+        { verbInfinitive: 'aller', tense: 'past', pronoun: 'he/she', pronounLabel: 'elle' },
+      ]);
+    });
   });
 
   describe('recordCorrectReview', () => {

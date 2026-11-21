@@ -14,7 +14,7 @@ import {
   type VerbEntry,
 } from '../../data/verbs';
 import type { Prompt } from '../../types';
-import { withMoodMarker } from '../../lib/prompts';
+import { getFrenchEtrePastForms, isFrenchEtrePast, withMoodMarker } from '../../lib/prompts';
 import { SegmentedControl } from '../ui/SegmentedControl';
 import { QuestionTense } from '../PracticeQuestion';
 import { FavoriteButton } from './FavoriteButton';
@@ -49,24 +49,33 @@ export function ConjugationTable({
   }
   const showCommands = isImperative(bookTense);
   const showVariants = bookTense === 'imperfectSubjunctive' && Boolean(selectedVerb.imperfectSubjunctiveSe);
+  const showFrenchAgreement = isFrenchEtrePast(activeLanguage.id, bookTense, selectedVerb);
+  const showComparison = showCommands || showVariants || showFrenchAgreement;
   const pronouns = getConjugationPronouns(activeLanguage, bookTense, selectedVerb);
 
   return (
     <>
       {pronouns.length === 0 && <p>{t('Command forms for this verb are not included yet.')}</p>}
-      {showCommands || showVariants ? pronouns.length > 0 && (
+      {showComparison ? pronouns.length > 0 && (
         <table className="conjugation-comparison" data-variants={showVariants || undefined} aria-label={showCommands ? t('Imperative comparison') : tenseName(activeLanguage, bookTense)}>
           <thead lang={locale}>
-            <tr><th scope="col">{t('Pronoun')}</th><th scope="col">{showCommands ? t('Affirmative') : '-ra'}</th><th scope="col">{showCommands ? t('Negative') : '-se'}</th></tr>
+            <tr>
+              <th scope="col">{t('Pronoun')}</th>
+              <th scope="col">{showCommands ? t('Affirmative') : showFrenchAgreement ? t('Masculine') : '-ra'}</th>
+              <th scope="col">{showCommands ? t('Negative') : showFrenchAgreement ? t('Feminine') : '-se'}</th>
+            </tr>
           </thead>
           <tbody lang={getStudyLanguageTag(activeLanguage.id)}>
-            {pronouns.map((pronoun) => (
-              <tr key={pronoun} data-highlighted={pronoun === highlightPronoun || undefined}>
-                <th scope="row">{withMoodMarker(activeLanguage.id, bookTense, getConjugationPronounLabel(activeLanguage, bookTense, pronoun))}</th>
-                <td>{selectedVerb.forms[showCommands ? 'imperative' : bookTense][pronoun]}</td>
-                <td>{showCommands ? selectedVerb.forms.imperativeNegative[pronoun] : selectedVerb.imperfectSubjunctiveSe?.[pronoun]}</td>
-              </tr>
-            ))}
+            {pronouns.map((pronoun) => {
+              const agreed = showFrenchAgreement ? getFrenchEtrePastForms(selectedVerb, pronoun) : undefined;
+              return (
+                <tr key={pronoun} data-highlighted={pronoun === highlightPronoun || undefined}>
+                  <th scope="row">{withMoodMarker(activeLanguage.id, bookTense, getConjugationPronounLabel(activeLanguage, bookTense, pronoun))}</th>
+                  <td>{agreed ? agreed.tableMasculine : selectedVerb.forms[showCommands ? 'imperative' : bookTense][pronoun]}</td>
+                  <td>{agreed ? agreed.tableFeminine : showCommands ? selectedVerb.forms.imperativeNegative[pronoun] : selectedVerb.imperfectSubjunctiveSe?.[pronoun]}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       ) : (
@@ -81,7 +90,12 @@ export function ConjugationTable({
           ))}
         </div>
       )}
-      {activeLanguage.id === 'french' && pronouns.includes('you plural') && (
+      {showFrenchAgreement && (
+        <p className="conjugation-note" lang={locale}>
+          {t('With être, the past participle agrees with the subject in gender and number. Polite singular vous omits -s.')}
+        </p>
+      )}
+      {activeLanguage.id === 'french' && pronouns.includes('you plural') && !showFrenchAgreement && (
         <p className="conjugation-note" lang={locale}>{t('Vous can address one person politely or more than one person.')}</p>
       )}
     </>

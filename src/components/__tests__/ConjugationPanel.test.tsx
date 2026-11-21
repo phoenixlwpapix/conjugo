@@ -78,6 +78,27 @@ describe('command comparison', () => {
   });
 });
 
+describe('French être gender agreement', () => {
+  it('renders a masculine/feminine comparison table for French être verbs in passé composé', () => {
+    const french = languages.find((language) => language.id === 'french')!;
+    const aller = french.verbs.find((entry) => entry.infinitive === 'aller')!;
+    const html = renderToStaticMarkup(<ConjugationPanel activeLanguage={french} bookTense="past" selectedVerb={aller} onTenseChange={() => {}} translationLanguage="en" />);
+    expect(html).toContain('class="conjugation-comparison"');
+    expect(html).toContain('<th scope="col">Masculine</th><th scope="col">Feminine</th>');
+    expect(html).toContain('<th scope="row">je</th><td>suis allé</td><td>suis allée</td>');
+    expect(html).toContain('<th scope="row">il/elle</th><td>est allé</td><td>est allée</td>');
+    expect(html).toContain('<th scope="row">nous</th><td>sommes allés</td><td>sommes allées</td>');
+    expect(html).toContain('<th scope="row">vous</th><td>êtes allé(s)</td><td>êtes allée(s)</td>');
+    expect(html).toContain('<th scope="row">ils/elles</th><td>sont allés</td><td>sont allées</td>');
+    expect(html).toContain('With être, the past participle agrees with the subject in gender and number. Polite singular vous omits -s.');
+
+    const parler = french.verbs.find((entry) => entry.infinitive === 'parler')!;
+    const avoirHtml = renderToStaticMarkup(<ConjugationPanel activeLanguage={french} bookTense="past" selectedVerb={parler} onTenseChange={() => {}} translationLanguage="en" />);
+    expect(avoirHtml).not.toContain('class="conjugation-comparison"');
+    expect(avoirHtml).toContain('<span>il/elle</span><strong>a parlé</strong>');
+  });
+});
+
 describe('conjugation modal sheet', () => {
   it('renders current verb and tense conjugations in a dialog and highlights the prompted pronoun', () => {
     const spanish = languages.find((language) => language.id === 'spanish')!;
@@ -98,5 +119,20 @@ describe('conjugation modal sheet', () => {
     expect(html).toContain('<span>él/ella/usted</span><strong>habla</strong>');
     expect(html).toContain('<span>ellos/ellas/ustedes</span><strong>hablan</strong>');
     expect(html).not.toContain('Choose tense, mood, or verb form');
+  });
+
+  it('highlights the prompted row in the French être agreement table inside the conjugation modal', () => {
+    const french = languages.find((language) => language.id === 'french')!;
+    const aller = french.verbs.find((entry) => entry.infinitive === 'aller')!;
+    const html = renderToStaticMarkup(
+      <ConjugationModal
+        prompt={{ language: french, verb: aller, tense: 'past', pronoun: 'he/she', selectedPronounLabel: 'elle' }}
+        isFavorite={false}
+        onToggleFavorite={() => {}}
+        onClose={() => {}}
+        translationLanguage="en"
+      />,
+    );
+    expect(html).toContain('data-highlighted="true"><th scope="row">il/elle</th><td>est allé</td><td>est allée</td>');
   });
 });

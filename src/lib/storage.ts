@@ -194,6 +194,7 @@ const isStoredMiss = (value: unknown): value is StoredMiss => {
     typeof miss.verbInfinitive === 'string' &&
     isTenseId(miss.tense) &&
     isPronoun(miss.pronoun) &&
+    (miss.pronounLabel === undefined || typeof miss.pronounLabel === 'string') &&
     typeof miss.answer === 'string' &&
     typeof miss.missedAt === 'number' &&
     isReviewBox(miss.box) &&
@@ -223,6 +224,7 @@ const normalizeMiss = (value: unknown): StoredMiss | null => {
     verbInfinitive: miss.verbInfinitive,
     tense: miss.tense,
     pronoun: miss.pronoun,
+    ...(typeof miss.pronounLabel === 'string' ? { pronounLabel: miss.pronounLabel } : {}),
     answer: typeof miss.answer === 'string' ? miss.answer : '',
     missedAt,
     box: isReviewBox(miss.box) ? miss.box : 1,

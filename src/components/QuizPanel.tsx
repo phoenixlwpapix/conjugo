@@ -79,7 +79,7 @@ export function QuizPanel({ active, language, shortcutsEnabled, questionCount, o
       completedSet: index === questions.length - 1,
       tense: question.tense,
       verbInfinitive: question.verb.infinitive,
-    }, { language, verb: question.verb, tense: question.tense, pronoun: question.pronoun });
+    }, { language, verb: question.verb, tense: question.tense, pronoun: question.pronoun, selectedPronounLabel: question.pronounLabel || undefined });
   }, [index, language, onAnswer, question, questions.length, selected, streak]);
 
   const next = useCallback(() => {
@@ -216,7 +216,7 @@ export function QuizPanel({ active, language, shortcutsEnabled, questionCount, o
                 title={selected === question.answer ? t('Correct!') : t('Correct answer: {answer}', { answer: question.answer })}
                 description={question.explanation[locale]}
                 feedbackRef={feedbackRef}
-                onOpenWordbook={() => onOpenWordbook({ language, verb: question.verb, tense: question.tense, pronoun: question.pronoun })}
+                onOpenWordbook={() => onOpenWordbook({ language, verb: question.verb, tense: question.tense, pronoun: question.pronoun, selectedPronounLabel: question.pronounLabel || undefined })}
                 onNext={next}
                 finalQuestion={index === questions.length - 1}
               />

@@ -168,4 +168,10 @@ describe('storage', () => {
     );
     expect(readPracticeStatsByLanguage().spanish).toMatchObject({ totalAnswered: 3, byTense: {}, byVerb: {} });
   });
+
+  it('persists pronounLabel on feminine French être misses', () => {
+    const miss = { ...legacyMiss, languageId: 'french' as const, verbInfinitive: 'aller', tense: 'past' as const, pronoun: 'he/she' as const, pronounLabel: 'elle', answer: 'est allée', box: 1 as const, dueAt: 1 };
+    writeStoredMisses([miss]);
+    expect(readStoredMisses()).toEqual([miss]);
+  });
 });

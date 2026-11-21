@@ -29,6 +29,7 @@ export type StoredMiss = {
   verbInfinitive: string;
   tense: TenseId;
   pronoun: Pronoun;
+  pronounLabel?: string;
   answer: string;
   missedAt: number;
   box: ReviewBox;
@@ -72,4 +73,5 @@ export type ReviewTarget = {
   verbInfinitive: string;
   tense: TenseId;
   pronoun: Pronoun;
+  pronounLabel?: string;
 };

@@ -10,8 +10,11 @@ import {
   createSessionPrompts,
   createVerbSessionPrompts,
   getAnswer,
+  getFrenchEtreOppositeGenderForm,
+  getFrenchEtrePastForms,
   getPromptKey,
   getPronounLabel,
+  isFrenchEtrePast,
   isGenderAgreeingForm,
 } from '../prompts';
 
@@ -158,12 +161,14 @@ describe('prompts', () => {
             expect(choices).toContain(answer);
 
             const distractors = choices.filter((choice) => choice !== answer);
-            const sameTenseForms = new Set(
-              getConjugationPronouns(language, tense, prompt.verb)
+            const oppositeGender = getFrenchEtreOppositeGenderForm(prompt);
+            const sameTenseForms = new Set([
+              ...getConjugationPronouns(language, tense, prompt.verb)
                 .filter((pronoun) => pronoun !== prompt.pronoun)
                 .map((pronoun) => prompt.verb.forms[tense][pronoun])
                 .filter((form) => Boolean(form) && form !== answer),
-            );
+              ...(oppositeGender ? [oppositeGender] : []),
+            ]);
             const samePersonOtherTenseForms = new Set(
               otherFiniteTenses
                 .filter(({ id }) => getConjugationPronouns(language, id, prompt.verb).includes(prompt.pronoun))
@@ -382,19 +387,84 @@ describe('prompts', () => {
       expect(isGenderAgreeingForm('spanish', 'past', 'fue')).toBe(false);
     });
 
-    it('never pairs a feminine pronoun with a masculine agreeing participle', () => {
-      const feminineLabels = new Set(['elle', 'elles', 'lei']);
-
-      for (const languageId of ['french', 'italian'] as const) {
-        const language = languages.find((l) => l.id === languageId)!;
-        for (let run = 0; run < 5; run += 1) {
-          const agreeing = createPromptPool(language, 'past').filter((prompt) =>
-            isGenderAgreeingForm(languageId, prompt.tense, getAnswer(prompt)),
-          );
-          expect(agreeing.length).toBeGreaterThan(0);
-          expect(agreeing.some((prompt) => feminineLabels.has(getPronounLabel(prompt)))).toBe(false);
-        }
+    it('never pairs Italian lei with a masculine agreeing participle', () => {
+      const italian = languages.find((l) => l.id === 'italian')!;
+      for (let run = 0; run < 5; run += 1) {
+        const agreeing = createPromptPool(italian, 'past').filter((prompt) =>
+          isGenderAgreeingForm('italian', prompt.tense, getAnswer(prompt)),
+        );
+        expect(agreeing.length).toBeGreaterThan(0);
+        expect(agreeing.some((prompt) => getPronounLabel(prompt) === 'lei')).toBe(false);
       }
+    });
+
+    it('generates feminine French être past answers for elle and elles with opposite-gender distractors', () => {
+      const french = languages.find((l) => l.id === 'french')!;
+      vi.spyOn(Math, 'random').mockReturnValue(0.99);
+      const pool = createPromptPool(french, 'past', new Set(['aller', 'partir', 'mourir', 'naître']));
+
+      const elleAller = pool.find((p) => p.verb.infinitive === 'aller' && p.pronoun === 'he/she')!;
+      expect(getPronounLabel(elleAller)).toBe('elle');
+      expect(getAnswer(elleAller)).toBe('est allée');
+      expect(getChoices(elleAller, 11)).toEqual(expect.arrayContaining(['est allée', 'est allé']));
+
+      const ellesPartir = pool.find((p) => p.verb.infinitive === 'partir' && p.pronoun === 'they')!;
+      expect(getPronounLabel(ellesPartir)).toBe('elles');
+      expect(getAnswer(ellesPartir)).toBe('sont parties');
+      expect(getChoices(ellesPartir, 11)).toEqual(expect.arrayContaining(['sont parties', 'sont partis']));
+
+      const elleMourir = pool.find((p) => p.verb.infinitive === 'mourir' && p.pronoun === 'he/she')!;
+      expect(getAnswer(elleMourir)).toBe('est morte');
+      expect(getChoices(elleMourir, 11)).toEqual(expect.arrayContaining(['est morte', 'est mort']));
+
+      const ellesNaitre = pool.find((p) => p.verb.infinitive === 'naître' && p.pronoun === 'they')!;
+      expect(getAnswer(ellesNaitre)).toBe('sont nées');
+      expect(getChoices(ellesNaitre, 11)).toEqual(expect.arrayContaining(['sont nées', 'sont nés']));
+
+      // Unmarked subjects keep unambiguous distractors (never treating valid feminine forms as wrong).
+      const jeAller = pool.find((p) => p.verb.infinitive === 'aller' && p.pronoun === 'I')!;
+      expect(getAnswer(jeAller)).toBe('suis allé');
+      expect(getChoices(jeAller, 11)).not.toContain('suis allée');
+      const vousAller = pool.find((p) => p.verb.infinitive === 'aller' && p.pronoun === 'you plural')!;
+      expect(getChoices(vousAller, 11)).not.toContain('êtes allées');
+      expect(getChoices(vousAller, 11)).not.toContain('êtes allé');
+      expect(getChoices(vousAller, 11)).not.toContain('êtes allée');
+
+      // Masculine il/ils still contrast with feminine elle/elles forms.
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+      const mascPool = createPromptPool(french, 'past', new Set(['aller', 'venir']));
+      const ilAller = mascPool.find((p) => p.verb.infinitive === 'aller' && p.pronoun === 'he/she')!;
+      expect(getPronounLabel(ilAller)).toBe('il');
+      expect(getAnswer(ilAller)).toBe('est allé');
+      expect(getChoices(ilAller, 11)).toEqual(expect.arrayContaining(['est allé', 'est allée']));
+      const ilsVenir = mascPool.find((p) => p.verb.infinitive === 'venir' && p.pronoun === 'they')!;
+      expect(getPronounLabel(ilsVenir)).toBe('ils');
+      expect(getAnswer(ilsVenir)).toBe('sont venus');
+      expect(getChoices(ilsVenir, 11)).toEqual(expect.arrayContaining(['sont venus', 'sont venues']));
+    });
+
+    it('derives all masculine and feminine forms for all 13 French être verbs', () => {
+      const french = languages.find((l) => l.id === 'french')!;
+      const etreVerbs = french.verbs.filter((verb) => isFrenchEtrePast('french', 'past', verb));
+      expect(etreVerbs).toHaveLength(13);
+      for (const verb of etreVerbs) {
+        expect(getFrenchEtrePastForms(verb, 'I').feminine).toMatch(/^suis .+e$/);
+        expect(getFrenchEtrePastForms(verb, 'you plural').tableMasculine).toMatch(/^êtes .+\(s\)$/);
+        expect(getFrenchEtrePastForms(verb, 'you plural').tableFeminine).toMatch(/^êtes .+e\(s\)$/);
+        expect(getFrenchEtrePastForms(verb, 'you plural').accepted).toHaveLength(4);
+        expect(getFrenchEtrePastForms(verb, 'they').feminine).toMatch(/^sont .+es$/);
+      }
+    });
+
+    it('preserves feminine pronoun labels when reviewing missed French être prompts', () => {
+      const french = languages.find((l) => l.id === 'french')!;
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+      const reviewSession = createMissSessionPrompts(french, [
+        { verbInfinitive: 'aller', tense: 'past', pronoun: 'he/she', pronounLabel: 'elle' },
+      ]);
+      expect(reviewSession).toHaveLength(1);
+      expect(getPronounLabel(reviewSession[0])).toBe('elle');
+      expect(getAnswer(reviewSession[0])).toBe('est allée');
     });
   });
   describe('vosotros preference', () => {

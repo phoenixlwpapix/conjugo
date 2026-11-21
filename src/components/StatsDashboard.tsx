@@ -359,7 +359,7 @@ export function StatsDashboard({
                   {recentMisses.map((miss) => {
                     const verb = activeLanguage.verbs.find((entry) => entry.infinitive === miss.verbInfinitive);
                     const displayAnswer = miss.answer || (verb ? verb.forms[miss.tense][miss.pronoun] : '');
-                    const pronoun = getConjugationPronounLabel(activeLanguage, miss.tense, miss.pronoun);
+                    const pronoun = miss.pronounLabel || getConjugationPronounLabel(activeLanguage, miss.tense, miss.pronoun);
 
                     return (
                       <tr role="row" data-has-pronoun={Boolean(pronoun)} key={`${miss.languageId}-${miss.verbInfinitive}-${miss.tense}-${miss.pronoun}`}>

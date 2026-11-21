@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.4.0",
+    "date": "2026-11-21",
+    "changes": {
+      "zh": [
+        "法语以 être 作助动词的复合过去时现支持性数配合：动词本与变位弹窗以阳性 / 阴性对照展示，并标注礼貌单数 vous 的用法。",
+        "变位练习开放 elle / elles 随机出题并加入阴阳性干扰项；拼写模式同时接受 je / tu / nous 的阴阳性及 vous 的单复数与阴阳性写法。",
+        "句子测验新增法语阴性主语的 être 复合过去时例句与解析。"
+      ],
+      "en": [
+        "French compound past verbs conjugated with être now show masculine and feminine agreement side by side in the Verb Book and conjugation modal, including polite singular vous.",
+        "Conjugation practice now prompts elle and elles with opposite-gender distractors, while Typing accepts gender variants for je, tu, and nous as well as singular and plural forms for vous.",
+        "Sentence quizzes add French compound past scenes with feminine subjects and agreement explanations."
+      ]
+    }
+  },
+  {
     "version": "0.3.3",
     "date": "2026-11-20",
     "changes": {

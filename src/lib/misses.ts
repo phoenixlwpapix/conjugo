@@ -1,6 +1,6 @@
 import { getConjugationPronouns, getLanguageTenses, type Language, type PracticeTenseId } from '../data/verbs';
 import type { Prompt, ReviewBox, ReviewTarget, StoredMiss } from '../types';
-import { getAnswer, getPracticeTenses } from './prompts';
+import { getAnswer, getPracticeTenses, isFrenchEtrePast, isFrenchFemininePronounLabel } from './prompts';
 
 export const getMissKey = (miss: Pick<StoredMiss, 'languageId' | 'verbInfinitive' | 'tense' | 'pronoun'>) =>
   `${miss.languageId}::${miss.verbInfinitive}::${miss.tense}::${miss.pronoun}`;
@@ -64,6 +64,7 @@ export const getReviewTargets = (
     verbInfinitive: miss.verbInfinitive,
     tense: miss.tense,
     pronoun: miss.pronoun,
+    ...(miss.pronounLabel ? { pronounLabel: miss.pronounLabel } : {}),
   }));
 };
 
@@ -87,11 +88,15 @@ export const upsertMiss = (
   limit = missLimitPerLanguage,
   now = Date.now(),
 ): StoredMiss[] => {
+  const keepPronounLabel =
+    isFrenchEtrePast(attemptPrompt.language.id, attemptPrompt.tense, attemptPrompt.verb) &&
+    isFrenchFemininePronounLabel(attemptPrompt.selectedPronounLabel);
   const miss: StoredMiss = {
     languageId: attemptPrompt.language.id,
     verbInfinitive: attemptPrompt.verb.infinitive,
     tense: attemptPrompt.tense,
     pronoun: attemptPrompt.pronoun,
+    ...(keepPronounLabel ? { pronounLabel: attemptPrompt.selectedPronounLabel } : {}),
     answer: getAnswer(attemptPrompt),
     missedAt: now,
     box: 1,

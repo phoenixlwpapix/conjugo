@@ -1,6 +1,6 @@
 import type { Prompt } from '../types';
 import { isNonFiniteForm } from '../data/nonFinite/types';
-import { getAnswer } from './prompts';
+import { getAnswer, getFrenchEtrePastForms, isFrenchEtrePast } from './prompts';
 
 const normalize = (answer: string) => answer.trim().toLowerCase().normalize('NFC').replace(/\s+/g, ' ').replace(/[‘’]/g, "'");
 
@@ -16,6 +16,13 @@ export function gradeTypedAnswer(input: string, prompt: Prompt): 'correct' | 'ac
   }
   if (prompt.tense === 'imperfectSubjunctive' && prompt.verb.imperfectSubjunctiveSe) {
     accepted.push(normalize(prompt.verb.imperfectSubjunctiveSe[prompt.pronoun]));
+  }
+  if (
+    isFrenchEtrePast(prompt.language.id, prompt.tense, prompt.verb) &&
+    prompt.pronoun !== 'he/she' &&
+    prompt.pronoun !== 'they'
+  ) {
+    accepted.push(...getFrenchEtrePastForms(prompt.verb, prompt.pronoun).accepted.map(normalize));
   }
   if (accepted.includes(answer)) return 'correct';
   if (!accepted.some((form) => withoutAccents(form) === withoutAccents(answer))) return 'wrong';
